@@ -1,0 +1,9 @@
+{
+  "00": ["Usuario o contraseña invalido", "error"],
+  "01": ["No se pudo cargar la configuracion", "error"],
+  "02": ["Fallo el guardado de la configuracion", "error"],
+  "03": ["Configuración guardada correctamente", "success"],
+  "04": ["No se pudo guardar la configuracion", "error"],
+  "05": ["Descarga de datos completada con éxito", "success"],
+  "06": ["La descarga de datos fue cancelada", "error"]
+}
