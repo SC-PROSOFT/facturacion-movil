@@ -39,9 +39,7 @@ export const TercerosFinder = React.memo(
     );
 
     const objConfig = useAppSelector(store => store.config.objConfig);
-
     const objOperador = useAppSelector(store => store.operator.objOperator);
-
     const [inputs, setInputs] = useState({
       operador: '',
     });
@@ -212,7 +210,6 @@ export const TercerosFinder = React.memo(
           <View style={{paddingHorizontal: 20, paddingBottom: 10}}>
             <IconLeftInput
               value={inputs.operador}
-              label="Buscar tercero"
               name="operador"
               mode="flat"
               keyboardType="default"

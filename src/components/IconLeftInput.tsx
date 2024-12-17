@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
 
 import {TextInput} from 'react-native-paper';
 
@@ -9,7 +9,6 @@ type Icon = 'magnify' | 'account-search';
 
 interface IconLeftInputProps {
   value: string;
-  label: string;
   name: string;
   mode: Mode;
   keyboardType: KeyboadType;
@@ -19,7 +18,6 @@ interface IconLeftInputProps {
 
 export const IconLeftInput = ({
   value,
-  label,
   name,
   mode,
   keyboardType,
@@ -27,29 +25,23 @@ export const IconLeftInput = ({
   icon,
 }: IconLeftInputProps) => {
   return (
-    <View style={styles.inputContainer}>
-      <TextInput
-        value={value}
-        //label={label}
-        placeholder="Buscar"
-        onChangeText={text => handleInputChange(name, text)}
-        mode={mode}
-        keyboardType={keyboardType}
-        left={<TextInput.Icon icon={icon} />}
-        style={styles.input}></TextInput>
-    </View>
+    <TextInput
+      value={value}
+      placeholder="Buscar"
+      onChangeText={text => handleInputChange(name, text)}
+      mode={mode}
+      keyboardType={keyboardType}
+      left={<TextInput.Icon icon={icon} />}
+      style={styles.input}
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  inputContainer: {
-    width: '100%',
-  },
   input: {
     backgroundColor: '#fff',
     height: 40,
     fontSize: 18,
-    marginBottom: 5,
     borderRadius: 10,
   },
 });

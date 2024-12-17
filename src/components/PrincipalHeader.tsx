@@ -8,11 +8,15 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {getInitialsOfClient} from '../utils';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
-import {setIsSignedIn, setIsAdmin} from '../redux/slices/operatorSlice';
+import {
+  setIsSignedIn,
+  setIsAdmin,
+  setIsShowTercerosFinder,
+} from '../redux/slices';
 /* context */
 import {decisionAlertContext} from '../context';
 /* components */
-import {IconLeftInput} from '../components';
+import {IconLeftInput, IconButton} from '../components';
 
 type FlyOutProps = {
   children?: ReactNode;
@@ -101,6 +105,8 @@ const Searcher = ({
   search: string;
   setSearch: React.Dispatch<React.SetStateAction<string>>;
 }) => {
+  const dispatch = useAppDispatch();
+
   const handleInputChange = (name: string, text: string) => {
     setSearch(text);
   };
@@ -117,15 +123,48 @@ const Searcher = ({
         Visitas programadas
       </Text>
 
-      <IconLeftInput
-        value={search}
-        label="Buscar visita"
-        name="articulo"
-        mode="flat"
-        keyboardType="default"
-        icon="magnify"
-        handleInputChange={handleInputChange}
-      />
+      <View
+        style={{
+          flexDirection: 'row',
+          width: '100%',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          alignContent: 'center',
+        }}>
+        <View style={{flex: 1, marginRight: 10}}>
+          <IconLeftInput
+            value={search}
+            name="articulo"
+            mode="flat"
+            keyboardType="default"
+            icon="magnify"
+            handleInputChange={handleInputChange}
+          />
+        </View>
+
+        <IconButton
+          iconName="account-search"
+          iconColor="#FFF"
+          iconSize={30}
+          onPress={() => dispatch(setIsShowTercerosFinder(true))}
+        />
+        <View style={{marginLeft: 10}}>
+          <IconButton
+            iconName="map-marker-path"
+            iconColor="#FFF"
+            iconSize={30}
+            onPress={() => console.log('caraja')}
+          />
+        </View>
+        <View style={{marginLeft: 10}}>
+          <IconButton
+            iconName="account-plus"
+            iconColor="#FFF"
+            iconSize={30}
+            onPress={() => console.log('caraja')}
+          />
+        </View>
+      </View>
     </View>
   );
 };

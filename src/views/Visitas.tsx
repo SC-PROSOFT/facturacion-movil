@@ -5,7 +5,7 @@ import {Text} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
 
 /* components */
-import {Visita, PrincipalHeader, Searcher} from '../components';
+import {Visita, PrincipalHeader, Searcher, TercerosFinder} from '../components';
 /* types */
 import {ITerceros, IVisita} from '../common/types';
 /* redux */
@@ -38,7 +38,7 @@ const visitas: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2024-11-29',
+    appointmentDate: '2024-12-16',
     location: {
       latitude: '',
       longitude: '',
@@ -52,7 +52,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2024-11-29',
+    appointmentDate: '2024-12-17',
     location: {
       latitude: '',
       longitude: '',
@@ -263,6 +263,8 @@ const Visitas: React.FC = () => {
           }}
         />
       </SafeAreaView>
+
+      <TercerosFinder />
     </View>
   );
 };

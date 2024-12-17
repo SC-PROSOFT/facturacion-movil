@@ -1,33 +1,25 @@
 import React from 'react';
-import {View, StyleSheet} from 'react-native';
-import {IconButton as PaperIconButton} from 'react-native-paper';
+import {TouchableOpacity} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface IconButtonProps {
   iconName: string;
   iconColor: string;
   iconSize: number;
-  pressIconButton: Function;
+  onPress: () => void;
 }
 
 export const IconButton = ({
   iconName,
   iconColor,
   iconSize,
-  pressIconButton,
+  onPress,
 }: IconButtonProps) => {
   return (
-    <PaperIconButton
-      icon={iconName}
-      iconColor={iconColor}
-      onPress={() => pressIconButton()}
-      size={iconSize}
-      style={styles.button}
-    />
+    <TouchableOpacity
+      style={{backgroundColor: '#485E8A', padding: 5, borderRadius: 5}}
+      onPress={() => onPress()}>
+      <Icon name={iconName} size={iconSize} color={iconColor} />
+    </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    justifyContent: 'center',
-  },
-});
