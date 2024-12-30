@@ -13,7 +13,14 @@ import {useAppSelector} from '../redux/hooks';
 /* navigators */
 import {TabNavPrincipal, TabNavTercero} from '../navigation';
 /* views */
-import {Config, Sync, Login, ModificarFactura, ModificarPedido} from '../views';
+import {
+  Config,
+  Sync,
+  Login,
+  ModificarFactura,
+  ModificarPedido,
+  CreateTercero,
+} from '../views';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -41,7 +48,7 @@ const Navigation = () => {
             name="Config"
             component={Config}
             options={{
-              unmountOnBlur: true,
+              //unmountOnBlur: true,
               title: 'Configuración',
               headerTitleAlign: 'left',
               headerShown: false,
@@ -73,7 +80,7 @@ const Navigation = () => {
             component={Sync}
             options={{
               headerShown: false,
-              unmountOnBlur: true,
+              //unmountOnBlur: true,
               headerTitle: 'Sincronizacion',
               headerTitleAlign: 'left',
               headerStyle: {
@@ -116,7 +123,7 @@ const Navigation = () => {
               animation: 'none',
               headerTintColor: '#fff',
               headerStyle: {
-                backgroundColor: '#2F4DA8',
+                backgroundColor: '#092254',
               },
             }}
           />
@@ -130,7 +137,7 @@ const Navigation = () => {
               animation: 'none',
               headerTintColor: '#fff',
               headerStyle: {
-                backgroundColor: '#2F4DA8',
+                backgroundColor: '#092254',
               },
             }}
           />
@@ -144,7 +151,7 @@ const Navigation = () => {
               animation: 'none',
               headerTintColor: '#fff',
               headerStyle: {
-                backgroundColor: '#2F4DA8',
+                backgroundColor: '#092254',
               },
             }}
           />
@@ -158,7 +165,21 @@ const Navigation = () => {
               animation: 'none',
               headerTintColor: '#fff',
               headerStyle: {
-                backgroundColor: '#2F4DA8',
+                backgroundColor: '#092254',
+              },
+            }}
+          />
+          <Stack.Screen
+            name="CreateTercero"
+            component={CreateTercero}
+            options={{
+              title: 'Crear Tercero',
+              headerTitleAlign: 'left',
+              headerShown: true,
+              animation: 'none',
+              headerTintColor: '#fff',
+              headerStyle: {
+                backgroundColor: '#092254',
               },
             }}
           />

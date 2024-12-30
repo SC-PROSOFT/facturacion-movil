@@ -11,3 +11,4 @@ export * from './Login';
 export * from './Visitas';
 export * from './Tercero';
 export * from './Survey';
+export * from './CreateTercero';

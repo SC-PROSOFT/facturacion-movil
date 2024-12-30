@@ -7,10 +7,17 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 /* Views */
 import {Visitas, Sync, ActualizarFacturas, ActualizarPedidos} from '../views';
+/* redux */
+import {useAppSelector} from '../redux/hooks';
+import {setIsShowTercerosFinder} from '../redux/slices';
 
 const Tab = createBottomTabNavigator();
 
 const TabNavPrincipal = () => {
+  const isShowTercerosFinder = useAppSelector(
+    store => store.tercerosFinder.isShowTercerosFinder,
+  );
+
   const optionsTabScreen = ({
     icon,
   }: {
@@ -27,6 +34,7 @@ const TabNavPrincipal = () => {
         fontWeight: 'bold',
       },
       tabBarStyle: {
+        display: isShowTabBar(),
         height: 80,
         paddingBottom: 10,
         paddingTop: 10,
@@ -43,6 +51,13 @@ const TabNavPrincipal = () => {
       },
       tabBarActiveBackgroundColor: '#B6BFD1',
     };
+  };
+  const isShowTabBar = (): 'none' | 'flex' => {
+    if (isShowTercerosFinder) {
+      return 'none';
+    } else {
+      return 'flex';
+    }
   };
 
   return (

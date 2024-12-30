@@ -3,6 +3,7 @@ import {View, TouchableOpacity} from 'react-native';
 import {Shadow} from 'react-native-shadow-2';
 import {Avatar, Text} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useNavigation} from '@react-navigation/native';
 
 /* utils */
 import {getInitialsOfClient} from '../utils';
@@ -105,6 +106,7 @@ const Searcher = ({
   search: string;
   setSearch: React.Dispatch<React.SetStateAction<string>>;
 }) => {
+  const navigation: any = useNavigation();
   const dispatch = useAppDispatch();
 
   const handleInputChange = (name: string, text: string) => {
@@ -161,7 +163,7 @@ const Searcher = ({
             iconName="account-plus"
             iconColor="#FFF"
             iconSize={30}
-            onPress={() => console.log('caraja')}
+            onPress={() => navigation.navigate("CreateTercero")}
           />
         </View>
       </View>

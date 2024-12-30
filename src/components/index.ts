@@ -29,3 +29,6 @@ export * from './Header';
 export * from './ProductTable';
 export * from './PrincipalHeader';
 export * from './GoogleMap';
+export * from './_Input';
+export * from './_InputSelect';
+export * from './_Checkbox';
