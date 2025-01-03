@@ -223,7 +223,6 @@ class OperadoresRepository implements IRepository<IOperadores> {
           sqlUpdateStatement,
           null,
           (_: ResultSet, response: ResultSet) => {
-            console.log('response', response);
             resolve(true);
           },
           (error: ResultSet) => {

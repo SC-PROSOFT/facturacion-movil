@@ -12,3 +12,5 @@ export * from './Visitas';
 export * from './Tercero';
 export * from './Survey';
 export * from './CreateTercero';
+export * from './CreateRuta';
+export * from './FilesTercero';

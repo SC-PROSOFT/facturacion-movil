@@ -28,7 +28,7 @@ const TabNavTercero = () => {
     return {
       headerShown: false,
       tabBarIcon: () => (
-        <Icon name={icon} style={{color: '#0B2863'}} size={38} />
+        <Icon name={icon} style={{color: '#0B2863'}} size={30} />
       ),
       tabBarLabelStyle: {
         color: '#0B2863',
@@ -79,8 +79,8 @@ const TabNavTercero = () => {
           tabBarIcon: () => (
             <Icon
               name="newspaper-check"
-              style={{color: '#FFF', position: 'absolute', paddingTop: 13}}
-              size={54}
+              style={{color: '#FFF', position: 'absolute', paddingTop: 38}}
+              size={35}
             />
           ),
           tabBarStyle: {
@@ -126,8 +126,8 @@ const TabNavTercero = () => {
           tabBarIcon: () => (
             <Icon
               name="cart-plus"
-              style={{color: '#FFF', position: 'absolute', paddingTop: 13}}
-              size={54}
+              style={{color: '#FFF', position: 'absolute', paddingTop: 38}}
+              size={35}
             />
           ),
           tabBarStyle: {

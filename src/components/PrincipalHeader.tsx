@@ -155,7 +155,7 @@ const Searcher = ({
             iconName="map-marker-path"
             iconColor="#FFF"
             iconSize={30}
-            onPress={() => console.log('caraja')}
+            onPress={() => navigation.navigate('CreateRuta')}
           />
         </View>
         <View style={{marginLeft: 10}}>
@@ -163,7 +163,7 @@ const Searcher = ({
             iconName="account-plus"
             iconColor="#FFF"
             iconSize={30}
-            onPress={() => navigation.navigate("CreateTercero")}
+            onPress={() => navigation.navigate('CreateTercero')}
           />
         </View>
       </View>

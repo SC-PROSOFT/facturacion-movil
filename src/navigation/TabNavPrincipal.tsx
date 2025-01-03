@@ -26,7 +26,7 @@ const TabNavPrincipal = () => {
     return {
       headerShown: false,
       tabBarIcon: () => (
-        <Icon name={icon} style={{color: '#0B2863'}} size={38} />
+        <Icon name={icon} style={{color: '#0B2863'}} size={30} />
       ),
       tabBarLabelStyle: {
         color: '#0B2863',

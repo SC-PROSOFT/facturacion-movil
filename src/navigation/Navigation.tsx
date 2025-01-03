@@ -20,6 +20,8 @@ import {
   ModificarFactura,
   ModificarPedido,
   CreateTercero,
+  CreateRuta,
+  FilesTercero,
 } from '../views';
 
 const Stack = createNativeStackNavigator();
@@ -174,6 +176,34 @@ const Navigation = () => {
             component={CreateTercero}
             options={{
               title: 'Crear Tercero',
+              headerTitleAlign: 'left',
+              headerShown: true,
+              animation: 'none',
+              headerTintColor: '#fff',
+              headerStyle: {
+                backgroundColor: '#092254',
+              },
+            }}
+          />
+          <Stack.Screen
+            name="CreateRuta"
+            component={CreateRuta}
+            options={{
+              title: 'Crear nueva ruta',
+              headerTitleAlign: 'left',
+              headerShown: true,
+              animation: 'none',
+              headerTintColor: '#fff',
+              headerStyle: {
+                backgroundColor: '#092254',
+              },
+            }}
+          />
+          <Stack.Screen
+            name="FilesTercero"
+            component={FilesTercero}
+            options={{
+              title: 'Archivos cliente',
               headerTitleAlign: 'left',
               headerShown: true,
               animation: 'none',

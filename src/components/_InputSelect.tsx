@@ -17,8 +17,6 @@ const _InputSelect = <T,>({
   values,
   ...props
 }: InputSelectProps<T>) => {
-
-  console.log('values', values)
   return (
     <Picker
       {...props}

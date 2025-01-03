@@ -3,11 +3,17 @@ import {View, ScrollView} from 'react-native';
 import {Text} from 'react-native-paper';
 
 /* components */
-import {_Input, _InputSelect, _Checkbox, CoolButton} from '../components';
+import {
+  _Input,
+  _InputSelect,
+  _Checkbox,
+  CoolButton,
+  _DatePicker,
+} from '../components';
 /* types */
 import {ITerceros} from '../common/types';
 
-const CreateTercero = () => {
+const CreateRuta = () => {
   const [tercero, setTercero] = useState<ITerceros>({
     codigo: '',
     nombre: '',
@@ -29,6 +35,7 @@ const CreateTercero = () => {
     zona: '',
     ruta: '',
   });
+  const [dateOfVisit, setDateOfVisit] = useState<Date>(new Date());
 
   const saveTercero = () => {
     console.log('Intente guardar un tercero');
@@ -40,7 +47,13 @@ const CreateTercero = () => {
         paddingHorizontal: 15,
         paddingTop: 10,
       }}>
-      <Text style={{color: '#092254', fontSize: 22, marginBottom: 10}}>
+      <Text
+        style={{
+          color: '#092254',
+          fontSize: 22,
+          marginBottom: 10,
+          marginLeft: 3,
+        }}>
         Informacion cliente
       </Text>
 
@@ -168,9 +181,33 @@ const CreateTercero = () => {
             />
           </View>
         </View>
+      </View>
 
+      <Text
+        style={{
+          color: '#092254',
+          fontSize: 22,
+          marginBottom: 10,
+          marginTop: 15,
+          marginLeft: 3,
+        }}>
+        Informacion visita
+      </Text>
+
+      {/* 🟥 Informacion visita */}
+      <View
+        style={{
+          elevation: 5,
+          padding: 7,
+          backgroundColor: '#fff',
+          borderRadius: 10,
+          gap: 8,
+        }}>
         <View style={{flexDirection: 'row', gap: 8}}>
-          <View style={{width: '40%'}}>
+          <View>
+            <_DatePicker date={dateOfVisit} setDate={setDateOfVisit} />
+          </View>
+          <View style={{flex: 1}}>
             <_InputSelect<'semanal' | 'mensual'>
               value={tercero.frecuencia}
               values={[
@@ -182,6 +219,13 @@ const CreateTercero = () => {
               }
             />
           </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 8,
+          }}>
           <View style={{flex: 1}}>
             <_Input
               label="Zona"
@@ -202,8 +246,7 @@ const CreateTercero = () => {
           </View>
         </View>
       </View>
-
-      <View style={{marginBottom: 20}}>
+      <View style={{marginBottom: 20, marginTop: 15}}>
         <CoolButton
           value="Guardar cliente"
           iconName="content-save"
@@ -218,4 +261,4 @@ const CreateTercero = () => {
   );
 };
 
-export {CreateTercero};
+export {CreateRuta};

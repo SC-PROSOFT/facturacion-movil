@@ -5,8 +5,9 @@ import {
   StyleSheet,
   VirtualizedList,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
-
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation} from '@react-navigation/native';
 
 /* utils */
@@ -69,6 +70,48 @@ const Tercero = () => {
           zIndex: 3,
         }}>
         <Header />
+      </View>
+
+      <View
+        style={{
+          position: 'absolute',
+          flexDirection: 'column',
+          alignSelf: 'flex-end',
+          marginTop: 50,
+          paddingRight: 14,
+          zIndex: 3,
+          gap: 5,
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#485E8A',
+              padding: 3,
+              borderRadius: 5,
+            }}
+            onPress={() => navigation.navigate("FilesTercero")}>
+            <Icon name="attachment" size={36} color={'#FFF'} />
+          </TouchableOpacity>
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#485E8A',
+              padding: 3,
+              borderRadius: 5,
+            }}
+            onPress={() => {}}>
+            <Icon name="map-marker-radius" size={36} color={'#FFF'} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.totalCountContainer}>
