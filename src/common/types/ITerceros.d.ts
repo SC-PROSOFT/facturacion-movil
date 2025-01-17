@@ -6,7 +6,7 @@ export interface ITerceros {
   vendedor: string;
   plazo: number;
   f_pago: '01' | '02'; // 01 contado, 02 credito
-  ex_iva: 'S' | 'N'; // S = true, N = false
+  ex_iva: 'S' | 'N'; // S = true, N = false, exento de iva (true: no paga, false: paga)
   clasificacion: string;
 
   /* ADICIONALES */
@@ -19,4 +19,8 @@ export interface ITerceros {
   frecuencia: 'semanal' | 'mensual';
   zona: string;
   ruta: string;
+  latitude: string;
+  longitude: string;
+  rut_path: string;
+  camaracomercio_path: string;
 }

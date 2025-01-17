@@ -1,13 +1,23 @@
 import React, {useState} from 'react';
-import {View, ScrollView} from 'react-native';
+import {View, ScrollView, TouchableOpacity} from 'react-native';
 import {Text} from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useNavigation} from '@react-navigation/native';
 
 /* components */
 import {_Input, _InputSelect, _Checkbox, CoolButton} from '../components';
 /* types */
 import {ITerceros} from '../common/types';
+/* utils */
+import {getUbication} from '../utils';
+/* redux */
+import {useAppSelector, useAppDispatch} from '../redux/hooks';
+import {setObjInfoAlert, setObjTercero} from '../redux/slices';
 
 const CreateTercero = () => {
+  const dispatch = useAppDispatch();
+  const navigation: any = useNavigation();
+
   const [tercero, setTercero] = useState<ITerceros>({
     codigo: '',
     nombre: '',
@@ -28,10 +38,39 @@ const CreateTercero = () => {
     frecuencia: 'semanal',
     zona: '',
     ruta: '',
+    latitude: '',
+    longitude: '',
+    rut_path: '',
+    camaracomercio_path: '',
   });
 
   const saveTercero = () => {
-    console.log('Intente guardar un tercero');
+    console.log('Intente guardar un tercero', tercero);
+  };
+
+  const toggleGetGeolocation = async () => {
+    try {
+      const migeo = await getUbication();
+
+      setTercero(prevState => ({
+        ...prevState,
+        latitude: migeo.latitude,
+        longitude: migeo.longitude,
+      }));
+    } catch (error: any) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'info',
+          description: `${error.message}`,
+        }),
+      );
+    }
+  };
+  const toggleAddFiles = () => {
+    dispatch(setObjTercero(tercero));
+
+    navigation.navigate('FilesTercero');
   };
 
   return (
@@ -74,6 +113,7 @@ const CreateTercero = () => {
             <_Input
               label="Identificacion"
               name="codigo"
+              keyboardType="numeric"
               onChangeText={(text: string) =>
                 setTercero(prevState => ({...prevState, codigo: text}))
               }
@@ -85,6 +125,7 @@ const CreateTercero = () => {
             <_Input
               label="Telefono"
               name="tel"
+              keyboardType="numeric"
               onChangeText={(text: string) =>
                 setTercero(prevState => ({...prevState, tel: text}))
               }
@@ -137,11 +178,11 @@ const CreateTercero = () => {
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
           <_Checkbox
             label="Iva"
-            status={tercero.ex_iva == 'S' ? true : false}
+            status={tercero.ex_iva == 'N' ? true : false}
             onPress={status =>
               setTercero(prevState => ({
                 ...prevState,
-                ex_iva: status ? 'S' : 'N',
+                ex_iva: status ? 'N' : 'S',
               }))
             }
           />
@@ -200,6 +241,39 @@ const CreateTercero = () => {
               }
             />
           </View>
+        </View>
+
+        <View style={{flexDirection: 'row', gap: 8}}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#485E8A',
+              padding: 3,
+              borderRadius: 5,
+            }}
+            disabled={tercero.codigo.length < 10 ? true : false}
+            onPress={() => toggleAddFiles()}>
+            <Icon name="attachment" size={36} color={'#FFF'} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#485E8A',
+              padding: 3,
+              borderRadius: 5,
+            }}
+            onPress={() => {
+              toggleGetGeolocation();
+            }}>
+            <Icon name="map-marker-radius" size={36} color={'#FFF'} />
+          </TouchableOpacity>
+        </View>
+
+        <View>
+          {tercero.codigo.length < 10 && (
+            <Text style={{color: 'red'}}>
+              Para adjuntar archivos debe ingresar la cedula del cliente
+            </Text>
+          )}
         </View>
       </View>
 

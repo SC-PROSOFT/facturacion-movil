@@ -15,6 +15,7 @@ const getPermissions = () => {
       );
 
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        return;
       } else {
         if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
           const granted2 = await PermissionsAndroid.request(
@@ -27,14 +28,17 @@ const getPermissions = () => {
               buttonPositive: 'Aceptar',
             },
           );
+          console.log('granted2', granted2);
 
           if (granted2 === PermissionsAndroid.RESULTS.GRANTED) {
+            console.log('aceptado');
           } else {
             reject('no volver a preguntar');
           }
         }
       }
     } catch (error) {
+      console.log('error', error);
       console.error('Error al solicitar permiso de ubicacion:', error);
     }
   });

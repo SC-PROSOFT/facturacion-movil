@@ -4,8 +4,17 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 /* components */
 import {CoolButton} from '../components';
+/* redux */
+import {useAppSelector} from '../redux/hooks';
+import {} from '../redux/slices';
 
 const FilesTercero = () => {
+  const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
+
+  const addRut = () => {
+    console.log('objTercero', objTercero);
+  };
+
   return (
     <View style={{padding: 10}}>
       <Text style={{fontSize: 20, marginBottom: 5, marginLeft: 3}}>RUT</Text>
@@ -19,7 +28,7 @@ const FilesTercero = () => {
           justifyContent: 'center',
           alignItems: 'center',
         }}
-        onPress={() => {}}>
+        onPress={() => addRut()}>
         <Icon
           name="file-remove"
           size={80}

@@ -13,7 +13,7 @@ import {
   facturasService,
 } from './services';
 
-const db: any = SQLite.openDatabase({name: 'localdb14'});
+const db: any = SQLite.openDatabase({name: 'localdb16'}); // 14
 
 /* create tables */
 const createTables = async (): Promise<boolean> => {

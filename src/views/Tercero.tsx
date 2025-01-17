@@ -11,7 +11,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation} from '@react-navigation/native';
 
 /* utils */
-import {formatToMoney} from '../utils';
+import {formatToMoney, getPermissions, getUbication} from '../utils';
 /* types */
 import {IOperation} from '../common/types';
 /* components */
@@ -22,6 +22,7 @@ import {
   setObjOperator,
   setArrProductAdded,
   setObjOperation,
+  setObjInfoAlert,
 } from '../redux/slices';
 
 const Tercero = () => {
@@ -30,6 +31,7 @@ const Tercero = () => {
 
   const arrFactura = useAppSelector(store => store.tercerosFinder.arrFactura);
   const arrPedido = useAppSelector(store => store.tercerosFinder.arrPedido);
+  const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
 
   const sumarTotalFacturaPedidos = (): number => {
     return [...arrFactura, ...arrPedido]
@@ -46,6 +48,23 @@ const Tercero = () => {
       navigation.navigate('ModificarFactura');
     } else {
       navigation.navigate('ModificarPedido');
+    }
+  };
+
+  const toggleGetGeolocation = async () => {
+    console.log('Intente obtener la geolocalizacion');
+    try {
+      const migeo = await getUbication();
+      console.log('objTercero', objTercero);
+      console.log('migeo', migeo);
+    } catch (error: any) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'info',
+          description: `${error.message}`,
+        }),
+      );
     }
   };
 
@@ -79,39 +98,30 @@ const Tercero = () => {
           alignSelf: 'flex-end',
           marginTop: 50,
           paddingRight: 14,
-          zIndex: 3,
+          zIndex: 4,
           gap: 5,
         }}>
-        <View
+        <TouchableOpacity
           style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#485E8A',
-              padding: 3,
-              borderRadius: 5,
-            }}
-            onPress={() => navigation.navigate("FilesTercero")}>
-            <Icon name="attachment" size={36} color={'#FFF'} />
-          </TouchableOpacity>
-        </View>
-        <View
+            backgroundColor: '#485E8A',
+            padding: 3,
+            borderRadius: 5,
+          }}
+          onPress={() => navigation.navigate('FilesTercero')}>
+          <Icon name="attachment" size={36} color={'#FFF'} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
+            backgroundColor: '#485E8A',
+            padding: 3,
+            borderRadius: 5,
+          }}
+          onPress={() => {
+            toggleGetGeolocation();
           }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#485E8A',
-              padding: 3,
-              borderRadius: 5,
-            }}
-            onPress={() => {}}>
-            <Icon name="map-marker-radius" size={36} color={'#FFF'} />
-          </TouchableOpacity>
-        </View>
+          <Icon name="map-marker-radius" size={36} color={'#FFF'} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.totalCountContainer}>

@@ -17,8 +17,8 @@ const getUbication = async () => {
           },
           error => {
             //console.error(error);
-            //reject('Ubicacion erronea');
-            resolve({latitude: '', longitude: ''});
+            reject(error);
+            //resolve({latitude: '', longitude: ''});
           },
           {enableHighAccuracy: false, timeout: 10000, maximumAge: 1000},
         );

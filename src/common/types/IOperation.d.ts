@@ -36,6 +36,7 @@ export interface IOperationDb {
   ubicacion_latitud: string;
   ubicacion_longitud: string;
   valorPedido: number;
+
   operador_auto_dian: string;
   operador_cod_vendedor: string;
   operador_codigo: string;
@@ -50,6 +51,7 @@ export interface IOperationDb {
   operador_prefijo: string;
   operador_sucursal: string;
   operador_vigencia: string;
+
   tercero_clasificacion: string;
   tercero_codigo: string;
   tercero_direcc: string;
@@ -59,6 +61,20 @@ export interface IOperationDb {
   tercero_plazo: number;
   tercero_tel: string;
   tercero_vendedor: string;
+  tercero_tipo?: 'CC' | 'TI';
+  tercero_departamento: string;
+  tercero_ciudad: string;
+  tercero_barrio: string;
+  tercero_email: string;
+  tercero_reteica: 'S' | 'N'; // S = true, N = false
+  tercero_frecuencia: 'semanal' | 'mensual';
+  tercero_zona: string;
+  tercero_ruta: string;
+  tercero_latitude: string;
+  tercero_longitude: string;
+  tercero_rut_path: string;
+  tercero_camaracomercio_path: string;
+
   guardadoEnServer: 'S' | 'N'; // fue guardado almenos una ves en el servidor, sirve para saber si debo guardar o actualizar en la vista ActualizarPedidos
   sincronizado: 'S' | 'N'; // Pedido sincronizado en servidor
   articulosAdded: string;

@@ -16,7 +16,21 @@ class TercerosRepository implements IRepository<ITerceros> {
         plazo TEXT,
         f_pago TEXT,
         ex_iva TEXT,
-        clasificacion TEXT
+        clasificacion TEXT,
+
+        tipo TEXT,
+        departamento TEXT,
+        ciudad TEXT,
+        barrio TEXT,
+        email TEXT,
+        reteica TEXT, 
+        frecuencia TEXT,
+        zona TEXT, 
+        ruta TEXT,
+        latitude TEXT,
+        longitude TEXT,
+        rut_path TEXT,
+        camaracomercio_path TEXT
     )
     `;
 
@@ -35,7 +49,76 @@ class TercerosRepository implements IRepository<ITerceros> {
       });
     });
   }
+  async create(tercero: ITerceros): Promise<boolean> {
+    const sqlInsertTerceroStatement = `
+    INSERT INTO terceros (
+        codigo,
+        nombre,
+        direcc,
+        tel,
+        vendedor,
+        plazo,
+        f_pago,
+        ex_iva,
+        clasificacion,
 
+        tipo,
+        departamento,
+        ciudad,
+        barrio,
+        email,
+        reteica, 
+        frecuencia,
+        zona, 
+        ruta,
+        latitude,
+        longitude,
+        rut_path,
+        camaracomercio_path
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+   `;
+
+    const valuesTercero = [
+      tercero.codigo,
+      tercero.nombre,
+      tercero.direcc,
+      tercero.tel,
+      tercero.vendedor,
+      tercero.plazo,
+      tercero.f_pago,
+      tercero.ex_iva,
+      tercero.clasificacion,
+
+      tercero.tipo,
+      tercero.departamento,
+      tercero.ciudad,
+      tercero.barrio,
+      tercero.email,
+      tercero.reteica,
+      tercero.frecuencia,
+      tercero.zona,
+      tercero.ruta,
+      tercero.latitude,
+      tercero.longitude,
+      tercero.rut_path,
+      tercero.camaracomercio_path,
+    ];
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlInsertTerceroStatement,
+          valuesTercero,
+          async (_: ResultSet, result: ResultSet) => {
+            resolve(true);
+          },
+          (error: Error) => {
+            reject(new Error(`[Error al crear tercero]: ${error}`));
+          },
+        );
+      });
+    });
+  }
   async fillTable(terceros: ITerceros[]): Promise<boolean> {
     const innerDeleteTerceros = () => {
       return new Promise((resolve, reject) => {
@@ -56,7 +139,10 @@ class TercerosRepository implements IRepository<ITerceros> {
 
     const innerInsertBlockOfTerceros = (terceros: ITerceros[]) => {
       const placeholders = terceros
-        .map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .map(
+          () =>
+            '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        )
         .join(', ');
 
       const sqlInsertStatement = `
@@ -69,7 +155,21 @@ class TercerosRepository implements IRepository<ITerceros> {
           plazo,
           f_pago,
           ex_iva,
-          clasificacion
+          clasificacion,
+
+          tipo,
+          departamento,
+          ciudad,
+          barrio,
+          email,
+          reteica, 
+          frecuencia,
+          zona, 
+          ruta,
+          latitude,
+          longitude,
+          rut_path,
+          camaracomercio_path
         ) VALUES ${placeholders}
       `;
 
@@ -83,6 +183,20 @@ class TercerosRepository implements IRepository<ITerceros> {
         tercero.f_pago,
         tercero.ex_iva,
         tercero.clasificacion,
+
+        tercero.tipo,
+        tercero.departamento,
+        tercero.ciudad,
+        tercero.barrio,
+        tercero.email,
+        tercero.reteica,
+        tercero.frecuencia,
+        tercero.zona,
+        tercero.ruta,
+        tercero.latitude,
+        tercero.longitude,
+        tercero.rut_path,
+        tercero.camaracomercio_path,
       ]);
 
       return new Promise((resolve, reject) => {
@@ -94,6 +208,7 @@ class TercerosRepository implements IRepository<ITerceros> {
               resolve(result.rows.raw());
             },
             (error: Error) => {
+              console.log('error', error);
               reject(new Error('Fallo guardar bloque terceros'));
             },
           );

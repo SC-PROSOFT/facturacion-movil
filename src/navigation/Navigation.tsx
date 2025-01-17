@@ -175,7 +175,7 @@ const Navigation = () => {
             name="CreateTercero"
             component={CreateTercero}
             options={{
-              title: 'Crear Tercero',
+              title: 'Crear cliente',
               headerTitleAlign: 'left',
               headerShown: true,
               animation: 'none',

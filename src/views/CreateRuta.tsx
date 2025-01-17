@@ -34,6 +34,8 @@ const CreateRuta = () => {
     frecuencia: 'semanal',
     zona: '',
     ruta: '',
+    latitude: '',
+    longitude: '',
   });
   const [dateOfVisit, setDateOfVisit] = useState<Date>(new Date());
 
@@ -248,7 +250,7 @@ const CreateRuta = () => {
       </View>
       <View style={{marginBottom: 20, marginTop: 15}}>
         <CoolButton
-          value="Guardar cliente"
+          value="Guardar ruta"
           iconName="content-save"
           colorButton="#09540B"
           colorText="#fff"
