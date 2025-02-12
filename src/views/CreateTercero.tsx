@@ -13,6 +13,8 @@ import {getUbication} from '../utils';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {setObjInfoAlert, setObjTercero} from '../redux/slices';
+/* services */
+import {tercerosService} from '../data_queries/local_database/services';
 
 const CreateTercero = () => {
   const dispatch = useAppDispatch();
@@ -44,8 +46,21 @@ const CreateTercero = () => {
     camaracomercio_path: '',
   });
 
-  const saveTercero = () => {
-    console.log('Intente guardar un tercero', tercero);
+  const saveTercero = async () => {
+    console.log('tercero =>>>>', tercero);
+    try {
+      const response = await tercerosService.createTercero(tercero);
+
+      console.log('response =>>>>', response);
+    } catch (error: any) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: `${error.message}`,
+        }),
+      );
+    }
   };
 
   const toggleGetGeolocation = async () => {

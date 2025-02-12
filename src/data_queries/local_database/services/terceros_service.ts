@@ -14,6 +14,10 @@ class TercerosService {
   async createTableTerceros(): Promise<boolean> {
     return this.tercerosRepository.createTable();
   }
+  
+  async createTercero(tercero: ITerceros): Promise<boolean> {
+    return this.tercerosRepository.create(tercero)
+  }
 
   async fillTerceros(terceros: ITerceros[]): Promise<boolean> {
     return this.tercerosRepository.fillTable(terceros);
