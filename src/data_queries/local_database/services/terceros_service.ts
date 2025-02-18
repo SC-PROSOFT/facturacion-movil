@@ -14,9 +14,9 @@ class TercerosService {
   async createTableTerceros(): Promise<boolean> {
     return this.tercerosRepository.createTable();
   }
-  
+
   async createTercero(tercero: ITerceros): Promise<boolean> {
-    return this.tercerosRepository.create(tercero)
+    return this.tercerosRepository.create(tercero);
   }
 
   async fillTerceros(terceros: ITerceros[]): Promise<boolean> {
@@ -29,6 +29,13 @@ class TercerosService {
 
   async getQuantityTerceros(): Promise<string> {
     return this.tercerosRepository.getQuantity();
+  }
+
+  async getPaginatedTerceros(
+    page: number,
+    pageSize: number,
+  ): Promise<ITerceros[]> {
+    return this.tercerosRepository.getPaginated(page, pageSize);
   }
 
   async getByAttribute(

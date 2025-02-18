@@ -24,6 +24,8 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#ddd',
     padding: 0,
+    width: '100%',
+    height: 40,
     fontSize: scaleFontSize(15),
   },
 });

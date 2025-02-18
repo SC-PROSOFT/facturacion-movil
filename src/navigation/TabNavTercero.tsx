@@ -85,7 +85,7 @@ const TabNavTercero = () => {
           ),
           tabBarStyle: {
             display: route.name == 'ElaborarFactura' ? 'none' : 'flex',
-            height: 80,
+            height: 40,
             width: '50%',
             paddingBottom: 10,
             backgroundColor: '#FFF',

@@ -14,3 +14,4 @@ export * from './Survey';
 export * from './CreateTercero';
 export * from './CreateRuta';
 export * from './FilesTercero';
+export * from './Estadisticas';

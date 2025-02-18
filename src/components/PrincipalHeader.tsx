@@ -66,7 +66,7 @@ const PrincipalHeader: FC<FlyOutProps> = ({children}) => {
             style={{borderRadius: 10}}
           />
           <View style={{marginLeft: 10}}>
-            <Text style={{color: '#FFF', fontSize: 20}}>
+            <Text style={{color: '#FFF', fontSize: 12}}>
               Sesion iniciada como:
             </Text>
             <Text style={{color: '#FFF', fontSize: 16, fontWeight: 'bold'}}>

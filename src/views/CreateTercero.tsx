@@ -5,14 +5,24 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation} from '@react-navigation/native';
 
 /* components */
-import {_Input, _InputSelect, _Checkbox, CoolButton} from '../components';
+import {
+  _Input,
+  _InputSelect,
+  _Checkbox,
+  CoolButton,
+  IconButton,
+} from '../components';
 /* types */
 import {ITerceros} from '../common/types';
 /* utils */
 import {getUbication} from '../utils';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
-import {setObjInfoAlert, setObjTercero} from '../redux/slices';
+import {
+  setObjInfoAlert,
+  setObjTercero,
+  setIsShowTercerosFinder,
+} from '../redux/slices';
 /* services */
 import {tercerosService} from '../data_queries/local_database/services';
 
@@ -123,11 +133,13 @@ const CreateTercero = () => {
             setTercero(prevState => ({...prevState, tipo: value}))
           }
         />
+
         <View style={{flexDirection: 'row', gap: 8}}>
           <View style={{flex: 1}}>
             <_Input
               label="Identificacion"
               name="codigo"
+              maxLength={15}
               keyboardType="numeric"
               onChangeText={(text: string) =>
                 setTercero(prevState => ({...prevState, codigo: text}))

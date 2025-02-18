@@ -38,13 +38,13 @@ const visitas: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2025-02-11',
+    appointmentDate: '2025-02-18',
     location: {
       latitude: '',
       longitude: '',
     },
 
-    id_tercero: '0000000151',
+    id_tercero: '0000001035',
   },
   {
     client: 'Diego Parrado',
@@ -52,7 +52,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-02-11',
+    appointmentDate: '2025-02-18',
     location: {
       latitude: '',
       longitude: '',
@@ -66,7 +66,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-02-12',
+    appointmentDate: '2025-02-19',
     location: {
       latitude: '',
       longitude: '',
@@ -249,6 +249,7 @@ const Visitas: React.FC = () => {
       </PrincipalHeader>
 
       <SafeAreaView>
+        <Text style={styles.sectionTitle}>Visitas</Text>
         <VirtualizedList
           data={filterVisitas(visitas)}
           renderItem={renderItem}

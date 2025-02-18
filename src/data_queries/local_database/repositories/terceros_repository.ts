@@ -293,6 +293,31 @@ class TercerosRepository implements IRepository<ITerceros> {
     });
   }
 
+  async getPaginated(page: number, pageSize: number): Promise<ITerceros[]> {
+    const offset = (page - 1) * pageSize;
+    const sqlSelectStatement = `
+      SELECT * FROM terceros
+      LIMIT ? OFFSET ?
+    `;
+    console.log('sqlSelectStatement =>>>>', sqlSelectStatement);
+    console.log('pageSize =>>>>', pageSize);
+    console.log('offset =>>>>', offset);
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [pageSize, offset],
+          (_: ResultSet, response: ResultSet) => {
+            resolve(response.rows.raw());
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo obtener terceros paginados'));
+          },
+        );
+      });
+    });
+  }
+
   async getByAttribute(
     atributeName: string,
     attributeValue: any,

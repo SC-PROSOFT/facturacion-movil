@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from 'react';
-
 import {useRoute} from '@react-navigation/native';
 import {
   View,
@@ -8,6 +7,7 @@ import {
   Keyboard,
   VirtualizedList,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import {Modal, Text, IconButton} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -45,6 +45,7 @@ export const TercerosFinder = React.memo(
     });
 
     const [terceros, setTerceros] = useState<ITerceros[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
       adjustScreenSize();
@@ -65,18 +66,25 @@ export const TercerosFinder = React.memo(
 
     const toggleShowOperadoresFinder = async () => {
       if (isShowTercerosFinder) {
+        setIsLoading(true);
         const {filtrarTercerosPorVendedor} = objConfig;
         const {cod_vendedor} = objOperador;
 
-        const tercerosScope = await tercerosService.getAllTerceros();
+        try {
+          const tercerosScope = await tercerosService.getAllTerceros();
 
-        if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
-          let tercerosFilterScope = tercerosScope.filter(
-            tercero => tercero.vendedor === cod_vendedor,
-          );
-          setTerceros(tercerosFilterScope);
-        } else {
-          setTerceros(tercerosScope);
+          if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
+            let tercerosFilterScope = tercerosScope.filter(
+              tercero => tercero.vendedor === cod_vendedor,
+            );
+            setTerceros(tercerosFilterScope);
+          } else {
+            setTerceros(tercerosScope);
+          }
+        } catch (error) {
+          console.error('Error al obtener terceros:', error);
+        } finally {
+          setIsLoading(false);
         }
       } else {
         setInputs({operador: ''});
@@ -220,18 +228,24 @@ export const TercerosFinder = React.memo(
         </View>
 
         <SafeAreaView style={{paddingHorizontal: 10}}>
-          <VirtualizedList
-            data={terceros.filter(
-              tercero =>
-                tercero.codigo.includes(inputs.operador.toUpperCase()) ||
-                tercero.nombre.includes(inputs.operador.toUpperCase()),
-            )}
-            renderItem={renderItem}
-            getItemCount={data => data.length}
-            getItem={(data, index) => data[index]}
-            keyExtractor={item => item.codigo.toString()}
-            keyboardShouldPersistTaps="always"
-          />
+          {isLoading ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+          ) : (
+            <VirtualizedList
+              data={terceros.filter(
+                tercero =>
+                  tercero.codigo.includes(inputs.operador.toUpperCase()) ||
+                  tercero.nombre.includes(inputs.operador.toUpperCase()),
+              )}
+              renderItem={renderItem}
+              getItemCount={data => data.length}
+              getItem={(data, index) => data[index]}
+              keyExtractor={item => item.codigo.toString()}
+              keyboardShouldPersistTaps="always"
+            />
+          )}
         </SafeAreaView>
       </Modal>
     );
