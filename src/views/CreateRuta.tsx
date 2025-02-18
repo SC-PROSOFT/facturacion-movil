@@ -23,7 +23,7 @@ const CreateRuta = () => {
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const [tercero, setTercero] = useState<ITerceros>({
     codigo: '',
-    nombre: objTercero.nombre,
+    nombre: '',
     direcc: '',
     tel: '',
     vendedor: '',
@@ -59,7 +59,6 @@ const CreateRuta = () => {
       clasificacion,
       plazo,
     });
-    dispatch(setIsShowTercerosFinder(false));
   };
   const saveTercero = () => {
     console.log('Intente guardar un tercero');
