@@ -249,7 +249,6 @@ const Visitas: React.FC = () => {
       </PrincipalHeader>
 
       <SafeAreaView>
-        <Text style={styles.sectionTitle}>Visitas</Text>
         <VirtualizedList
           data={filterVisitas(visitas)}
           renderItem={renderItem}
