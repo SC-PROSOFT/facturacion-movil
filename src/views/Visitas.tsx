@@ -58,7 +58,7 @@ const visitas: IVisita[] = [
       longitude: '',
     },
 
-    id_tercero: '0000000112',
+    id_tercero: '0000002276',
   },
   {
     client: 'Diego Parrado',
