@@ -28,15 +28,15 @@ const TabNavTercero = () => {
     return {
       headerShown: false,
       tabBarIcon: () => (
-        <Icon name={icon} style={{color: '#0B2863'}} size={30} />
+        <Icon name={icon} style={{color: '#0B2863'}} size={25} />
       ),
       tabBarLabelStyle: {
         color: '#0B2863',
-        fontSize: 14,
+        fontSize: 10,
         fontWeight: 'bold',
       },
       tabBarStyle: {
-        height: 80,
+        height: 70,
         width: '50%',
         paddingBottom: 10,
         //paddingTop: 10,
@@ -45,14 +45,14 @@ const TabNavTercero = () => {
         position: 'absolute',
         marginHorizontal: 10,
         borderRadius: 10,
-        paddingLeft: 10,
-        paddingRight: 10,
+        paddingLeft: 5,
+        paddingRight: 5,
       },
       tabBarItemStyle: {
         marginTop: 10,
         borderRadius: 10,
         marginHorizontal: 10,
-        paddingVertical: 2,
+        paddingVertical: 0.5,
       },
       tabBarActiveBackgroundColor: '#B6BFD1',
     };
@@ -85,7 +85,7 @@ const TabNavTercero = () => {
           ),
           tabBarStyle: {
             display: route.name == 'ElaborarFactura' ? 'none' : 'flex',
-            height: 40,
+            height: 80,
             width: '50%',
             paddingBottom: 10,
             backgroundColor: '#FFF',
@@ -100,9 +100,9 @@ const TabNavTercero = () => {
             position: 'absolute',
             borderRadius: 10,
             backgroundColor: '#0B2863',
-            height: 80,
-            width: 80,
-            marginLeft: 220,
+            height: 70,
+            width: 70,
+            marginLeft: 185,
           },
         })}
         listeners={({navigation}) => ({
@@ -147,9 +147,9 @@ const TabNavTercero = () => {
             position: 'absolute',
             borderRadius: 10,
             backgroundColor: '#0B2863',
-            height: 80,
-            width: 80,
-            marginLeft: 310,
+            height: 70,
+            width: 70,
+            marginLeft: 265,
           },
         })}
         listeners={({navigation}) => ({
