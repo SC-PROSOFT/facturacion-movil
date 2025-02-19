@@ -17,6 +17,10 @@ import {ITerceros} from '../common/types';
 import {setIsShowTercerosFinder} from '../redux/slices';
 import {tercerosService} from '../data_queries/local_database/services';
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
+import AxiosInstance from 'axios';
+// import {TercerosQueries} from '../data_queries/api/queries/terceros_queries';
+
+// const TercerosQuery = new TercerosQueries();
 
 const CreateRuta = () => {
   const dispatch = useAppDispatch();
