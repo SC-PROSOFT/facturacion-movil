@@ -122,6 +122,7 @@ class SyncQueries {
 
   _getTerceros = async (): Promise<ITerceros[]> => {
     try {
+      console.log('direccionIp =>', this.direccionIp);
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802.dll`,
         {},

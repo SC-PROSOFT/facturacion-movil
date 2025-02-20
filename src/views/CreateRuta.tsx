@@ -18,13 +18,12 @@ import {setIsShowTercerosFinder} from '../redux/slices';
 import {tercerosService} from '../data_queries/local_database/services';
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import AxiosInstance from 'axios';
-// import {TercerosQueries} from '../data_queries/api/queries/terceros_queries';
-
-// const TercerosQuery = new TercerosQueries();
+import {TercerosApiServices} from '../data_queries/api/queries/terceros_queries';
 
 const CreateRuta = () => {
   const dispatch = useAppDispatch();
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
+  const objConfig = useAppSelector(store => store.config.objConfig);
   const [tercero, setTercero] = useState<ITerceros>({
     codigo: '',
     nombre: '',
@@ -65,7 +64,12 @@ const CreateRuta = () => {
     });
   };
   const saveTercero = () => {
-    console.log('Intente guardar un tercero');
+    console.log('objConfig =>', objConfig);
+    const TercerosApiService = new TercerosApiServices(
+      objConfig.direccionIp,
+      objConfig.puerto,
+    );
+    TercerosApiService._saveTercero(tercero);
   };
 
   const searchTercero = (cod_terce: string) => {
