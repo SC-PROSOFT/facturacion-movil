@@ -38,7 +38,7 @@ const visitas: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2025-02-20',
+    appointmentDate: '2025-02-21',
     location: {
       latitude: '',
       longitude: '',
@@ -52,7 +52,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-02-18',
+    appointmentDate: '2025-02-21',
     location: {
       latitude: '',
       longitude: '',
@@ -66,7 +66,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-02-19',
+    appointmentDate: '2025-02-22',
     location: {
       latitude: '',
       longitude: '',
@@ -217,6 +217,17 @@ const Visitas: React.FC = () => {
     }
   };
 
+  const toggleTercero = async (tercero: ITerceros) => {
+    visitas.filter(visita => {
+      console.log('tercero =>>>>', tercero.codigo);
+      console.log('visita =>>>>', visita.id_tercero);
+      if (visita.id_tercero === tercero.codigo) {
+        console.log('visita =>>>>', visita);
+        setSearch(visita.client);
+      }
+    });
+  };
+
   const renderItem = ({item, index}: {item: IVisita; index: any}) => {
     let showHeader = false;
 
@@ -264,7 +275,7 @@ const Visitas: React.FC = () => {
         />
       </SafeAreaView>
 
-      <TercerosFinder />
+      <TercerosFinder toggleTercero={toggleTercero} />
     </View>
   );
 };
