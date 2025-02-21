@@ -218,11 +218,9 @@ const Visitas: React.FC = () => {
   };
 
   const toggleTercero = async (tercero: ITerceros) => {
+    console.log('tercero =>>>>', tercero);
     visitas.filter(visita => {
-      console.log('tercero =>>>>', tercero.codigo);
-      console.log('visita =>>>>', visita.id_tercero);
       if (visita.id_tercero === tercero.codigo) {
-        console.log('visita =>>>>', visita);
         setSearch(visita.client);
       }
     });
