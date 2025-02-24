@@ -196,7 +196,7 @@ export const OperadoresFinder = React.memo(() => {
       <View>
         <IconLeftInput
           value={inputs.operador}
-          label="Buscar operador"
+          // label="Buscar operador"
           name="operador"
           mode="flat"
           keyboardType="default"

@@ -184,7 +184,7 @@ export const AlmacenesFinder = React.memo(
         <View>
           <IconLeftInput
             value={inputs.almacen}
-            label="Buscar almacen"
+            // label="Buscar almacen"
             name="almacen"
             mode="flat"
             keyboardType="default"

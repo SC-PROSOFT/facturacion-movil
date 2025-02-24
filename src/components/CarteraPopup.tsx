@@ -85,7 +85,7 @@ export const CarteraPopup = React.memo(() => {
               iconName="close"
               iconColor="#FFF"
               iconSize={25}
-              pressIconButton={() => dispatch(setIsShowCarteraPopup(false))}
+              onPress={() => dispatch(setIsShowCarteraPopup(false))}
             />
           </View>
 

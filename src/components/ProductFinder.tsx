@@ -230,7 +230,7 @@ export const ProductFinder = React.memo(
           <View style={{paddingLeft: 20, paddingRight: 20, paddingBottom: 5}}>
             <IconLeftInput
               value={inputs.product}
-              label="Buscar articulo"
+              // label="Buscar articulo"
               name="articulo"
               mode="flat"
               keyboardType="default"

@@ -266,7 +266,7 @@ const PedidosFinder: React.FC<PedidosFinderProps> = React.memo(
         <View>
           <IconLeftInput
             value={inputs.pedido}
-            label="Buscar pedido"
+            // label="Buscar pedido"
             name="pedido"
             mode="flat"
             keyboardType="default"

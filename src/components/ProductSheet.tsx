@@ -352,7 +352,7 @@ const ProductSheet: React.FC<ProductSheetProps> = ({}) => {
           iconName="close"
           iconColor="#FFF"
           iconSize={25}
-          pressIconButton={toggleCloseProductSheet}
+          onPress={toggleCloseProductSheet}
         />
       </View>
 

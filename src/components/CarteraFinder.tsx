@@ -217,7 +217,7 @@ export const CarteraFinder = React.memo(
         <View>
           <IconLeftInput
             value={inputs.cartera}
-            label="Buscar cartera"
+            // label="Buscar cartera"
             name="cartera"
             mode="flat"
             keyboardType="default"

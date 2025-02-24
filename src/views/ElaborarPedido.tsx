@@ -871,11 +871,12 @@ const ElaborarPedido: React.FC = () => {
       dispatch(setIntCartera(carteraSumada));
       //🟦
     } catch (error: any) {
+      console.log(error);
       dispatch(
         setObjInfoAlert({
           visible: true,
           type: 'error',
-          description: error.message,
+          description: error,
         }),
       );
     }
@@ -946,6 +947,7 @@ const ElaborarPedido: React.FC = () => {
       } else if (error instanceof ApiSaveOrderError) {
         saveOrderInLocalDatabaseOnly();
       } else {
+        console.log("Save err"+error);
         dispatch(
           setObjInfoAlert({
             visible: true,
@@ -976,6 +978,7 @@ const ElaborarPedido: React.FC = () => {
       });
       setIsLoadingSave(false);
     } catch (error: any) {
+      console.log("Save Order"+error);
       setIsLoadingSave(false);
       dispatch(
         setObjInfoAlert({

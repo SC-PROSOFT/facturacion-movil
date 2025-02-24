@@ -257,7 +257,7 @@ const FacturasFinder: React.FC<FacturasFinderProps> = React.memo(
         <View>
           <IconLeftInput
             value={inputs.factura}
-            label="Buscar factura"
+            // label="Buscar factura"
             name="factura"
             mode="flat"
             keyboardType="default"
