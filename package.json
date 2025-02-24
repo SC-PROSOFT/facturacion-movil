@@ -48,6 +48,7 @@
     "@react-native/eslint-config": "0.76.3",
     "@react-native/metro-config": "0.76.3",
     "@react-native/typescript-config": "0.76.3",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/react": "^18.2.6",
     "@types/react-native-html-to-pdf": "^0.8.3",
     "@types/react-native-sqlite-storage": "^6.0.5",
