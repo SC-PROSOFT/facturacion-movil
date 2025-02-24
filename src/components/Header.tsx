@@ -42,15 +42,15 @@ const Header: React.FC<HeaderProps> = ({children}) => {
       <View style={styles.container1}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <Avatar.Text
-            size={42}
+            size={40}
             label={getInitialsOfClient(objTercero.nombre)}
             style={{borderRadius: 10}}
           />
           <View style={{marginLeft: 10}}>
-            <Text style={{color: '#FFF', fontSize: 20}}>
+            <Text style={{color: '#FFF', fontSize: 14}}>
               {objTercero.nombre}
             </Text>
-            <Text style={{color: '#FFF', fontSize: 16, fontWeight: 'bold'}}>
+            <Text style={{color: '#FFF', fontSize: 12, fontWeight: 'bold'}}>
               {objVisita.adress}
             </Text>
           </View>
