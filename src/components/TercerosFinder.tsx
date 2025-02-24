@@ -11,19 +11,12 @@ import {
 } from 'react-native';
 import {Modal, Text, IconButton} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-/* components */
 import {IconLeftInput} from '.';
-/* redux hooks */
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
-/* redux slices */
 import {setIsShowTercerosFinder} from '../redux/slices/tercerosFinderSlice';
-/* local database service */
 import {tercerosService} from '../data_queries/local_database/services';
-/* types */
 import {ITerceros} from '../common/types';
 
-/* local types */
 interface TercerosFinderProps {
   toggleTercero?: (tercero: ITerceros) => void;
 }
@@ -31,63 +24,75 @@ interface TercerosFinderProps {
 export const TercerosFinder = React.memo(
   ({toggleTercero}: TercerosFinderProps) => {
     const dispatch = useAppDispatch();
-
     const route = useRoute();
-
     const isShowTercerosFinder = useAppSelector(
       store => store.tercerosFinder.isShowTercerosFinder,
     );
-
     const objConfig = useAppSelector(store => store.config.objConfig);
     const objOperador = useAppSelector(store => store.operator.objOperator);
-    const [inputs, setInputs] = useState({
-      operador: '',
-    });
-
+    const [inputs, setInputs] = useState({operador: ''});
     const [terceros, setTerceros] = useState<ITerceros[]>([]);
+    const [filteredTerceros, setFilteredTerceros] = useState<ITerceros[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
+    const [quantityTerceros, setQuantityTerceros] = useState(0);
 
     useEffect(() => {
       adjustScreenSize();
     }, []);
 
     useEffect(() => {
-      toggleShowOperadoresFinder();
+      if (isShowTercerosFinder) {
+        loadAllTerceros();
+      }
     }, [isShowTercerosFinder]);
 
     const handleInputChange = (name: string, text: string) => {
       setInputs(prevState => ({...prevState, [name]: text}));
+      filterTerceros(text);
+    };
+
+    const filterTerceros = (text: string) => {
+      const filtered = terceros.filter(
+        tercero =>
+          tercero.codigo.includes(text.toUpperCase()) ||
+          tercero.nombre.includes(text.toUpperCase()),
+      );
+      setFilteredTerceros(filtered);
     };
 
     const closeOperadoresFinder = () => {
       setTerceros([]);
+      setFilteredTerceros([]);
       dispatch(setIsShowTercerosFinder(false));
     };
 
-    const toggleShowOperadoresFinder = async () => {
-      if (isShowTercerosFinder) {
-        setIsLoading(true);
-        const {filtrarTercerosPorVendedor} = objConfig;
-        const {cod_vendedor} = objOperador;
+    const loadAllTerceros = async () => {
+      setIsLoading(true);
+      const {filtrarTercerosPorVendedor} = objConfig;
+      const {cod_vendedor} = objOperador;
 
-        try {
-          const tercerosScope = await tercerosService.getAllTerceros();
+      try {
+        const quantityTerceros = await tercerosService.getQuantityTerceros();
+        setQuantityTerceros(parseInt(quantityTerceros));
 
-          if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
-            let tercerosFilterScope = tercerosScope.filter(
-              tercero => tercero.vendedor === cod_vendedor,
-            );
-            setTerceros(tercerosFilterScope);
-          } else {
-            setTerceros(tercerosScope);
-          }
-        } catch (error) {
-          console.error('Error al obtener terceros:', error);
-        } finally {
-          setIsLoading(false);
+        const allTerceros = await tercerosService.getAllTerceros();
+
+        if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
+          const filteredTerceros = allTerceros.filter(
+            tercero => tercero.vendedor === cod_vendedor,
+          );
+          setTerceros(filteredTerceros);
+          setFilteredTerceros(filteredTerceros);
+        } else {
+          setTerceros(allTerceros);
+          setFilteredTerceros(allTerceros);
         }
-      } else {
-        setInputs({operador: ''});
+      } catch (error) {
+        console.error('Error al obtener terceros:', error);
+      } finally {
+        setIsLoading(false);
+        setIsFirstLoad(false);
       }
     };
 
@@ -203,7 +208,7 @@ export const TercerosFinder = React.memo(
               paddingLeft: 20,
             }}>
             <Text allowFontScaling={false} style={styles.title}>
-              Busqueda de terceros ({terceros.length})
+              Busqueda de terceros ({quantityTerceros})
             </Text>
 
             <IconButton
@@ -227,18 +232,14 @@ export const TercerosFinder = React.memo(
           </View>
         </View>
 
-        <SafeAreaView style={{paddingHorizontal: 10}}>
-          {isLoading ? (
+        <SafeAreaView style={{paddingHorizontal: 10, paddingBottom: 120}}>
+          {isLoading && isFirstLoad ? (
             <View style={styles.loaderContainer}>
               <ActivityIndicator size="large" color="#0000ff" />
             </View>
           ) : (
             <VirtualizedList
-              data={terceros.filter(
-                tercero =>
-                  tercero.codigo.includes(inputs.operador.toUpperCase()) ||
-                  tercero.nombre.includes(inputs.operador.toUpperCase()),
-              )}
+              data={filteredTerceros}
               renderItem={renderItem}
               getItemCount={data => data.length}
               getItem={(data, index) => data[index]}
