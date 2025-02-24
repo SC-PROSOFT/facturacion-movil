@@ -18,6 +18,7 @@ class SyncQueries {
 
   _getOperadores = async (): Promise<IOperadores[]> => {
     try {
+      console.log('direccionIp =>', this.direccionIp);
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON982.dll`,
         {},
@@ -27,11 +28,13 @@ class SyncQueries {
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'
       ) {
+        console.log('response =>', response);
         throw new Error('La configuracion no es correcta');
       }
 
       return response.data.data.MENSAJE.usuarios;
     } catch (error: any) {
+      // console.log('error =>', error);
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);
       } else if (error?.message == 'La solicitud fue cancelada') {
@@ -44,6 +47,7 @@ class SyncQueries {
 
   _getArticulos = async (): Promise<IProduct[]> => {
     try {
+      console.log('direccionIpArt =>', this.direccionIp);
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/INV803.dll`,
         {},
@@ -58,6 +62,7 @@ class SyncQueries {
 
       return response.data.data.MENSAJE.Articulos;
     } catch (error: any) {
+      console.log('errorArt =>', error);
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);
       } else if (error?.message == 'La solicitud fue cancelada') {
@@ -84,6 +89,7 @@ class SyncQueries {
 
       return response.data.data.MENSAJE.datos;
     } catch (error: any) {
+      console.log('errorAlm =>', error);
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);
       } else if (error?.message == 'La solicitud fue cancelada') {
@@ -110,6 +116,7 @@ class SyncQueries {
 
       return response.data.data.MENSAJE.facturas;
     } catch (error: any) {
+      console.log('errorCart =>', error);
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);
       } else if (error?.message == 'La solicitud fue cancelada') {
@@ -137,6 +144,7 @@ class SyncQueries {
 
       return response.data.data.MENSAJE.terceros;
     } catch (error: any) {
+      console.log('errorTerce =>', error);
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);
       } else if (error?.message == 'La solicitud fue cancelada') {
