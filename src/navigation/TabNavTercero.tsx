@@ -39,7 +39,6 @@ const TabNavTercero = () => {
         height: 70,
         width: '50%',
         paddingBottom: 10,
-        //paddingTop: 10,
         backgroundColor: '#FFF',
         marginBottom: 20,
         position: 'absolute',
@@ -68,7 +67,37 @@ const TabNavTercero = () => {
       <Tab.Screen
         name="Encuesta"
         component={Survey}
-        options={optionsTabScreenLeft({icon: 'notebook-plus'})}
+        options={({route}) => ({
+          headerShown: false,
+          tabBarIcon: () => (
+            <Icon name="notebook-plus" style={{color: '#0B2863'}} size={25} />
+          ),
+          tabBarLabelStyle: {
+            color: '#0B2863',
+            fontSize: 10,
+            fontWeight: 'bold',
+          },
+          tabBarStyle: {
+            display: route.name === 'Encuesta' ? 'none' : 'flex',
+            height: 70,
+            width: '50%',
+            paddingBottom: 10,
+            backgroundColor: '#FFF',
+            marginBottom: 20,
+            position: 'absolute',
+            marginHorizontal: 10,
+            borderRadius: 10,
+            paddingLeft: 5,
+            paddingRight: 5,
+          },
+          tabBarItemStyle: {
+            marginTop: 10,
+            borderRadius: 10,
+            marginHorizontal: 10,
+            paddingVertical: 0.5,
+          },
+          tabBarActiveBackgroundColor: '#B6BFD1',
+        })}
       />
       <Tab.Screen
         name="ElaborarFactura"

@@ -10,73 +10,57 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import React, {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch} from '../redux/hooks';
-import {ISurvey, IQuestion} from '../common/types/ISurvey';
+import {IEncuesta, IPregunta} from '../common/types/IEncuesta';
 import {_Checkbox} from '../components/_Checkbox';
 import {_DatePicker} from '../components/_DatePicker';
 import {_InputSelect} from '../components/_InputSelect';
 import {_Input} from '../components/_Input';
+import {Button} from 'react-native-paper';
 
 const Survey = () => {
   const dispatch = useAppDispatch();
   const navigation: any = useNavigation();
 
-  const survies: ISurvey = {
-    id: '3',
-    title: 'Product Feature Survey',
-    createdAt: new Date(),
-    questions: [
+  const survey: IEncuesta = {
+    codigo: 3,
+    numero_preguntas: 5,
+    activar: 'S',
+    preguntas: [
       {
-        id: 'q1',
-        text: 'Which features do you use the most?',
-        type: 'checkbox',
-        required: true,
-        options: [
-          {id: 'o1', text: 'Feature A', checked: false},
-          {id: 'o2', text: 'Feature B', checked: false},
-          {id: 'o3', text: 'Feature C', checked: false},
-        ],
+        tipo: 'checkbox',
+        pregunta_texto: 'Which features do you use the most?',
+        numero_resp_cerrada: 3,
+        opciones_respuesta_cerrada: ['Feature A', 'Feature B', 'Feature C'],
       },
       {
-        id: 'q2',
-        text: 'Do you feel valued at work?',
-        type: 'multiple-choice',
-        required: true,
-        options: [
-          {id: 'o1', text: 'Yes'},
-          {id: 'o2', text: 'No'},
-        ],
+        tipo: 'multiple-choice',
+        pregunta_texto: 'Do you feel valued at work?',
+        numero_resp_cerrada: 2,
+        opciones_respuesta_cerrada: ['Yes', 'No'],
       },
       {
-        id: 'q3',
-        text: 'What can we improve?',
-        type: 'text',
-        required: false,
+        tipo: 'text',
+        pregunta_texto: 'What can we improve?',
+        numero_resp_cerrada: 0,
+        opciones_respuesta_cerrada: [],
       },
       {
-        id: 'q4',
-        text: 'Rate our service',
-        type: 'rating',
-        required: true,
+        tipo: 'rating',
+        pregunta_texto: 'Rate our service',
+        numero_resp_cerrada: 0,
+        opciones_respuesta_cerrada: [],
       },
       {
-        id: 'q5',
-        text: 'Select a date for your visit',
-        type: 'date',
-        required: true,
-      },
-      {
-        id: 'q6',
-        text: 'Select a date for your visit',
-        type: 'date',
-        required: true,
-      },
-      {
-        id: 'q7',
-        text: 'Select a date for your visit',
-        type: 'date',
-        required: true,
+        tipo: 'date',
+        pregunta_texto: 'Select a date for your visit',
+        numero_resp_cerrada: 0,
+        opciones_respuesta_cerrada: [],
       },
     ],
+    admin_creacion: 'admin',
+    fecha_creacion: {anio: 2023, mes: 10, dia: 1},
+    admin_modificacion: 'admin',
+    fecha_modificacion: {anio: 2023, mes: 10, dia: 2},
   };
 
   const handleBackPress = () => {
@@ -87,84 +71,105 @@ const Survey = () => {
     }
   };
 
+  const [responses, setResponses] = useState<{[key: number]: any}>({});
+
+  const handleResponseChange = (index: number, value: any) => {
+    setResponses(prevResponses => ({
+      ...prevResponses,
+      [index]: value,
+    }));
+  };
+
   const renderQuestionItem = ({
     item,
-    selectedDate,
-    setSelectedDate,
-    selectedValue,
-    setSelectedValue,
-    checkboxStatus,
-    setCheckboxStatus,
+    index,
   }: {
-    item: IQuestion;
-    selectedDate: Date;
-    setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
-    selectedValue: string;
-    setSelectedValue: React.Dispatch<React.SetStateAction<string>>;
-    checkboxStatus: boolean;
-    setCheckboxStatus: React.Dispatch<React.SetStateAction<boolean>>;
-  }) => (
-    <View style={styles.questionItem}>
-      <Text style={styles.questionText}>{item.text}</Text>
-      <Text style={styles.questionRequired}>
-        {item.required ? 'Required' : 'Optional'}
-      </Text>
+    item: IPregunta;
+    index: number;
+  }) => {
+    return (
+      <View style={styles.questionItem}>
+        <Text style={styles.questionText}>{item.pregunta_texto}</Text>
+        <Text style={styles.questionRequired}>
+          {item.numero_resp_cerrada > 0 ? 'Required' : 'Optional'}
+        </Text>
 
-      {item.type === 'text' && <_Input placeholder="Type your answer here" />}
+        {item.tipo === 'text' && (
+          <_Input
+            placeholder="Type your answer here"
+            value={responses[index] || ''}
+            onChangeText={(text: string) => handleResponseChange(index, text)}
+          />
+        )}
 
-      {item.type === 'multiple-choice' && (
-        <_InputSelect
-          value={selectedValue}
-          setValue={setSelectedValue}
-          values={
-            item.options?.map(option => ({
-              label: option.text,
-              value: option.id,
-            })) || []
-          }
-        />
-      )}
+        {item.tipo === 'multiple-choice' && (
+          <_InputSelect
+            value={responses[index] || ''}
+            setValue={value => handleResponseChange(index, value)}
+            values={
+              item.opciones_respuesta_cerrada.map((option, idx) => ({
+                label: option,
+                value: idx.toString(),
+              })) || []
+            }
+          />
+        )}
 
-      {item.type === 'checkbox' &&
-        item.options?.map(option => (
-          <View key={option.id} style={styles.checkboxContainer}>
-            <_Checkbox
-              label={option.text}
-              status={checkboxStatus}
-              onPress={setCheckboxStatus}
-            />
-          </View>
-        ))}
-
-      {item.type === 'rating' && (
-        <View style={styles.ratingContainer}>
-          {[1, 2, 3, 4, 5].map(rating => (
-            <TouchableOpacity key={rating} style={styles.ratingButton}>
-              <Text>{rating}</Text>
-            </TouchableOpacity>
+        {item.tipo === 'checkbox' &&
+          item.opciones_respuesta_cerrada.map((option, idx) => (
+            <View key={idx} style={styles.checkboxContainer}>
+              <_Checkbox
+                label={option}
+                status={responses[index]?.includes(option) || false}
+                onPress={() => {
+                  const currentResponses = responses[index] || [];
+                  if (currentResponses.includes(option)) {
+                    handleResponseChange(
+                      index,
+                      currentResponses.filter(
+                        (resp: string) => resp !== option,
+                      ),
+                    );
+                  } else {
+                    handleResponseChange(index, [...currentResponses, option]);
+                  }
+                }}
+              />
+            </View>
           ))}
-        </View>
-      )}
 
-      {item.type === 'date' && (
-        <_DatePicker date={selectedDate} setDate={setSelectedDate} />
-      )}
-    </View>
-  );
+        {item.tipo === 'rating' && (
+          <View style={styles.ratingContainer}>
+            {[1, 2, 3, 4, 5].map(rating => (
+              <TouchableOpacity
+                key={rating}
+                style={styles.ratingButton}
+                onPress={() => handleResponseChange(index, rating)}>
+                <Text>{rating}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedValue, setSelectedValue] = useState('');
-  const [checkboxStatus, setCheckboxStatus] = useState(false);
+        {item.tipo === 'date' && (
+          <_DatePicker
+            date={responses[index] || new Date()}
+            setDate={date => handleResponseChange(index, date)}
+          />
+        )}
+      </View>
+    );
+  };
 
-  const getItem = (data: IQuestion[], index: number) => data[index];
+  const getItem = (data: IPregunta[], index: number) => data[index];
 
-  const getItemCount = (data: IQuestion[]) => data.length;
+  const getItemCount = (data: IPregunta[]) => data.length;
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Text style={styles.title}>{survies.title}</Text>
+          <Text style={styles.title}>Product Feature Survey</Text>
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleBackPress}>
@@ -176,26 +181,24 @@ const Survey = () => {
             />
           </TouchableOpacity>
         </View>
-        <Text style={styles.surveyDescription}>{survies.description}</Text>
-        <VirtualizedList
-          data={survies.questions}
-          initialNumToRender={4}
-          renderItem={({item}) =>
-            renderQuestionItem({
-              item,
-              selectedDate,
-              setSelectedDate,
-              selectedValue,
-              setSelectedValue,
-              checkboxStatus,
-              setCheckboxStatus,
-            })
-          }
-          keyExtractor={item => item.id}
-          getItem={getItem}
-          getItemCount={getItemCount}
-          contentContainerStyle={styles.listContent}
-        />
+        <View style={styles.listContent}>
+          <VirtualizedList
+            data={survey.preguntas}
+            initialNumToRender={4}
+            renderItem={({item, index}) => renderQuestionItem({item, index})}
+            keyExtractor={(item, index) => index.toString()}
+            getItem={getItem}
+            getItemCount={getItemCount}
+          />
+          <Button
+            mode="contained"
+            onPress={() => {
+              console.log(responses);
+            }}
+            style={styles.submitButton}>
+            Submit
+          </Button>
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -204,6 +207,7 @@ const Survey = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingBottom: 80,
   },
   safeArea: {
     flex: 1,
@@ -232,16 +236,13 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 10,
-    paddingBottom: 120, // Ajusta el padding inferior para evitar que se corte
-  },
-  surveyDescription: {
-    fontSize: 14,
-    color: '#666',
+    paddingBottom: 20, // Espacio entre la lista y el botón
   },
   questionItem: {
     paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+    marginBottom: 20, // Espacio entre los elementos de la lista
   },
   questionText: {
     fontSize: 16,
@@ -265,6 +266,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     marginHorizontal: 5,
+  },
+  submitButton: {
+    marginTop: 20, // Espacio entre la lista y el botón
   },
 });
 
