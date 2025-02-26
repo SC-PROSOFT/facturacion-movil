@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   VirtualizedList,
   SafeAreaView,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -32,6 +33,31 @@ const Tercero = () => {
   const arrFactura = useAppSelector(store => store.tercerosFinder.arrFactura);
   const arrPedido = useAppSelector(store => store.tercerosFinder.arrPedido);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
+
+  const shouldShowAlert = () => {
+    return !objTercero.rut_path || !objTercero.camaracomercio_path;
+  };
+
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (shouldShowAlert()) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.5,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start();
+    }
+  }, [pulseAnim, shouldShowAlert]);
 
   const sumarTotalFacturaPedidos = (): number => {
     return [...arrFactura, ...arrPedido]
@@ -108,6 +134,11 @@ const Tercero = () => {
             borderRadius: 5,
           }}
           onPress={() => navigation.navigate('FilesTercero')}>
+          {shouldShowAlert() && (
+            <Animated.View
+              style={[styles.alertIndicator, {transform: [{scale: pulseAnim}]}]}
+            />
+          )}
           <Icon name="attachment" size={36} color={'#FFF'} />
         </TouchableOpacity>
 
@@ -217,6 +248,16 @@ const styles = StyleSheet.create({
   },
   movientosContainer: {
     marginTop: 120,
+  },
+  alertIndicator: {
+    position: 'absolute',
+    top: -3,
+    left: -3,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
+    zIndex: 5,
   },
 });
 
