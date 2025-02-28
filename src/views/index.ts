@@ -5,6 +5,7 @@ export * from './ActualizarFacturas';
 export * from './ElaborarFactura';
 export * from './ModificarFactura';
 export * from './ActualizarDispositivo';
+export * from './SyncDispositivo';
 export * from './Sync';
 export * from './Config';
 export * from './Login';

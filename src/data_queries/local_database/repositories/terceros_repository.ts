@@ -3,6 +3,14 @@ import {ResultSet} from 'react-native-sqlite-storage';
 import {IRepository, ITerceros} from '../../../common/types';
 
 import {db} from '../local_database_config';
+import {useAppDispatch, useAppSelector} from '../../../redux/hooks';
+import {
+  setObjInfoAlert,
+  setObjTercero,
+  addTerceroCreado,
+  addTerceroEditado,
+  setIsShowTercerosFinder,
+} from '../../../redux/slices';
 
 class TercerosRepository implements IRepository<ITerceros> {
   async createTable(): Promise<boolean> {
@@ -13,24 +21,23 @@ class TercerosRepository implements IRepository<ITerceros> {
         direcc TEXT,
         tel TEXT,
         vendedor TEXT,
-        plazo TEXT,
+        plazo INTEGER,
         f_pago TEXT,
         ex_iva TEXT,
         clasificacion TEXT,
-
         tipo TEXT,
         departamento TEXT,
         ciudad TEXT,
         barrio TEXT,
         email TEXT,
-        reteica TEXT, 
+        reteica TEXT,
         frecuencia TEXT,
-        zona TEXT, 
+        zona TEXT,
         ruta TEXT,
         latitude TEXT,
         longitude TEXT,
         rut_path TEXT,
-        camaracomercio_path TEXT
+        camaracomercio_path TEXT,
     )
     `;
 
@@ -49,6 +56,7 @@ class TercerosRepository implements IRepository<ITerceros> {
       });
     });
   }
+
   async create(tercero: ITerceros): Promise<boolean> {
     const sqlInsertTerceroStatement = `
     INSERT INTO terceros (
@@ -61,15 +69,14 @@ class TercerosRepository implements IRepository<ITerceros> {
         f_pago,
         ex_iva,
         clasificacion,
-
         tipo,
         departamento,
         ciudad,
         barrio,
         email,
-        reteica, 
+        reteica,
         frecuencia,
-        zona, 
+        zona,
         ruta,
         latitude,
         longitude,
@@ -88,7 +95,6 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.f_pago,
       tercero.ex_iva,
       tercero.clasificacion,
-
       tercero.tipo,
       tercero.departamento,
       tercero.ciudad,
@@ -110,15 +116,114 @@ class TercerosRepository implements IRepository<ITerceros> {
           sqlInsertTerceroStatement,
           valuesTercero,
           async (_: ResultSet, result: ResultSet) => {
+            const dispatch = useAppDispatch();
+            const response =  dispatch(addTerceroCreado(tercero));
+            console.log('response =>>>>', response);
+            console.log('response =>>>>', response);
             resolve(true);
           },
-          (error: Error) => {
+          (error: ResultSet) => {
+            console.log('error', error);
             reject(new Error(`[Error al crear tercero]: ${error}`));
           },
         );
       });
     });
   }
+
+  async update(id: string, tercero: ITerceros): Promise<boolean> {
+    const sqlUpdateTerceroStatement = `
+    UPDATE terceros SET
+        nombre = ?,
+        direcc = ?,
+        tel = ?,
+        vendedor = ?,
+        plazo = ?,
+        f_pago = ?,
+        ex_iva = ?,
+        clasificacion = ?,
+        tipo = ?,
+        departamento = ?,
+        ciudad = ?,
+        barrio = ?,
+        email = ?,
+        reteica = ?,
+        frecuencia = ?,
+        zona = ?,
+        ruta = ?,
+        latitude = ?,
+        longitude = ?,
+        rut_path = ?,
+        camaracomercio_path = ?
+    WHERE codigo = ?
+   `;
+
+    const valuesTercero = [
+      tercero.nombre,
+      tercero.direcc,
+      tercero.tel,
+      tercero.vendedor,
+      tercero.plazo,
+      tercero.f_pago,
+      tercero.ex_iva,
+      tercero.clasificacion,
+      tercero.tipo,
+      tercero.departamento,
+      tercero.ciudad,
+      tercero.barrio,
+      tercero.email,
+      tercero.reteica,
+      tercero.frecuencia,
+      tercero.zona,
+      tercero.ruta,
+      tercero.latitude,
+      tercero.longitude,
+      tercero.rut_path,
+      tercero.camaracomercio_path,
+      id,
+    ];
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlUpdateTerceroStatement,
+          valuesTercero,
+          async (_: ResultSet, result: ResultSet) => {
+            const dispatch = useAppDispatch();
+            const response = dispatch(addTerceroEditado(tercero));
+            console.log('response =>', response);
+            resolve(true);
+          },
+          (error: any) => {
+            console.log('error', error);
+            reject(new Error(`[Error al actualizar tercero]: ${error}`));
+          },
+        );
+      });
+    });
+  }
+
+  async getModified(): Promise<ITerceros[]> {
+    const sqlSelectStatement = `
+        SELECT * FROM terceros WHERE estado IN ('1', '2')
+    `;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            resolve(response.rows.raw());
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo obtener terceros modificados'));
+          },
+        );
+      });
+    });
+  }
+
   async fillTable(terceros: ITerceros[]): Promise<boolean> {
     const innerDeleteTerceros = () => {
       return new Promise((resolve, reject) => {
@@ -339,6 +444,29 @@ class TercerosRepository implements IRepository<ITerceros> {
                 ),
               );
             }
+          },
+          (error: Error) => {
+            reject(new Error('Fallo obtener cantidad terceros'));
+          },
+        );
+      });
+    });
+  }
+
+  async getByLikeAttribute(
+    atributeName: string,
+    attributeValue: any,
+  ): Promise<ITerceros[]> {
+    if (attributeValue === '') {
+      return this.getAll();
+    }
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `SELECT * FROM terceros WHERE ${atributeName} LIKE ?`,
+          [`%${attributeValue}%`],
+          (_: ResultSet, response: ResultSet) => {
+            resolve(response.rows.raw());
           },
           (error: Error) => {
             reject(new Error('Fallo obtener cantidad terceros'));

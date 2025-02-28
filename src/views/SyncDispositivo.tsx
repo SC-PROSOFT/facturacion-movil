@@ -1,7 +1,5 @@
 import React, {useState, useEffect} from 'react';
-
 import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
-
 import {
   Divider,
   Dialog,
@@ -9,48 +7,24 @@ import {
   Text,
   ActivityIndicator,
 } from 'react-native-paper';
-
-/* icons */
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-/* redux hooks */
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
-/* redux slices */
+import {showAlert} from '../utils/showAlert';
 import {
+  setObjInfoAlert,
   setIsSignedIn,
   setStrTouchedButton,
   setIsShowTercerosFinder,
-  setIsShowOperadoresFinder,
-  setIsShowProductFinder,
-  setIsShowCarteraFinder,
-  setIsShowAlmacenesFinder,
 } from '../redux/slices';
-/* components */
-import {
-  CoolButton,
-  PrincipalHeader,
-  OperadoresFinder,
-  TercerosFinder,
-  ProductFinder,
-  AlmacenesFinder,
-  CarteraFinder,
-} from '../components';
-/* queries */
+import {CoolButton, PrincipalHeader, TercerosFinder} from '../components';
 import {SyncQueries} from '../data_queries/api/queries';
-/* local database services */
 import {
-  operadoresService,
-  articulosService,
-  almacenesService,
-  carteraService,
-  tercerosService,
   pedidosService,
   facturasService,
+  tercerosService,
 } from '../data_queries/local_database/services';
-/* utils */
-import {showAlert} from '../utils/showAlert';
-/* slices */
-import {setObjInfoAlert} from '../redux/slices';
-/* local types */
+import {ITerceros} from '../common/types';
+
 interface ProgressWindowProps {
   visible: boolean;
   dialogContent: string;
@@ -60,25 +34,17 @@ interface ProgressWindowProps {
 
 interface RecordProps {
   records: {
-    quantityOperadores: string;
-    quantityArticulos: string;
-    quantityAlmacenes: string;
-    quantityCartera: string;
     quantityTerceros: string;
+    createdTerceros: number;
+    editedTerceros: number;
   };
-  toggleOperadores: () => void;
   toggleTerceros: () => void;
-  toggleArticulos: () => void;
-  toggleCartera: () => void;
-  toggleAlmacenes: () => void;
 }
 
 interface Records {
-  quantityOperadores: string;
-  quantityArticulos: string;
-  quantityAlmacenes: string;
-  quantityCartera: string;
   quantityTerceros: string;
+  createdTerceros: number;
+  editedTerceros: number;
 }
 
 const ProgressWindow = ({
@@ -125,26 +91,12 @@ const ProgressWindow = ({
   );
 };
 
-const Record = ({
-  records,
-  toggleOperadores,
-  toggleTerceros,
-  toggleArticulos,
-  toggleCartera,
-  toggleAlmacenes,
-}: RecordProps) => {
-  const {
-    quantityOperadores,
-    quantityArticulos,
-    quantityAlmacenes,
-    quantityCartera,
-    quantityTerceros,
-  } = records;
+const Record = ({records, toggleTerceros}: RecordProps) => {
+  const {quantityTerceros, createdTerceros, editedTerceros} = records;
 
   const styles = StyleSheet.create({
     container: {
       backgroundColor: '#fff',
-      //height: '100%',
     },
     itemContainer: {
       display: 'flex',
@@ -173,76 +125,9 @@ const Record = ({
       marginVertical: 10,
     },
   });
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={toggleOperadores} style={styles.itemContainer}>
-        <View style={styles.itemLeft}>
-          <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
-            Operadores
-          </Text>
-          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {quantityOperadores} registros
-          </Text>
-        </View>
-
-        <View style={styles.itemRight}>
-          <Icon name="chevron-right" color="grey" size={28} />
-        </View>
-      </TouchableOpacity>
-
-      <Divider style={styles.divider} />
-
-      <TouchableOpacity onPress={toggleArticulos} style={styles.itemContainer}>
-        <View style={styles.itemLeft}>
-          <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
-            Articulos
-          </Text>
-          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {quantityArticulos} registros
-          </Text>
-        </View>
-
-        <View style={styles.itemRight}>
-          <Icon name="chevron-right" color="grey" size={28} />
-        </View>
-      </TouchableOpacity>
-
-      <Divider style={styles.divider} />
-
-      <TouchableOpacity onPress={toggleAlmacenes} style={styles.itemContainer}>
-        <View style={styles.itemLeft}>
-          <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
-            Almacenes
-          </Text>
-          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {quantityAlmacenes} registros
-          </Text>
-        </View>
-
-        <View style={styles.itemRight}>
-          <Icon name="chevron-right" color="grey" size={28} />
-        </View>
-      </TouchableOpacity>
-
-      <Divider style={styles.divider} />
-
-      <TouchableOpacity onPress={toggleCartera} style={styles.itemContainer}>
-        <View style={styles.itemLeft}>
-          <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
-            Cartera
-          </Text>
-          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {quantityCartera} registros
-          </Text>
-        </View>
-
-        <View style={styles.itemRight}>
-          <Icon name="chevron-right" color="grey" size={28} />
-        </View>
-      </TouchableOpacity>
-
-      <Divider style={styles.divider} />
-
       <TouchableOpacity onPress={toggleTerceros} style={styles.itemContainer}>
         <View style={styles.itemLeft}>
           <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
@@ -250,6 +135,9 @@ const Record = ({
           </Text>
           <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
             {quantityTerceros} registros
+          </Text>
+          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+            {createdTerceros} creados, {editedTerceros} editados
           </Text>
         </View>
 
@@ -261,85 +149,57 @@ const Record = ({
   );
 };
 
-const Sync = () => {
+const SyncDispositivo = () => {
   const dispatch = useAppDispatch();
-
   const objConfig = useAppSelector(store => store.config.objConfig);
-
+  const tercerosCreados = useAppSelector(
+    store => store.tercerosFinder.tercerosCreados,
+  );
+  const tercerosEditados = useAppSelector(
+    store => store.tercerosFinder.tercerosEditados,
+  );
   const [screenHeight, setScreenHeight] = useState(
     Dimensions.get('window').height,
   );
-
   const [syncQueriesScope, setSyncQueriesScope] = useState<any>();
-
   const [showProgressWindow, setShowProgressWindow] = useState<boolean>(false);
-
   const [dialogContent, setDialogContent] = useState('');
-
   const [disabledCancel, setDisabledCancel] = useState<boolean>(false);
-
   const [records, setRecords] = useState<Records>({
-    quantityOperadores: '',
-    quantityArticulos: '',
-    quantityAlmacenes: '',
-    quantityCartera: '',
-    quantityTerceros: '',
+    quantityTerceros: '0',
+    createdTerceros: 0,
+    editedTerceros: 0,
   });
 
   useEffect(() => {
     loadRecord();
   }, []);
 
-  const toggleDownloadData = async () => {
+  const toggleUploadData = async () => {
     setShowProgressWindow(true);
 
     const {direccionIp, puerto} = objConfig;
-
     const syncQueries = new SyncQueries(direccionIp, puerto);
-
     setSyncQueriesScope(syncQueries);
 
     try {
-      setDialogContent('Trayendo terceros - 5/5');
+      setDialogContent('Trayendo terceros');
       const resGetTerceros = await syncQueries._getTerceros();
-      setDialogContent('Trayendo operadores - 1/5');
-      const resGetOperadores = await syncQueries._getOperadores();
-
-      setDialogContent('Trayendo articulos - 2/5');
-      const resGetArticulos = await syncQueries._getArticulos();
-
-      setDialogContent('Trayendo almacenes - 3/5');
-      const resGetAlmacenes = await syncQueries._getAlmacenes();
-
-      setDialogContent('Trayendo cartera - 4/5');
-      const resGetCartera = await syncQueries._getCartera();
 
       setDisabledCancel(true);
 
       await pedidosService.deleteTablaPedidos();
       await facturasService.deleteTablaFacturas();
 
-      setDialogContent('Descargando operadores - 1/5');
-      await operadoresService.fillOperadores(resGetOperadores);
-      setDialogContent('Descargando articulos - 2/5');
-      await articulosService.fillArticulos(resGetArticulos);
-      setDialogContent('Descargando almacenes - 3/5');
-      await almacenesService.fillAlmacenes(resGetAlmacenes);
-      setDialogContent('Descargando cartera - 4/5');
-      await carteraService.fillCartera(resGetCartera);
-      setDialogContent('Descargando terceros - 5/5');
+      setDialogContent('Descargando terceros');
       await tercerosService.fillTerceros(resGetTerceros);
 
       setDisabledCancel(false);
-
       setShowProgressWindow(false);
-
       loadRecord();
-
       dispatch(showAlert('05'));
     } catch (error: any) {
       setShowProgressWindow(false);
-
       dispatch(
         setObjInfoAlert({
           visible: true,
@@ -355,50 +215,37 @@ const Sync = () => {
       case 'cerrar sesion':
         singOff();
         break;
-
       default:
         break;
     }
   };
+
   const singOff = () => {
     dispatch(setIsSignedIn(false));
     dispatch(setStrTouchedButton('config'));
   };
+
   const cancelSyncQueries = async () => {
     setShowProgressWindow(false);
-
     syncQueriesScope._cancelSyncQueries();
   };
+
   const loadRecord = async () => {
-    const quantityOperadores = await operadoresService.getQuantityOperadores();
-    const quantityArticulos = await articulosService.getQuantityArticulos();
-    const quantityAlmacenes = await almacenesService.getQuantityAlmacenes();
-    const quantityCartera = await carteraService.getQuantityCartera();
-    const quantityTerceros = await tercerosService.getQuantityTerceros();
+    const createdTerceros = tercerosCreados.length || 0;
+    const editedTerceros = tercerosEditados.length || 0;
+    const quantityTerceros = (createdTerceros + editedTerceros).toString();
 
     setRecords({
-      quantityOperadores,
-      quantityArticulos,
-      quantityAlmacenes,
-      quantityCartera,
       quantityTerceros,
+      createdTerceros,
+      editedTerceros,
     });
   };
-  const toggleOperadores = () => {
-    dispatch(setIsShowOperadoresFinder(true));
-  };
+
   const toggleTerceros = () => {
     dispatch(setIsShowTercerosFinder(true));
   };
-  const toggleArticulos = () => {
-    dispatch(setIsShowProductFinder(true));
-  };
-  const toggleCartera = () => {
-    dispatch(setIsShowCarteraFinder(true));
-  };
-  const toggleAlmacenes = () => {
-    dispatch(setIsShowAlmacenesFinder(true));
-  };
+
   const styles = StyleSheet.create({
     container: {
       height: screenHeight - 55,
@@ -427,7 +274,6 @@ const Sync = () => {
       paddingHorizontal: 20,
       paddingVertical: 15,
       borderRadius: 10,
-      //height: screenHeight * 0.5,
     },
     tabButtonsContainer: {
       display: 'flex',
@@ -446,24 +292,17 @@ const Sync = () => {
       <View style={styles.content}>
         <View style={styles.buttonContainer}>
           <CoolButton
-            value="Descargar datos"
-            iconName="download"
+            value="Sincronizar datos"
+            iconName="upload"
             colorButton="#365AC3"
             colorText="#fff"
             iconSize={20}
-            pressCoolButton={() => toggleDownloadData()}
+            pressCoolButton={() => toggleUploadData()}
           />
         </View>
 
         <View style={styles.recordContainer}>
-          <Record
-            records={records}
-            toggleOperadores={toggleOperadores}
-            toggleTerceros={toggleTerceros}
-            toggleArticulos={toggleArticulos}
-            toggleCartera={toggleCartera}
-            toggleAlmacenes={toggleAlmacenes}
-          />
+          <Record records={records} toggleTerceros={toggleTerceros} />
         </View>
       </View>
 
@@ -474,13 +313,9 @@ const Sync = () => {
         disabledCancel={disabledCancel}
       />
 
-      <OperadoresFinder />
-      <ProductFinder />
-      <AlmacenesFinder />
-      <CarteraFinder />
       <TercerosFinder />
     </View>
   );
 };
 
-export {Sync};
+export {SyncDispositivo};

@@ -1,6 +1,9 @@
 import {TercerosRepository} from '../repositories';
 
 import {ITerceros} from '../../../common/types';
+import {useAppDispatch} from '../../../redux/hooks';
+
+
 
 const tercerosRepository = new TercerosRepository();
 
@@ -17,6 +20,14 @@ class TercerosService {
 
   async createTercero(tercero: ITerceros): Promise<boolean> {
     return this.tercerosRepository.create(tercero);
+  }
+
+  async updateTercero(tercero: ITerceros): Promise<boolean> {
+    return this.tercerosRepository.update(tercero.codigo, tercero);
+  }
+
+  async getModifiedTerceros(): Promise<ITerceros[]> {
+    return this.tercerosRepository.getModified();
   }
 
   async fillTerceros(terceros: ITerceros[]): Promise<boolean> {

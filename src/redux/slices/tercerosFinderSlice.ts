@@ -1,6 +1,5 @@
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
-
-import {IOperation, IOperationDb, ITerceros} from '../../common/types';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { IOperation, ITerceros } from '../../common/types';
 
 interface TercerosFinder {
   isShowTercerosFinder: boolean;
@@ -8,6 +7,8 @@ interface TercerosFinder {
   arrFactura: IOperation[];
   arrPedido: IOperation[];
   intCartera: number;
+  tercerosCreados: ITerceros[];
+  tercerosEditados: ITerceros[];
 }
 
 const initialState: TercerosFinder = {
@@ -22,7 +23,6 @@ const initialState: TercerosFinder = {
     f_pago: '01',
     ex_iva: 'N',
     clasificacion: '',
-
     tipo: 'CC',
     departamento: '',
     ciudad: '',
@@ -40,6 +40,8 @@ const initialState: TercerosFinder = {
   arrFactura: [],
   arrPedido: [],
   intCartera: 0,
+  tercerosCreados: [],
+  tercerosEditados: [],
 };
 
 export const tercerosFinderSlice = createSlice({
@@ -61,6 +63,12 @@ export const tercerosFinderSlice = createSlice({
     setIntCartera: (state, action: PayloadAction<number>) => {
       state.intCartera = action.payload;
     },
+    addTerceroCreado: (state, action: PayloadAction<ITerceros>) => {
+      state.tercerosCreados.push(action.payload);
+    },
+    addTerceroEditado: (state, action: PayloadAction<ITerceros>) => {
+      state.tercerosEditados.push(action.payload);
+    },
   },
 });
 
@@ -70,6 +78,8 @@ export const {
   setArrFactura,
   setArrPedido,
   setIntCartera,
+  addTerceroCreado,
+  addTerceroEditado,
 } = tercerosFinderSlice.actions;
 
 export default tercerosFinderSlice.reducer;

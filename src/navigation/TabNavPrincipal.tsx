@@ -6,7 +6,13 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 /* Views */
-import {Visitas, Sync, ActualizarFacturas, ActualizarPedidos} from '../views';
+import {
+  Visitas,
+  Sync,
+  ActualizarFacturas,
+  ActualizarPedidos,
+  SyncDispositivo,
+} from '../views';
 /* redux */
 import {useAppSelector} from '../redux/hooks';
 import {setIsShowTercerosFinder} from '../redux/slices';
@@ -74,8 +80,8 @@ const TabNavPrincipal = () => {
       />
       <Tab.Screen
         name="Sinc. pedidos"
-        component={ActualizarPedidos}
-        options={optionsTabScreen({icon: 'shopping'})}
+        component={SyncDispositivo}
+        options={optionsTabScreen({icon: 'cloud-sync'})}
       />
       <Tab.Screen
         name="Actualizar"

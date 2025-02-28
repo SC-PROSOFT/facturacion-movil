@@ -38,7 +38,7 @@ const visitas: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2025-02-26',
+    appointmentDate: '2025-02-27',
     location: {
       latitude: '',
       longitude: '',
@@ -52,7 +52,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-02-26',
+    appointmentDate: '2025-02-27',
     location: {
       latitude: '',
       longitude: '',
@@ -66,12 +66,11 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-02-26',
+    appointmentDate: '2025-02-27',
     location: {
       latitude: '',
       longitude: '',
     },
-
     id_tercero: '0000000112',
   },
 ];
@@ -170,6 +169,7 @@ const Visitas: React.FC = () => {
       dispatch(setObjTercero(tercero));
 
       navigation.navigate('TabNavTercero');
+
     } catch (error: any) {
       dispatch(
         setObjInfoAlert({
@@ -186,7 +186,7 @@ const Visitas: React.FC = () => {
         'tercero_codigo',
         tercero.codigo,
       );
-
+      
       dispatch(setArrFactura(facturas));
     } catch (error: any) {
       dispatch(
