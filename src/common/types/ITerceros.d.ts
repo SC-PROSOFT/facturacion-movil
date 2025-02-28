@@ -23,4 +23,6 @@ export interface ITerceros {
   longitude: string;
   rut_path: string;
   camaracomercio_path: string;
+
+  estado?: '1' | '2'; // 1 = Creado, 2 = Actualizado
 }

@@ -1,4 +1,4 @@
-// Si el campo 'activar' solo acepta ciertos valores, podríamos definir un tipo literal:
+
 type ActivarFlag = 'S' | 'N';
 
 export interface IEncuesta {

@@ -48,7 +48,8 @@ export interface IRepository<T> {
    * @returns Una promesa que resuelve en `true` si la actualización fue exitosa, o `false` si no se pudo actualizar.
    * @template T El tipo de entidad que se almacena en el repositorio.
    */
-  update?(id: string, item: T): Promise<boolean>;
+  update(id: string, item: T): Promise<boolean>;
+
 
   /**
    * Elimina un elemento en el repositorio por su ID.
