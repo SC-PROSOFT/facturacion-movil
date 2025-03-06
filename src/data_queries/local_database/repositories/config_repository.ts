@@ -34,6 +34,7 @@ class ConfigRepository implements IRepository<IConfig> {
           sqlStatement,
           null,
           (_: ResultSet, response: ResultSet) => {
+            console.log('response =>', response);
             resolve(true);
           },
           (error: Error) => {
@@ -88,7 +89,7 @@ class ConfigRepository implements IRepository<IConfig> {
       tarifaIva1=?,
       tarifaIva2=?,
       tarifaIva3=?
-    `;
+  `;
 
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
@@ -119,9 +120,11 @@ class ConfigRepository implements IRepository<IConfig> {
                   config.tarifaIva3,
                 ],
                 (_: ResultSet, result: ResultSet) => {
+                  console.log('result =>', result);
                   resolve(true);
                 },
                 (error: Error) => {
+                  console.log('error en update =>', error);
                   reject(new Error('Fallo guardar configuracion'));
                 },
               );
@@ -148,13 +151,72 @@ class ConfigRepository implements IRepository<IConfig> {
                   config.tarifaIva3,
                 ],
                 (_: ResultSet, result: ResultSet) => {
+                  console.log('result =>', result);
                   resolve(true);
                 },
                 (error: Error) => {
+                  console.log('error en insert =>', error);
                   reject(new Error('Fallo guardar configuracion'));
                 },
               );
             }
+          },
+          (error: Error) => {
+            console.log('error en select =>', error);
+            reject(new Error('Fallo guardar configuracion'));
+          },
+        );
+      });
+    });
+  }
+
+  async update(id: string, config: IConfig): Promise<boolean> {
+    const sqlUpdateStatement = `
+    UPDATE config SET 
+      facturarSinExistencias=?,
+      seleccionarAlmacen=?,
+      localizacionGps=?,
+      filtrarTercerosPorVendedor=?,
+      modificarPrecio=?,
+      direccionIp=?,
+      puerto=?,
+      descargasIp=?,
+      datosIp=?,
+      directorioContabilidad=?,
+      empresa=?,
+      nit=?,
+      direccion=?,
+      ciudad=?,
+      tarifaIva1=?,
+      tarifaIva2=?,
+      tarifaIva3=?
+    `;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlUpdateStatement,
+          [
+            config.facturarSinExistencias ? 1 : 0,
+            config.seleccionarAlmacen ? 1 : 0,
+            config.localizacionGps ? 1 : 0,
+            config.filtrarTercerosPorVendedor ? 1 : 0,
+            config.modificarPrecio ? 1 : 0,
+            config.direccionIp,
+            config.puerto,
+            config.descargasIp,
+            config.datosIp,
+            config.directorioContabilidad,
+            config.empresa,
+            config.nit,
+            config.direccion,
+            config.ciudad,
+            config.tarifaIva1,
+            config.tarifaIva2,
+            config.tarifaIva3,
+          ],
+          (_: ResultSet, result: ResultSet) => {
+            resolve(true);
           },
           (error: Error) => {
             reject(new Error('Fallo guardar configuracion'));

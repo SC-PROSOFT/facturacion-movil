@@ -1,8 +1,17 @@
 import React, {useState} from 'react';
-import {View, ScrollView, TouchableOpacity} from 'react-native';
-import {Text} from 'react-native-paper';
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import {Text, ActivityIndicator} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation} from '@react-navigation/native';
+import DocumentPicker, {
+  DocumentPickerResponse,
+} from 'react-native-document-picker';
 
 /* components */
 import {
@@ -11,6 +20,8 @@ import {
   _Checkbox,
   CoolButton,
   IconButton,
+  FrecuenciaFinder,
+  UploadArchives,
 } from '../components';
 /* types */
 import {ITerceros} from '../common/types';
@@ -22,6 +33,8 @@ import {
   setObjInfoAlert,
   setObjTercero,
   setIsShowTercerosFinder,
+  setIsShowFrecuenciaFinder,
+  setIsShowUploadArchives,
 } from '../redux/slices';
 /* services */
 import {tercerosService} from '../data_queries/local_database/services';
@@ -40,14 +53,14 @@ const CreateTercero = () => {
     f_pago: '01',
     ex_iva: 'N',
     clasificacion: '',
-
+    dv: '',
     tipo: 'CC',
     departamento: '',
     ciudad: '',
     barrio: '',
     email: '',
     reteica: 'N',
-    frecuencia: 'semanal',
+    frecuencia: '',
     zona: '',
     ruta: '',
     latitude: '',
@@ -56,13 +69,128 @@ const CreateTercero = () => {
     camaracomercio_path: '',
   });
 
+  const [errors, setErrors] = useState({
+    codigo: '',
+    nombre: '',
+    dv: '',
+    direcc: '',
+    zona: '',
+    ruta: '',
+    frecuencia: '',
+  });
+
+  const [isCodigoValid, setIsCodigoValid] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const validateFields = () => {
+    const newErrors = {
+      codigo: '',
+      nombre: '',
+      dv: '',
+      direcc: '',
+      zona: '',
+      ruta: '',
+      frecuencia: '',
+    };
+
+    if (!tercero.codigo) newErrors.codigo = 'El código es requerido';
+    if (!tercero.nombre) newErrors.nombre = 'El nombre es requerido';
+    if (!tercero.dv) newErrors.dv = 'El DV es requerido';
+    if (!tercero.direcc) newErrors.direcc = 'La dirección es requerida';
+    if (!tercero.zona) newErrors.zona = 'La zona es requerida';
+    if (!tercero.ruta) newErrors.ruta = 'La ruta es requerida';
+    if (!tercero.frecuencia)
+      newErrors.frecuencia = 'La frecuencia es requerida';
+
+    setErrors(newErrors);
+
+    return !Object.values(newErrors).some(error => error);
+  };
+
+  const checkCodigoExists = async () => {
+    console.log('tercero =>>>>', 'Entre');
+    if (!tercero.codigo) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        codigo: 'El código es requerido',
+      }));
+      setIsDisabled(true);
+      return;
+    }
+
+    try {
+      console.log('tercero =>>>>', 'tercero.codigo =>', tercero.codigo);
+      calculateDV(tercero.codigo);
+      setIsLoading(true);
+
+      const existingTercero = await tercerosService.getByAttribute(
+        'codigo',
+        tercero.codigo,
+      );
+      if (existingTercero) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: 'El codigo que digito ya tiene un tercero asociado',
+          }),
+        );
+        setIsLoading(false);
+        setIsCodigoValid(false);
+        setIsDisabled(true);
+      } else {
+        setIsLoading(false);
+        setIsCodigoValid(true);
+        setIsDisabled(false);
+      }
+    } catch (error) {
+      setIsLoading(false);
+      setIsCodigoValid(true);
+      setIsDisabled(false);
+    }
+  };
+
+  const calculateDV = (nit: string) => {
+    const weights = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43];
+    let acum = 0;
+
+    // Asegúrate de que el NIT tenga al menos 10 caracteres
+    nit = nit.padStart(10, '0');
+
+    for (let i = 0; i < 10; i++) {
+      acum += parseInt(nit.charAt(9 - i)) * weights[i];
+    }
+
+    const divi = Math.floor(acum / 11);
+    const resid = acum % 11;
+
+    let factor = resid > 0 ? resid : 0;
+
+    if (factor === 0 || factor === 1) {
+      console.log('factor =>>>>', factor);
+      setTercero(prevState => ({...prevState, dv: factor.toString()}));
+    } else {
+      console.log('factor =>>>>', factor);
+      setTercero(prevState => ({...prevState, dv: (11 - factor).toString()}));
+    }
+  };
+
   const saveTercero = async () => {
+    if (!validateFields()) {
+      return;
+    }
+
     console.log('tercero =>>>>', tercero);
+    setIsLoading(true);
     try {
       const response = await tercerosService.createTercero(tercero);
 
       console.log('response =>>>>', response);
+      setIsLoading(false);
+      navigation.navigate('TabNavPrincipal');
     } catch (error: any) {
+      setIsLoading(false);
       dispatch(
         setObjInfoAlert({
           visible: true,
@@ -92,230 +220,346 @@ const CreateTercero = () => {
       );
     }
   };
-  const toggleAddFiles = () => {
-    dispatch(setObjTercero(tercero));
 
-    navigation.navigate('FilesTercero');
+  const handleFilesUpload = (files: {
+    rutFile: DocumentPickerResponse | null;
+    camaraComercioFile: DocumentPickerResponse | null;
+    cedulaFile: DocumentPickerResponse | null;
+  }) => {
+    console.log('Archivos subidos:', files);
+    // Aquí puedes actualizar el estado o realizar otras acciones con los archivos subidos
   };
 
+  const screenWidth = Dimensions.get('window').width;
+
   return (
-    <ScrollView
-      style={{
-        paddingHorizontal: 15,
-        paddingTop: 10,
-      }}>
-      <Text style={{color: '#092254', fontSize: 22, marginBottom: 10}}>
-        Informacion cliente
-      </Text>
-
-      <View
+    <View style={{flex: 1}}>
+      <ScrollView
         style={{
-          elevation: 5,
-          padding: 7,
-          backgroundColor: '#fff',
-          borderRadius: 10,
-          gap: 8,
-        }}>
-        <_Input
-          label="Nombre"
-          name="nombre"
-          onChangeText={(text: string) =>
-            setTercero(prevState => ({...prevState, nombre: text}))
-          }
-        />
-        <_InputSelect<'CC' | 'TI'>
-          value={tercero.tipo ?? 'CC'}
-          values={[
-            {label: 'Cedula de ciudadania', value: 'CC'},
-            {label: 'Tarjeta de identidad', value: 'TI'},
-          ]}
-          setValue={value =>
-            setTercero(prevState => ({...prevState, tipo: value}))
-          }
-        />
+          paddingHorizontal: 15,
+          paddingTop: 10,
+          opacity: isLoading ? 0.5 : 1, // Efecto de opacidad
+        }}
+        scrollEnabled={!isLoading} // Deshabilitar scroll mientras se carga
+      >
+        <Text style={{color: '#092254', fontSize: 22, marginBottom: 10}}>
+          Informacion cliente
+        </Text>
 
-        <View style={{flexDirection: 'row', gap: 8}}>
-          <View style={{flex: 1}}>
-            <_Input
-              label="Identificacion"
-              name="codigo"
-              maxLength={15}
-              keyboardType="numeric"
-              onChangeText={(text: string) =>
-                setTercero(prevState => ({...prevState, codigo: text}))
-              }
-              style={{}}
-            />
-          </View>
-
-          <View style={{flex: 1}}>
-            <_Input
-              label="Telefono"
-              name="tel"
-              keyboardType="numeric"
-              onChangeText={(text: string) =>
-                setTercero(prevState => ({...prevState, tel: text}))
-              }
-            />
-          </View>
-        </View>
-        <View style={{flexDirection: 'row', gap: 8}}>
-          <View style={{flex: 1}}>
-            <_Input
-              label="Departamento"
-              name="departamento"
-              onChangeText={(text: string) =>
-                setTercero(prevState => ({...prevState, departamento: text}))
-              }
-            />
-          </View>
-
-          <View style={{flex: 1}}>
-            <_Input
-              label="Ciudad"
-              name="ciudad"
-              onChangeText={(text: string) =>
-                setTercero(prevState => ({...prevState, ciudad: text}))
-              }
-            />
-          </View>
-        </View>
-        <_Input
-          label="Barrio"
-          name="barrio"
-          onChangeText={(text: string) =>
-            setTercero(prevState => ({...prevState, barrio: text}))
-          }
-        />
-        <_Input
-          label="Direccion"
-          name="direcc"
-          onChangeText={(text: string) =>
-            setTercero(prevState => ({...prevState, direcc: text}))
-          }
-        />
-        <_Input
-          label="Correo electronico"
-          name="email"
-          onChangeText={(text: string) =>
-            setTercero(prevState => ({...prevState, email: text}))
-          }
-        />
-
-        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-          <_Checkbox
-            label="Iva"
-            status={tercero.ex_iva == 'N' ? true : false}
-            onPress={status =>
-              setTercero(prevState => ({
-                ...prevState,
-                ex_iva: status ? 'N' : 'S',
-              }))
+        <View
+          style={{
+            elevation: 5,
+            padding: 7,
+            backgroundColor: '#fff',
+            borderRadius: 10,
+            gap: 8,
+          }}>
+          <_Input
+            label="Nombre"
+            name="nombre"
+            onChangeText={(text: string) =>
+              setTercero(prevState => ({...prevState, nombre: text}))
             }
+            error={errors.nombre}
+            // disabled={isDisabled}
           />
-          <_Checkbox
-            label="Reteica"
-            status={tercero.reteica == 'S' ? true : false}
-            onPress={status =>
-              setTercero(prevState => ({
-                ...prevState,
-                reteica: status ? 'S' : 'N',
-              }))
+          <_InputSelect<'CC' | 'TI'>
+            value={tercero.tipo ?? 'CC'}
+            values={[
+              {label: 'Cedula de ciudadania', value: 'CC'},
+              {label: 'Tarjeta de identidad', value: 'TI'},
+            ]}
+            setValue={value =>
+              setTercero(prevState => ({...prevState, tipo: value}))
             }
+            // disabled={isDisabled}
           />
-          <View style={{width: '70%'}}>
-            <_InputSelect<'01' | '02'>
-              value={tercero.f_pago}
-              values={[
-                {label: 'Contado', value: '01'},
-                {label: 'Credito', value: '02'},
-              ]}
-              setValue={value =>
-                setTercero(prevState => ({...prevState, f_pago: value}))
+
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <View style={{flex: 1}}>
+              <_Input
+                label="Identificacion"
+                name="codigo"
+                maxLength={15}
+                keyboardType="numeric"
+                onChangeText={(text: string) =>
+                  setTercero(prevState => ({...prevState, codigo: text}))
+                }
+                onBlur={checkCodigoExists}
+                error={errors.codigo}
+              />
+            </View>
+            <View style={{flex: 0.3}}>
+              <_Input
+                label="Dv"
+                name="dv"
+                keyboardType="numeric"
+                maxLength={1}
+                value={tercero.dv} // Asegúrate de que el valor esté vinculado al estado
+                onChangeText={(text: string) =>
+                  setTercero(prevState => ({...prevState, dv: text}))
+                }
+                error={errors.dv}
+                disabled={isDisabled}
+                
+              />
+            </View>
+          </View>
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <View style={{flex: 1}}>
+              <_Input
+                label="Telefono"
+                name="tel"
+                keyboardType="numeric"
+                onChangeText={(text: string) =>
+                  setTercero(prevState => ({...prevState, tel: text}))
+                }
+                disabled={isDisabled}
+              />
+            </View>
+
+            <View style={{flex: 0.3}}>
+              <_Input
+                label="Plazo"
+                name="plazo"
+                maxLength={3}
+                onChangeText={(text: string) =>
+                  setTercero(prevState => ({
+                    ...prevState,
+                    plazo: parseInt(text),
+                  }))
+                }
+                disabled={isDisabled}
+              />
+            </View>
+          </View>
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <View style={{flex: 1}}>
+              <_Input
+                label="Departamento"
+                name="departamento"
+                onChangeText={(text: string) =>
+                  setTercero(prevState => ({...prevState, departamento: text}))
+                }
+                disabled={isDisabled}
+              />
+            </View>
+
+            <View style={{flex: 1}}>
+              <_Input
+                label="Ciudad"
+                name="ciudad"
+                onChangeText={(text: string) =>
+                  setTercero(prevState => ({...prevState, ciudad: text}))
+                }
+                disabled={isDisabled}
+              />
+            </View>
+          </View>
+          <_Input
+            label="Barrio"
+            name="barrio"
+            onChangeText={(text: string) =>
+              setTercero(prevState => ({...prevState, barrio: text}))
+            }
+            disabled={isDisabled}
+          />
+          <_Input
+            label="Direccion"
+            name="direcc"
+            onChangeText={(text: string) =>
+              setTercero(prevState => ({...prevState, direcc: text}))
+            }
+            error={errors.direcc}
+            disabled={isDisabled}
+          />
+          <_Input
+            label="Correo electronico"
+            name="email"
+            onChangeText={(text: string) =>
+              setTercero(prevState => ({...prevState, email: text}))
+            }
+            disabled={isDisabled}
+          />
+
+          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+            <_Checkbox
+              label="Iva"
+              status={tercero.ex_iva == 'N' ? true : false}
+              onPress={status =>
+                setTercero(prevState => ({
+                  ...prevState,
+                  ex_iva: status ? 'N' : 'S',
+                }))
               }
+              // disabled={isDisabled}
             />
+            <_Checkbox
+              label="Reteica"
+              status={tercero.reteica == 'S' ? true : false}
+              onPress={status =>
+                setTercero(prevState => ({
+                  ...prevState,
+                  reteica: status ? 'S' : 'N',
+                }))
+              }
+              // disabled={isDisabled}
+            />
+            <View style={{width: '70%'}}>
+              <_InputSelect<'01' | '02'>
+                value={tercero.f_pago}
+                values={[
+                  {label: 'Contado', value: '01'},
+                  {label: 'Credito', value: '02'},
+                ]}
+                setValue={value =>
+                  setTercero(prevState => ({...prevState, f_pago: value}))
+                }
+                // disabled={isDisabled}
+              />
+            </View>
+          </View>
+
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <View
+              style={{flex: 1.8, flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{flex: 4}}>
+                <_Input
+                  label="Frecuencia"
+                  name="frecuencia"
+                  onChangeText={(text: string) =>
+                    setTercero(prevState => ({...prevState, frecuencia: text}))
+                  }
+                  error={errors.frecuencia}
+                  disabled={isDisabled}
+                />
+              </View>
+              <View style={{flex: 1.5, marginLeft: 6}}>
+                <IconButton
+                  iconName="calendar-refresh"
+                  iconColor="#FFF"
+                  iconSize={36}
+                  onPress={() => dispatch(setIsShowFrecuenciaFinder(true))}
+                  // disabled={isDisabled}
+                />
+              </View>
+            </View>
+            <View
+              style={{flex: 1.5, flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{flex: 4}}>
+                <_Input
+                  label="Zona"
+                  name="zona"
+                  onChangeText={(text: string) =>
+                    setTercero(prevState => ({...prevState, zona: text}))
+                  }
+                  error={errors.zona}
+                  disabled={isDisabled}
+                />
+              </View>
+              <View style={{flex: 2, marginLeft: 6}}>
+                <IconButton
+                  iconName="map-marker-path"
+                  iconColor="#FFF"
+                  iconSize={36}
+                  onPress={() => dispatch(setIsShowTercerosFinder(true))}
+                  // disabled={isDisabled}
+                />
+              </View>
+            </View>
+          </View>
+          <View style={{width: screenWidth / 2}}>
+            <View style={{flexDirection: 'row', gap: 6}}>
+              <View style={{flex: 1}}>
+                <_Input
+                  label="Ruta"
+                  name="ruta"
+                  onChangeText={(text: string) =>
+                    setTercero(prevState => ({...prevState, ruta: text}))
+                  }
+                  error={errors.ruta}
+                  disabled={isDisabled}
+                />
+              </View>
+              <View style={{flex: 0.35}}>
+                <IconButton
+                  iconName="call-split"
+                  iconColor="#FFF"
+                  iconSize={36}
+                  onPress={() => dispatch(setIsShowTercerosFinder(true))}
+                  // disabled={isDisabled}
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#485E8A',
+                padding: 3,
+                borderRadius: 5,
+              }}
+              onPress={() => dispatch(setIsShowUploadArchives(true))}
+              disabled={isDisabled}>
+              <Icon name="attachment" size={36} color={'#FFF'} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#485E8A',
+                padding: 3,
+                borderRadius: 5,
+              }}
+              onPress={() => {
+                toggleGetGeolocation();
+              }}
+              disabled={isDisabled}>
+              <Icon name="map-marker-radius" size={36} color={'#FFF'} />
+            </TouchableOpacity>
+          </View>
+
+          <View>
+            {tercero.codigo.length < 10 && (
+              <Text style={{color: 'red'}}>
+                Para adjuntar archivos debe ingresar la cedula del cliente
+              </Text>
+            )}
           </View>
         </View>
 
-        <View style={{flexDirection: 'row', gap: 8}}>
-          <View style={{width: '40%'}}>
-            <_InputSelect<'semanal' | 'mensual'>
-              value={tercero.frecuencia}
-              values={[
-                {label: 'Semanal', value: 'semanal'},
-                {label: 'Mensual', value: 'mensual'},
-              ]}
-              setValue={value =>
-                setTercero(prevState => ({...prevState, frecuencia: value}))
-              }
-            />
-          </View>
-          <View style={{flex: 1}}>
-            <_Input
-              label="Zona"
-              name="zona"
-              onChangeText={(text: string) =>
-                setTercero(prevState => ({...prevState, zona: text}))
-              }
-            />
-          </View>
-          <View style={{flex: 1}}>
-            <_Input
-              label="Ruta"
-              name="ruta"
-              onChangeText={(text: string) =>
-                setTercero(prevState => ({...prevState, ruta: text}))
-              }
-            />
-          </View>
+        <View style={{marginVertical: 20}}>
+          <CoolButton
+            value="Guardar cliente"
+            iconName="content-save"
+            colorButton="#09540B"
+            colorText="#fff"
+            iconSize={20}
+            fontSize={18}
+            pressCoolButton={() => saveTercero()}
+          />
         </View>
 
-        <View style={{flexDirection: 'row', gap: 8}}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#485E8A',
-              padding: 3,
-              borderRadius: 5,
-            }}
-            disabled={tercero.codigo.length < 10 ? true : false}
-            onPress={() => toggleAddFiles()}>
-            <Icon name="attachment" size={36} color={'#FFF'} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#485E8A',
-              padding: 3,
-              borderRadius: 5,
-            }}
-            onPress={() => {
-              toggleGetGeolocation();
-            }}>
-            <Icon name="map-marker-radius" size={36} color={'#FFF'} />
-          </TouchableOpacity>
+        {/* Agrega el componente FrecuenciaFinder aquí */}
+      </ScrollView>
+      <FrecuenciaFinder />
+      <UploadArchives onFilesUpload={handleFilesUpload} />
+      {isLoading && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo oscuro con opacidad
+          }}>
+          <ActivityIndicator size="large" color="#092254" />
         </View>
-
-        <View>
-          {tercero.codigo.length < 10 && (
-            <Text style={{color: 'red'}}>
-              Para adjuntar archivos debe ingresar la cedula del cliente
-            </Text>
-          )}
-        </View>
-      </View>
-
-      <View style={{marginBottom: 20}}>
-        <CoolButton
-          value="Guardar cliente"
-          iconName="content-save"
-          colorButton="#09540B"
-          colorText="#fff"
-          iconSize={20}
-          fontSize={18}
-          pressCoolButton={() => saveTercero()}
-        />
-      </View>
-    </ScrollView>
+      )}
+    </View>
   );
 };
 

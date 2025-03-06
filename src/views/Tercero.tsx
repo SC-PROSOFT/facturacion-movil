@@ -14,7 +14,7 @@ import {useNavigation} from '@react-navigation/native';
 /* utils */
 import {formatToMoney, getPermissions, getUbication} from '../utils';
 /* types */
-import {IOperation} from '../common/types';
+import {IOperation, IEncuesta} from '../common/types';
 /* components */
 import {Movimiento, Header} from '../components';
 /* redux */
@@ -24,6 +24,7 @@ import {
   setArrProductAdded,
   setObjOperation,
   setObjInfoAlert,
+  setObjEncuesta,
 } from '../redux/slices';
 
 const Tercero = () => {

@@ -1,15 +1,14 @@
-
 type ActivarFlag = 'S' | 'N';
 
 export interface IEncuesta {
-  codigo: number;
-  numero_preguntas: number;
+  codigo: string;
+  numero_preguntas: string;
   activar: ActivarFlag | string; // ACTIVAR-ENCU (podríamos restringirlo a 'S' o 'N')
-  preguntas: Pregunta[];
+  preguntas: IPregunta[];
   admin_creacion: string;
-  fecha_creacion: Fecha;
+  fecha_creacion: string; // Formato 'YYYY-MM-DD'
   admin_modificacion: string;
-  fecha_modificacion: Fecha;
+  fecha_modificacion: string; // Formato 'YYYY-MM-DD'
 }
 
 export interface IPregunta {
@@ -17,10 +16,4 @@ export interface IPregunta {
   pregunta_texto: string;
   numero_resp_cerrada: number;
   opciones_respuesta_cerrada: string[];
-}
-
-export interface IFecha {
-  anio: number;
-  mes: number;
-  dia: number;
 }

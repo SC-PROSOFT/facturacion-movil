@@ -17,6 +17,20 @@ class TercerosApiServices {
     return datos;
   };
 
+  _getTerceros = async (): Promise<ITerceros[]> => {
+    try {
+      const response = await this.axiosInstance.post(
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
+        {},
+      );
+      console.log('response get terce =>', response);
+      return response.data.data.terceros;
+    } catch (error) {
+      console.error('error =>', error);
+      return [];
+    }
+  };
+
   _saveTercero = async (tercero: ITerceros): Promise<boolean> => {
     const innerFormatTercero = this._constructTercero(tercero);
 
@@ -31,7 +45,7 @@ class TercerosApiServices {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
         {body},
       );
-      console.log('response =>', response);
+      console.log('response get terce =>', response);
       return true;
     } catch (error) {
       console.error('error =>', error);

@@ -103,6 +103,7 @@ class PedidosRepository implements IRepository<IOperation | IOperationDb> {
         tercero_nombre,
         tercero_plazo,
         tercero_tel,
+        tercer_dv,
         tercero_vendedor,        
         guardadoEnServer,
         sincronizado,
@@ -306,6 +307,7 @@ class PedidosRepository implements IRepository<IOperation | IOperationDb> {
                     longitude: pedido.tercero_longitude,
                     rut_path: pedido.tercero_rut_path,
                     camaracomercio_path: pedido.tercero_camaracomercio_path,
+                    dv: pedido.tercero_dv,
                   },
                   articulosAdded: JSON.parse(pedido.articulosAdded),
 
@@ -407,6 +409,7 @@ class PedidosRepository implements IRepository<IOperation | IOperationDb> {
                         rut_path: factura.tercero_rut_path,
                         camaracomercio_path:
                           factura.tercero_camaracomercio_path,
+                        dv: factura.tercero_dv,
                       },
                       articulosAdded: JSON.parse(factura.articulosAdded),
 

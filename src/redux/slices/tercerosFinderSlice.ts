@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IOperation, ITerceros } from '../../common/types';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {IOperation, ITerceros} from '../../common/types';
 
 interface TercerosFinder {
   isShowTercerosFinder: boolean;
@@ -35,6 +35,7 @@ const initialState: TercerosFinder = {
     latitude: '',
     longitude: '',
     rut_path: '',
+    dv: '1',
     camaracomercio_path: '',
   },
   arrFactura: [],

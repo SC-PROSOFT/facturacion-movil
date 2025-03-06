@@ -8,6 +8,7 @@ export interface ITerceros {
   f_pago: '01' | '02'; // 01 contado, 02 credito
   ex_iva: 'S' | 'N'; // S = true, N = false, exento de iva (true: no paga, false: paga)
   clasificacion: string;
+  dv: string;
 
   /* ADICIONALES */
   tipo?: 'CC' | 'TI';
@@ -16,7 +17,7 @@ export interface ITerceros {
   barrio: string;
   email: string;
   reteica: 'S' | 'N'; // S = true, N = false
-  frecuencia: 'semanal' | 'mensual';
+  frecuencia: string;
   zona: string;
   ruta: string;
   latitude: string;

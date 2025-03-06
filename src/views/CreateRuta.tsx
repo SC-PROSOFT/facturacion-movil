@@ -34,7 +34,7 @@ const CreateRuta = () => {
     f_pago: '01',
     ex_iva: 'N',
     clasificacion: '',
-
+    dv: '1',
     tipo: 'CC',
     departamento: '',
     ciudad: '',
@@ -264,7 +264,7 @@ const CreateRuta = () => {
             <View>
               <_DatePicker date={dateOfVisit} setDate={setDateOfVisit} />
             </View>
-            <View style={{flex: 1}}>
+            {/* <View style={{flex: 1}}>
               <_InputSelect<'semanal' | 'mensual'>
                 value={tercero.frecuencia}
                 values={[
@@ -275,7 +275,7 @@ const CreateRuta = () => {
                   setTercero(prevState => ({...prevState, frecuencia: value}))
                 }
               />
-            </View>
+            </View> */}
           </View>
 
           <View
@@ -317,7 +317,10 @@ const CreateRuta = () => {
           />
         </View>
       </ScrollView>
-      <TercerosFinder toggleTercero={toggleTercero} />
+      <TercerosFinder
+        toggleTercero={toggleTercero}
+        searchTable="terceros"
+      />
     </View>
   );
 };

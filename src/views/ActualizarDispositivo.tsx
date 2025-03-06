@@ -40,6 +40,7 @@ import {
   tercerosService,
   pedidosService,
   facturasService,
+  encuestaService,
 } from '../data_queries/local_database/services';
 /* utils */
 import {showAlert} from '../utils/showAlert';
@@ -71,6 +72,7 @@ interface RecordProps {
   toggleDownCartera: () => void;
   toggleAlmacenes: () => void;
   toggleDownAlmacenes: () => void;
+  toggleDownEncuesta: () => void;
 }
 
 interface Records {
@@ -345,7 +347,7 @@ const ActualizarDispositivo = () => {
 
       setDisabledCancel(true);
 
-      await pedidosService.deleteTablaPedidos();
+      // await pedidosService.deleteTablaPedidos();
       await facturasService.deleteTablaFacturas();
 
       setDialogContent('Descargando operadores - 1/5');
@@ -573,6 +575,24 @@ const ActualizarDispositivo = () => {
       );
     }
   };
+
+  const toggleDownEncuesta = async () => {
+    setShowProgressWindow(true);
+    const {direccionIp, puerto} = objConfig;
+    const syncQueries = new SyncQueries(direccionIp, puerto);
+    setSyncQueriesScope(syncQueries);
+    try {
+      setDialogContent('Trayendo encuesta - 1/1');
+      const resGetEncuesta = await syncQueries._getEncuesta();
+      setDisabledCancel(true);
+      setDialogContent('Descargando encuesta - 1/1');
+      await encuestaService.fillEncuesta(resGetEncuesta);
+      setDisabledCancel(false);
+      setShowProgressWindow(false);
+      loadRecord();
+      dispatch(showAlert('05'));
+    } catch (error: any) {}
+  };
   const cancelSyncQueries = async () => {
     setShowProgressWindow(false);
 
@@ -675,6 +695,7 @@ const ActualizarDispositivo = () => {
             toggleDownCartera={toggleDownCartera}
             toggleAlmacenes={toggleAlmacenes}
             toggleDownAlmacenes={toggleDownAlmacenes}
+            toggleDownEncuesta={toggleDownEncuesta}
           />
         </View>
       </View>
@@ -690,7 +711,7 @@ const ActualizarDispositivo = () => {
       <ProductFinder />
       <AlmacenesFinder />
       <CarteraFinder />
-      <TercerosFinder />
+      <TercerosFinder searchTable="terceros" />
     </View>
   );
 };

@@ -45,6 +45,7 @@ import {
   tercerosService,
   pedidosService,
   facturasService,
+  encuestaService,
 } from '../data_queries/local_database/services';
 /* utils */
 import {showAlert} from '../utils/showAlert';
@@ -292,54 +293,61 @@ const Sync = () => {
 
   const toggleDownloadData = async () => {
     setShowProgressWindow(true);
-
+  
     const {direccionIp, puerto} = objConfig;
-
+  
     const syncQueries = new SyncQueries(direccionIp, puerto);
-
+  
     setSyncQueriesScope(syncQueries);
-
+  
     try {
-      setDialogContent('Trayendo terceros - 5/5');
-      const resGetTerceros = await syncQueries._getTerceros();
-      setDialogContent('Trayendo operadores - 1/5');
-      const resGetOperadores = await syncQueries._getOperadores();
-
-      setDialogContent('Trayendo articulos - 2/5');
-      const resGetArticulos = await syncQueries._getArticulos();
-
-      setDialogContent('Trayendo almacenes - 3/5');
-      const resGetAlmacenes = await syncQueries._getAlmacenes();
-
-      setDialogContent('Trayendo cartera - 4/5');
-      const resGetCartera = await syncQueries._getCartera();
-
+      // setDialogContent('Trayendo operadores - 1/5');
+      // const resGetOperadores = await syncQueries._getOperadores();
+  
+      // setDialogContent('Trayendo articulos - 2/5');
+      // const resGetArticulos = await syncQueries._getArticulos();
+  
+      // setDialogContent('Trayendo almacenes - 3/5');
+      // const resGetAlmacenes = await syncQueries._getAlmacenes();
+  
+      // setDialogContent('Trayendo cartera - 4/5');
+      // const resGetCartera = await syncQueries._getCartera();
+      setDialogContent('Trayendo encuesta - 5/5');
+      const resGetEncuesta = await syncQueries._getEncuesta();
+      console.log('Encuesta obtenida:', resGetEncuesta);
+      // setDialogContent('Trayendo terceros - 5/5');
+      // const resGetTerceros = await syncQueries._getTerceros();
+  
       setDisabledCancel(true);
-
+  
       await pedidosService.deleteTablaPedidos();
       await facturasService.deleteTablaFacturas();
-
-      setDialogContent('Descargando operadores - 1/5');
-      await operadoresService.fillOperadores(resGetOperadores);
-      setDialogContent('Descargando articulos - 2/5');
-      await articulosService.fillArticulos(resGetArticulos);
-      setDialogContent('Descargando almacenes - 3/5');
-      await almacenesService.fillAlmacenes(resGetAlmacenes);
-      setDialogContent('Descargando cartera - 4/5');
-      await carteraService.fillCartera(resGetCartera);
-      setDialogContent('Descargando terceros - 5/5');
-      await tercerosService.fillTerceros(resGetTerceros);
-
+  
+      // setDialogContent('Descargando operadores - 1/5');
+      // await operadoresService.fillOperadores(resGetOperadores);
+      // setDialogContent('Descargando articulos - 2/5');
+      // await articulosService.fillArticulos(resGetArticulos);
+      // setDialogContent('Descargando almacenes - 3/5');
+      // await almacenesService.fillAlmacenes(resGetAlmacenes);
+      // setDialogContent('Descargando cartera - 4/5');
+      // await carteraService.fillCartera(resGetCartera);
+      setDialogContent('Descargando encuesta - 5/5');
+      await encuestaService.fillEncuesta(resGetEncuesta);
+      console.log('Encuesta descargada e insertada correctamente');
+      // setDialogContent('Descargando terceros - 5/5');
+      // await tercerosService.fillTerceros(resGetTerceros);
+  
       setDisabledCancel(false);
-
+  
       setShowProgressWindow(false);
-
+  
       loadRecord();
-
+  
       dispatch(showAlert('05'));
     } catch (error: any) {
+      console.error('Error durante la sincronización:', error);
       setShowProgressWindow(false);
-
+  
       dispatch(
         setObjInfoAlert({
           visible: true,
@@ -478,7 +486,7 @@ const Sync = () => {
       <ProductFinder />
       <AlmacenesFinder />
       <CarteraFinder />
-      <TercerosFinder />
+      <TercerosFinder searchTable="terceros" />
     </View>
   );
 };

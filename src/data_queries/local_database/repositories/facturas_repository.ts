@@ -121,6 +121,7 @@ class FacturasRepository implements IRepository<IOperation | IOperationDb> {
         tercero_nombre,
         tercero_plazo,
         tercero_tel,
+        tercer_dv,
         tercero_vendedor,
         tercero_tipo,
         tercero_departamento,
@@ -371,6 +372,7 @@ class FacturasRepository implements IRepository<IOperation | IOperationDb> {
                     longitude: factura.tercero_longitude,
                     rut_path: factura.tercero_rut_path,
                     camaracomercio_path: factura.tercero_camaracomercio_path,
+                    dv: factura.tercero_dv,
                   },
                   articulosAdded: JSON.parse(factura.articulosAdded),
 
@@ -473,6 +475,7 @@ class FacturasRepository implements IRepository<IOperation | IOperationDb> {
                         rut_path: factura.tercero_rut_path,
                         camaracomercio_path:
                           factura.tercero_camaracomercio_path,
+                        dv: factura.tercero_dv,
                       },
                       articulosAdded: JSON.parse(factura.articulosAdded),
 

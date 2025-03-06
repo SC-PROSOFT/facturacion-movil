@@ -40,6 +40,7 @@ class AlmacenesRepository implements IRepository<IAlmacen> {
               resolve(true);
             },
             (error: ResultSet) => {
+              console.log('error =>', error);
               reject(new Error('Fallo borrar almacenes'));
             },
           );

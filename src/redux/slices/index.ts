@@ -15,3 +15,6 @@ export * from './syncSlice';
 export * from './visitaSlice';
 export * from './productSlice';
 export * from './operationSlice';
+export * from './frecuenciasFinderSlice';
+export * from './uploadArchivesSlice';
+export * from './encuestaSlice';

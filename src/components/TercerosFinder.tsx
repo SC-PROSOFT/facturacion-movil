@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {useRoute} from '@react-navigation/native';
 import {
   View,
@@ -16,13 +16,15 @@ import {useAppDispatch, useAppSelector} from '../redux/hooks';
 import {setIsShowTercerosFinder} from '../redux/slices/tercerosFinderSlice';
 import {tercerosService} from '../data_queries/local_database/services';
 import {ITerceros} from '../common/types';
+import debounce from 'lodash/debounce';
 
 interface TercerosFinderProps {
   toggleTercero?: (tercero: ITerceros) => void;
+  searchTable: 'terceros' | 'terceros_nuevos';
 }
 
 export const TercerosFinder = React.memo(
-  ({toggleTercero}: TercerosFinderProps) => {
+  ({toggleTercero, searchTable}: TercerosFinderProps) => {
     const dispatch = useAppDispatch();
     const route = useRoute();
     const isShowTercerosFinder = useAppSelector(
@@ -31,11 +33,14 @@ export const TercerosFinder = React.memo(
     const objConfig = useAppSelector(store => store.config.objConfig);
     const objOperador = useAppSelector(store => store.operator.objOperator);
     const [inputs, setInputs] = useState({operador: ''});
+    const [tempTerceros, setTempTerceros] = useState<ITerceros[]>([]);
     const [terceros, setTerceros] = useState<ITerceros[]>([]);
     const [filteredTerceros, setFilteredTerceros] = useState<ITerceros[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const [quantityTerceros, setQuantityTerceros] = useState(0);
+    const [page, setPage] = useState(1);
+    const pageSize = 20;
 
     useEffect(() => {
       adjustScreenSize();
@@ -47,18 +52,43 @@ export const TercerosFinder = React.memo(
       }
     }, [isShowTercerosFinder]);
 
+    useEffect(() => {
+      return () => {
+        debouncedFilterTerceros.cancel();
+      };
+    }, []);
+
     const handleInputChange = (name: string, text: string) => {
       setInputs(prevState => ({...prevState, [name]: text}));
-      filterTerceros(text);
+      debouncedFilterTerceros(text);
     };
 
-    const filterTerceros = (text: string) => {
-      const filtered = terceros.filter(
-        tercero =>
-          tercero.codigo.includes(text.toUpperCase()) ||
-          tercero.nombre.includes(text.toUpperCase()),
-      );
-      setFilteredTerceros(filtered);
+    const debouncedFilterTerceros = useCallback(
+      debounce((text: string) => {
+        filterTerceros(text);
+      }, 2000),
+      [],
+    );
+
+    const filterTerceros = async (text: string) => {
+      if (text.length === 0) {
+
+        setFilteredTerceros(tempTerceros);
+        return;
+      }
+
+      const attribute = /^[0-9]/.test(text) ? 'codigo' : 'nombre';
+      try {
+        const filtered = await tercerosService.getByLikeAttribute(
+          attribute,
+          text,
+          searchTable,
+        );
+
+        setFilteredTerceros(filtered);
+      } catch (error) {
+        console.error('Error al filtrar terceros:', error);
+      }
     };
 
     const closeOperadoresFinder = () => {
@@ -73,18 +103,26 @@ export const TercerosFinder = React.memo(
       const {cod_vendedor} = objOperador;
 
       try {
-        const quantityTerceros = await tercerosService.getQuantityTerceros();
+        const quantityTerceros = await tercerosService.getQuantityByTable(
+          searchTable,
+        );
         setQuantityTerceros(parseInt(quantityTerceros));
 
-        const allTerceros = await tercerosService.getAllTerceros();
+        const allTerceros = await tercerosService.getPaginatedByTable(
+          searchTable,
+          1, // Reset page to 1
+          pageSize,
+        );
 
         if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
           const filteredTerceros = allTerceros.filter(
             tercero => tercero.vendedor === cod_vendedor,
           );
+          setTempTerceros(filteredTerceros);
           setTerceros(filteredTerceros);
           setFilteredTerceros(filteredTerceros);
         } else {
+          setTempTerceros(allTerceros);
           setTerceros(allTerceros);
           setFilteredTerceros(allTerceros);
         }
@@ -93,6 +131,31 @@ export const TercerosFinder = React.memo(
       } finally {
         setIsLoading(false);
         setIsFirstLoad(false);
+      }
+    };
+
+    const loadMoreTerceros = async () => {
+      if (isLoading) return;
+      if (filteredTerceros.length >= quantityTerceros) return;
+
+      setIsLoading(true);
+      const newPage = page + 1;
+
+      try {
+        const moreTerceros = await tercerosService.getPaginatedByTable(
+          searchTable,
+          newPage,
+          pageSize,
+        );
+
+        setTerceros(prevTerceros => [...prevTerceros, ...moreTerceros]);
+        setFilteredTerceros(prevTerceros => [...prevTerceros, ...moreTerceros]);
+        setTempTerceros(prevTerceros => [...prevTerceros, ...moreTerceros]);
+        setPage(newPage);
+      } catch (error) {
+        console.error('Error al cargar más terceros:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -245,6 +308,15 @@ export const TercerosFinder = React.memo(
               getItem={(data, index) => data[index]}
               keyExtractor={item => item.codigo.toString()}
               keyboardShouldPersistTaps="always"
+              onEndReached={loadMoreTerceros}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={
+                isLoading ? (
+                  <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="small" color="#0000ff" />
+                  </View>
+                ) : null
+              }
             />
           )}
         </SafeAreaView>

@@ -21,6 +21,7 @@ class RememberAccountRepository implements IRepository<IRememberAccount> {
           sqlCreateStatement,
           null,
           (_: ResultSet, response: ResultSet) => {
+            console.log('response', response);
             resolve(true);
           },
           (error: Error) => {
@@ -40,6 +41,7 @@ class RememberAccountRepository implements IRepository<IRememberAccount> {
           `INSERT INTO rememberAccount (user, password) VALUES (?, ?)`,
           [user, password],
           (_: ResultSet, response: ResultSet) => {
+            console.log('response', response);
             resolve(true);
           },
           (error: Error) => {
@@ -65,6 +67,7 @@ class RememberAccountRepository implements IRepository<IRememberAccount> {
           WHERE user = '${oldUser}'`,
           null,
           (_: ResultSet, response: ResultSet) => {
+            console.log('response', response);
             resolve(true);
           },
           (error: Error) => {
@@ -82,6 +85,7 @@ class RememberAccountRepository implements IRepository<IRememberAccount> {
           `DELETE FROM rememberAccount`,
           null,
           (_: ResultSet, response: ResultSet) => {
+            console.log('response', response);
             resolve(true);
           },
           (error: Error) => {

@@ -435,14 +435,17 @@ const Config: React.FC = () => {
         directorio: objConfig.directorioContabilidad,
         ip_datos: objConfig.datosIp,
       };
-
+      console.log('configData =>', configData);
       const resApi_saveConfig: any = await api_saveConfig(
         configData,
         objConfig.direccionIp,
         objConfig.puerto,
       );
 
+      console.log(resApi_saveConfig?.data.MENSAJE);
+
       if (resApi_saveConfig?.data.MENSAJE == 'Grabado correctamente') {
+        console.log('Grabado correctamente entre');
         saveInLocalDb();
         setIsLoadingSave(false);
       } else {
@@ -450,12 +453,16 @@ const Config: React.FC = () => {
         dispatch(showAlert('NN'));
       }
     } catch (error) {
+      console.log(error);
       setIsLoadingSave(false);
       dispatch(showAlert('02'));
     }
   };
   const saveInLocalDb = async () => {
     try {
+      console.log('entre');
+      console.log('objConfig =>', objConfig);
+
       await configService.saveConfig({
         facturarSinExistencias: objConfig.facturarSinExistencias,
         seleccionarAlmacen: objConfig.seleccionarAlmacen,
@@ -477,9 +484,10 @@ const Config: React.FC = () => {
         tarifaIva2: objConfig.tarifaIva2,
         tarifaIva3: objConfig.tarifaIva3,
       });
-
+      console.log('Save In LocalDb');
       dispatch(showAlert('03'));
     } catch (error) {
+      console.log('error =>', error);
       dispatch(showAlert('04'));
     }
   };

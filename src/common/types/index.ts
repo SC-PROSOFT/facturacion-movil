@@ -11,3 +11,4 @@ export * from './IVisita';
 export * from './IMovimiento';
 export * from './ISurvey';
 export * from './IEncuesta';
+export * from './IFrecuencia';

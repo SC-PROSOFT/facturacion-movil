@@ -33,3 +33,6 @@ export * from './_Input';
 export * from './_InputSelect';
 export * from './_Checkbox';
 export * from './_DatePicker';
+export * from './_InputRightIcon';
+export * from './FrequencyFinder';
+export * from './UploadArchives';

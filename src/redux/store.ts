@@ -17,6 +17,8 @@ import carteraPopupReducer from './slices/carteraPopupSlice';
 import visitaReducer from './slices/visitaSlice';
 import productReducer from './slices/productSlice';
 import operationReducer from './slices/operationSlice';
+import frecuenciaFinderReducer from './slices/frecuenciasFinderSlice';
+import uploadArchivesReducer from './slices/uploadArchivesSlice'; // Importa el reducer
 
 export const store = configureStore({
   reducer: {
@@ -37,6 +39,8 @@ export const store = configureStore({
     visita: visitaReducer,
     product: productReducer,
     operation: operationReducer,
+    frecuenciaFinder: frecuenciaFinderReducer,
+    uploadArchives: uploadArchivesReducer, // Añade el reducer aquí
   },
 });
 

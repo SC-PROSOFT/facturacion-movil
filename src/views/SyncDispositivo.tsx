@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
 import {
   Divider,
@@ -24,6 +24,12 @@ import {
   tercerosService,
 } from '../data_queries/local_database/services';
 import {ITerceros} from '../common/types';
+import {
+  FacturasApiService,
+  PedidosApiService,
+} from '../data_queries/api/queries';
+import Toast from 'react-native-toast-message';
+import {useFocusEffect} from '@react-navigation/native';
 
 interface ProgressWindowProps {
   visible: boolean;
@@ -31,12 +37,28 @@ interface ProgressWindowProps {
   cancelSyncQueries: () => void;
   disabledCancel: boolean;
 }
+interface Facturas {
+  facturasActualizados: number;
+  facturasPendientesDeActualizacion: number;
+  facturasElaborados: number;
+}
 
+interface Pedidos {
+  pedidosActualizados: number;
+  pedidosPendientesDeActualizacion: number;
+  pedidosElaborados: number;
+}
 interface RecordProps {
   records: {
     quantityTerceros: string;
     createdTerceros: number;
     editedTerceros: number;
+    facturasActualizados: number;
+    facturasPendientesDeActualizacion: number;
+    facturasElaborados: number;
+    pedidosActualizados: number;
+    pedidosPendientesDeActualizacion: number;
+    pedidosElaborados: number;
   };
   toggleTerceros: () => void;
 }
@@ -45,6 +67,12 @@ interface Records {
   quantityTerceros: string;
   createdTerceros: number;
   editedTerceros: number;
+  facturasActualizados: number;
+  facturasPendientesDeActualizacion: number;
+  facturasElaborados: number;
+  pedidosActualizados: number;
+  pedidosPendientesDeActualizacion: number;
+  pedidosElaborados: number;
 }
 
 const ProgressWindow = ({
@@ -92,7 +120,14 @@ const ProgressWindow = ({
 };
 
 const Record = ({records, toggleTerceros}: RecordProps) => {
-  const {quantityTerceros, createdTerceros, editedTerceros} = records;
+  const {
+    quantityTerceros,
+    createdTerceros,
+    editedTerceros,
+    facturasActualizados,
+    facturasPendientesDeActualizacion,
+    facturasElaborados,
+  } = records;
 
   const styles = StyleSheet.create({
     container: {
@@ -145,6 +180,22 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
           <Icon name="chevron-right" color="grey" size={28} />
         </View>
       </TouchableOpacity>
+      <Divider style={styles.divider} />
+
+      <TouchableOpacity style={styles.itemContainer}>
+        <View style={styles.itemLeft}>
+          <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
+            Facturas
+          </Text>
+          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+            {facturasElaborados} Facturas
+          </Text>
+          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+            {facturasPendientesDeActualizacion} pendientes,{' '}
+            {facturasActualizados} actualizadas
+          </Text>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -158,6 +209,20 @@ const SyncDispositivo = () => {
   const tercerosEditados = useAppSelector(
     store => store.tercerosFinder.tercerosEditados,
   );
+
+  const [factura, setFacturas] = useState<Facturas>({
+    facturasActualizados: 0,
+    facturasPendientesDeActualizacion: 0,
+    facturasElaborados: 0,
+  });
+
+  const [pedido, setPedidos] = useState<Pedidos>({
+    pedidosActualizados: 0,
+    pedidosPendientesDeActualizacion: 0,
+    pedidosElaborados: 0,
+  });
+  const [loading, setLoading] = useState<boolean>(false);
+
   const [screenHeight, setScreenHeight] = useState(
     Dimensions.get('window').height,
   );
@@ -169,11 +234,182 @@ const SyncDispositivo = () => {
     quantityTerceros: '0',
     createdTerceros: 0,
     editedTerceros: 0,
+    facturasActualizados: 0,
+    facturasPendientesDeActualizacion: 0,
+    facturasElaborados: 0,
+    pedidosActualizados: 0,
+    pedidosPendientesDeActualizacion: 0,
+    pedidosElaborados: 0,
   });
 
-  useEffect(() => {
-    loadRecord();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadRecord();
+      loadFacturasValues();
+    }, []),
+  );
+
+  const loadFacturasValues: () => void = async () => {
+    try {
+      const facturas = await facturasService.getAllFacturas();
+
+      const facturasValues = {
+        facturasActualizados: 0,
+        facturasPendientesDeActualizacion: 0,
+        facturasElaborados: 0,
+      };
+
+      for (let factura of facturas) {
+        factura.sincronizado == 'S'
+          ? (facturasValues.facturasActualizados += 1)
+          : (facturasValues.facturasPendientesDeActualizacion += 1);
+
+        facturasValues.facturasElaborados++;
+      }
+
+      setFacturas(facturasValues);
+
+      setRecords(prevRecords => ({
+        ...prevRecords,
+        facturasActualizados: facturasValues.facturasActualizados,
+        facturasPendientesDeActualizacion:
+          facturasValues.facturasPendientesDeActualizacion,
+        facturasElaborados: facturasValues.facturasElaborados,
+      }));
+    } catch (error) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: 'Fallo cargar valores de facturas',
+        }),
+      );
+    }
+  };
+
+  const updateFacturas: () => void = async () => {
+    setLoading(true);
+    const facturasApiService = new FacturasApiService(
+      objConfig.descargasIp,
+      objConfig.puerto,
+    );
+
+    const facturas = await facturasService.getAllFacturas();
+
+    for (let index = 0; index < facturas.length; index++) {
+      const factura = facturas[index];
+
+      try {
+        await facturasApiService._saveFactura(
+          factura,
+          factura.guardadoEnServer == 'S' ? 'put' : 'post',
+        );
+        await facturasService.updateFactura(
+          factura.operador.nro_factura.toString(),
+          {
+            ...factura,
+            sincronizado: 'S',
+          },
+        );
+
+        if (index === facturas.length - 1) {
+          Toast.show({
+            type: 'success',
+            text1: 'Facturas actualizadas correctamente',
+          });
+        }
+
+        loadFacturasValues();
+        setLoading(false);
+      } catch (error: any) {
+        setLoading(false);
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: error.message,
+          }),
+        );
+      }
+    }
+  };
+
+  const loadPedidosValues: () => void = async () => {
+    try {
+      const pedidos = await pedidosService.getAllPedidos();
+
+      const pedidosValues = {
+        pedidosActualizados: 0,
+        pedidosPendientesDeActualizacion: 0,
+        pedidosElaborados: 0,
+      };
+
+      for (let pedido of pedidos) {
+        pedido.sincronizado == 'S'
+          ? (pedidosValues.pedidosActualizados += 1)
+          : (pedidosValues.pedidosPendientesDeActualizacion += 1);
+
+        pedidosValues.pedidosElaborados++;
+      }
+
+      setPedidos(pedidosValues);
+      setRecords(prevRecords => ({
+        ...prevRecords,
+        pedidosActualizados: pedidosValues.pedidosActualizados,
+        pedidosPendientesDeActualizacion:
+          pedidosValues.pedidosPendientesDeActualizacion,
+        pedidosElaborados: pedidosValues.pedidosElaborados,
+      }));
+    } catch (error) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: 'Fallo cargar valores de pedidos',
+        }),
+      );
+    }
+  };
+
+  const updatePedidos: () => void = async () => {
+    setLoading(true);
+    const pedidosApiService = new PedidosApiService(
+      objConfig.descargasIp,
+      objConfig.puerto,
+    );
+
+    const pedidos = await pedidosService.getAllPedidos();
+
+    for (let index = 0; index < pedidos.length; index++) {
+      const pedido = pedidos[index];
+
+      try {
+        await pedidosApiService._savePedido(
+          pedido,
+          pedido.guardadoEnServer == 'S' ? 'put' : 'post',
+        );
+
+        if (index === pedidos.length - 1) {
+          Toast.show({
+            type: 'success',
+            text1: 'pedidos actualizados correctamente',
+          });
+        }
+
+        loadPedidosValues();
+        setLoading(false);
+      } catch (error: any) {
+        setLoading(false);
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: error.message,
+          }),
+        );
+      }
+    }
+  };
 
   const toggleUploadData = async () => {
     setShowProgressWindow(true);
@@ -231,15 +467,32 @@ const SyncDispositivo = () => {
   };
 
   const loadRecord = async () => {
-    const createdTerceros = tercerosCreados.length || 0;
-    const editedTerceros = tercerosEditados.length || 0;
-    const quantityTerceros = (createdTerceros + editedTerceros).toString();
+    try {
+      console.log('loading records from database');
+      const createdTerceros = await tercerosService.getCreated();
+      console.log('createdTerceros', createdTerceros);
+      const editedTerceros = await tercerosService.getModified();
+      console.log('editedTerceros', editedTerceros);
+      const quantityTerceros = (
+        createdTerceros.length + editedTerceros.length
+      ).toString();
 
-    setRecords({
-      quantityTerceros,
-      createdTerceros,
-      editedTerceros,
-    });
+      setRecords({
+        quantityTerceros,
+        createdTerceros: createdTerceros.length,
+        editedTerceros: editedTerceros.length,
+        facturasActualizados: factura.facturasActualizados,
+        facturasPendientesDeActualizacion:
+          factura.facturasPendientesDeActualizacion,
+        facturasElaborados: factura.facturasElaborados,
+        pedidosActualizados: pedido.pedidosActualizados,
+        pedidosPendientesDeActualizacion:
+          pedido.pedidosPendientesDeActualizacion,
+        pedidosElaborados: pedido.pedidosElaborados,
+      });
+    } catch (error) {
+      console.error('Error loading records from database', error);
+    }
   };
 
   const toggleTerceros = () => {
@@ -274,6 +527,7 @@ const SyncDispositivo = () => {
       paddingHorizontal: 20,
       paddingVertical: 15,
       borderRadius: 10,
+      //height: screenHeight * 0.5,
     },
     tabButtonsContainer: {
       display: 'flex',
@@ -313,7 +567,7 @@ const SyncDispositivo = () => {
         disabledCancel={disabledCancel}
       />
 
-      <TercerosFinder />
+      <TercerosFinder searchTable="terceros_nuevos" />
     </View>
   );
 };

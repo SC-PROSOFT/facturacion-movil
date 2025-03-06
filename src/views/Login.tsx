@@ -252,6 +252,7 @@ const Login = () => {
     }
   };
   const initDb = async () => {
+    console.log('initDb');
     await createTables();
 
     loadRememberedAccount();

@@ -3,8 +3,6 @@ import {TercerosRepository} from '../repositories';
 import {ITerceros} from '../../../common/types';
 import {useAppDispatch} from '../../../redux/hooks';
 
-
-
 const tercerosRepository = new TercerosRepository();
 
 class TercerosService {
@@ -16,6 +14,14 @@ class TercerosService {
 
   async createTableTerceros(): Promise<boolean> {
     return this.tercerosRepository.createTable();
+  }
+
+  async createTableTercerosCreates(): Promise<boolean> {
+    return this.tercerosRepository.createTableCreates();
+  }
+
+  async createTableTercerosEdits(): Promise<boolean> {
+    return this.tercerosRepository.createTableEdits();
   }
 
   async createTercero(tercero: ITerceros): Promise<boolean> {
@@ -42,11 +48,16 @@ class TercerosService {
     return this.tercerosRepository.getQuantity();
   }
 
-  async getPaginatedTerceros(
+  async getPaginatedByTable(
+    tableSearch: 'terceros' | 'terceros_nuevos',
     page: number,
     pageSize: number,
   ): Promise<ITerceros[]> {
-    return this.tercerosRepository.getPaginated(page, pageSize);
+    return this.tercerosRepository.getPaginatedByTable(
+      tableSearch,
+      page,
+      pageSize,
+    );
   }
 
   async getByAttribute(
@@ -57,6 +68,38 @@ class TercerosService {
       attributeName,
       attributeValue,
     );
+  }
+
+  async getByLikeAttribute(
+    attributeName: string,
+    attributeValue: any,
+    tableSearch: 'terceros' | 'terceros_nuevos',
+  ): Promise<ITerceros[]> {
+    return this.tercerosRepository.getByLikeAttribute(
+      attributeName,
+      attributeValue,
+      tableSearch,
+    );
+  }
+
+  async getAllByTable(
+    tableSearch: 'terceros' | 'terceros_nuevos',
+  ): Promise<ITerceros[]> {
+    return this.tercerosRepository.getAllByTable(tableSearch);
+  }
+
+  async getQuantityByTable(
+    tableSearch: 'terceros' | 'terceros_nuevos',
+  ): Promise<string> {
+    return this.tercerosRepository.getQuantityByTable(tableSearch);
+  }
+
+  async getCreated(): Promise<ITerceros[]> {
+    return this.tercerosRepository.getCreatedTerceros();
+  }
+
+  async getModified(): Promise<ITerceros[]> {
+    return this.tercerosRepository.getEditedTerceros();
   }
 }
 

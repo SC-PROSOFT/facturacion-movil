@@ -57,6 +57,7 @@ export interface IOperationDb {
   tercero_direcc: string;
   tercero_ex_iva: 'S' | 'N';
   tercero_f_pago: '01' | '02';
+  tercero_dv: string;
   tercero_nombre: string;
   tercero_plazo: number;
   tercero_tel: string;

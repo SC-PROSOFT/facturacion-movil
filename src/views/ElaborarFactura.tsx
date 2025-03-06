@@ -1233,7 +1233,7 @@ const ElaborarFactura: React.FC = () => {
         </View>
       </ScrollView>
 
-      <TercerosFinder toggleTercero={toggleTercero} />
+      <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
       <ProductFinder toggleProduct={toggleArticulo} />
       <CarteraPopup />
       <ProductSheet />

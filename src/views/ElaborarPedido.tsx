@@ -947,7 +947,7 @@ const ElaborarPedido: React.FC = () => {
       } else if (error instanceof ApiSaveOrderError) {
         saveOrderInLocalDatabaseOnly();
       } else {
-        console.log("Save err"+error);
+        console.log('Save err' + error);
         dispatch(
           setObjInfoAlert({
             visible: true,
@@ -978,7 +978,7 @@ const ElaborarPedido: React.FC = () => {
       });
       setIsLoadingSave(false);
     } catch (error: any) {
-      console.log("Save Order"+error);
+      console.log('Save Order' + error);
       setIsLoadingSave(false);
       dispatch(
         setObjInfoAlert({
@@ -1218,7 +1218,7 @@ const ElaborarPedido: React.FC = () => {
         </View>
       </ScrollView>
 
-      <TercerosFinder toggleTercero={toggleTercero} />
+      <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
       <ProductFinder toggleProduct={toggleProduct} />
       <CarteraPopup />
       <ProductSheet />

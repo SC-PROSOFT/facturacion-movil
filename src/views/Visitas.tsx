@@ -19,6 +19,7 @@ import {
   setObjInfoAlert,
   setArrFactura,
   setArrPedido,
+  setObjEncuesta,
 } from '../redux/slices';
 /* local db */
 import {
@@ -28,6 +29,7 @@ import {
   tercerosService,
   facturasService,
   pedidosService,
+  encuestaService,
 } from '../data_queries/local_database/services';
 
 const visitas: IVisita[] = [
@@ -38,7 +40,7 @@ const visitas: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2025-02-27',
+    appointmentDate: '2025-03-06',
     location: {
       latitude: '',
       longitude: '',
@@ -52,7 +54,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-02-27',
+    appointmentDate: '2025-03-06',
     location: {
       latitude: '',
       longitude: '',
@@ -66,7 +68,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-02-27',
+    appointmentDate: '2025-03-06',
     location: {
       latitude: '',
       longitude: '',
@@ -101,6 +103,7 @@ const Visitas: React.FC = () => {
 
     dispatch(setArrCartera(cartera));
   };
+
   const loadSettings = async () => {
     try {
       const config = await configService.getConfig();
@@ -169,7 +172,6 @@ const Visitas: React.FC = () => {
       dispatch(setObjTercero(tercero));
 
       navigation.navigate('TabNavTercero');
-
     } catch (error: any) {
       dispatch(
         setObjInfoAlert({
@@ -186,7 +188,7 @@ const Visitas: React.FC = () => {
         'tercero_codigo',
         tercero.codigo,
       );
-      
+
       dispatch(setArrFactura(facturas));
     } catch (error: any) {
       dispatch(
@@ -272,8 +274,7 @@ const Visitas: React.FC = () => {
           }}
         />
       </SafeAreaView>
-
-      <TercerosFinder toggleTercero={toggleTercero} />
+      <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
     </View>
   );
 };

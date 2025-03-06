@@ -11,6 +11,7 @@ import {
   configService,
   pedidosService,
   facturasService,
+  encuestaService,
 } from './services';
 
 const db: any = SQLite.openDatabase({name: 'localdb16'}); // 14
@@ -18,14 +19,29 @@ const db: any = SQLite.openDatabase({name: 'localdb16'}); // 14
 /* create tables */
 const createTables = async (): Promise<boolean> => {
   try {
-    await operadoresService.createTableOperadores();
-    await articulosService.createTableArticulos();
-    await almacenesService.createTableAlmacenes();
-    await carteraService.createTableCartera();
-    await tercerosService.createTableTerceros();
-    await rememberAccountService.createTableRememberAccount();
+    console.log('Creando tablas 1...');
     await configService.createTableConfig();
+    console.log('Creando tablas 2...');
+    await operadoresService.createTableOperadores();
+    console.log('Creando tablas 3...');
+    await articulosService.createTableArticulos();
+    console.log('Creando tablas 4...');
+    await almacenesService.createTableAlmacenes();
+    console.log('Creando tablas 5...');
+    await carteraService.createTableCartera();
+    console.log('Creando tablas 6...');
+    await tercerosService.createTableTerceros();
+    console.log('Creando tablas 6.1...');
+    await tercerosService.createTableTercerosCreates();
+    console.log('Creando tablas 6.2...');
+    await tercerosService.createTableTercerosEdits();
+    console.log('Creando tablas 7...');
+    await rememberAccountService.createTableRememberAccount();
+    console.log('Creando tablas 8...');
+    await encuestaService.createTableEncuesta();
+    console.log('Creando tablas 9...');
     await pedidosService.createTablePedidos();
+    console.log('Creando tablas 10...');
     await facturasService.createTableFacturas();
 
     return true;
