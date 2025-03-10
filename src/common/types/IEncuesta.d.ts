@@ -2,7 +2,7 @@ type ActivarFlag = 'S' | 'N';
 
 export interface IEncuesta {
   codigo: string;
-  numero_preguntas: string;
+  nro_preguntas: string;
   activar: ActivarFlag | string; // ACTIVAR-ENCU (podríamos restringirlo a 'S' o 'N')
   preguntas: IPregunta[];
   admin_creacion: string;

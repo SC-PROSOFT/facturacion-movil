@@ -62,7 +62,7 @@ export interface IOperationDb {
   tercero_plazo: number;
   tercero_tel: string;
   tercero_vendedor: string;
-  tercero_tipo?: 'CC' | 'TI';
+  tercero_tipo?: 'CC' | 'NIT';
   tercero_departamento: string;
   tercero_ciudad: string;
   tercero_barrio: string;

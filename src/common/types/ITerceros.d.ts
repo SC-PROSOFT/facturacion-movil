@@ -11,7 +11,7 @@ export interface ITerceros {
   dv: string;
 
   /* ADICIONALES */
-  tipo?: 'CC' | 'TI';
+  tipo?: 'CC' | 'NIT';
   departamento: string;
   ciudad: string;
   barrio: string;
