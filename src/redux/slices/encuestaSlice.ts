@@ -3,21 +3,22 @@ import {IEncuesta} from '../../common/types';
 
 interface EncuestaState {
   isShowEncuesta: boolean;
-  objEncuesta: IEncuesta;
+  objEncuesta: IEncuesta | null;
 }
 
 const initialState: EncuestaState = {
   isShowEncuesta: false,
-  objEncuesta: {
-    codigo: '',
-    numero_preguntas: 0,
-    preguntas: [],
-    activar: '',
-    admin_creacion: '',
-    fecha_creacion: {anio: 0, mes: 0, dia: 0},
-    admin_modificacion: '',
-    fecha_modificacion: {anio: 0, mes: 0, dia: 0},
-  },
+  objEncuesta:
+    {
+      codigo: '',
+      nro_preguntas: '',
+      preguntas: [],
+      activar: '',
+      admin_creacion: '',
+      fecha_creacion: '',
+      admin_modificacion: '',
+      fecha_modificacion: '',
+    } || null,
 };
 
 export const encuestaSlice = createSlice({
@@ -27,7 +28,7 @@ export const encuestaSlice = createSlice({
     setIsShowEncuesta(state, action: PayloadAction<boolean>) {
       state.isShowEncuesta = action.payload;
     },
-    setObjEncuesta(state, action: PayloadAction<IEncuesta>) {
+    setObjEncuesta(state, action: PayloadAction<IEncuesta | null>) {
       state.objEncuesta = action.payload;
     },
   },

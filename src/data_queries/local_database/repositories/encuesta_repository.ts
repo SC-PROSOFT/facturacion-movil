@@ -6,14 +6,14 @@ class EncuestaRepository implements IRepository<IEncuesta> {
   async createTable(): Promise<boolean> {
     const sqlCreateStatement = `
         CREATE TABLE IF NOT EXISTS encuesta (
-            codigo INTEGER NOT NULL UNIQUE, 
-            numero_preguntas TEXT NOT NULL,
-            activar TEXT CHECK (activar IN ('S', 'N')) NOT NULL,
-            preguntas TEXT NOT NULL, 
-            admin_creacion TEXT NOT NULL,
-            fecha_creacion TEXT NOT NULL, 
-            admin_modificacion TEXT NOT NULL,
-            fecha_modificacion TEXT NOT NULL
+            codigo INTEGER , 
+            nro_preguntas TEXT,
+            activar TEXT ,
+            preguntas TEXT , 
+            admin_creacion TEXT ,
+            fecha_creacion TEXT , 
+            admin_modificacion TEXT ,
+            fecha_modificacion TEXT
         )
         `;
 
@@ -41,7 +41,7 @@ class EncuestaRepository implements IRepository<IEncuesta> {
     const sqlInsertStatement = `
         INSERT INTO encuesta (
             codigo, 
-            numero_preguntas, 
+            nro_preguntas, 
             activar, 
             preguntas, 
             admin_creacion, 
@@ -64,7 +64,7 @@ class EncuestaRepository implements IRepository<IEncuesta> {
               sqlInsertStatement,
               [
                 encuesta.codigo,
-                encuesta.numero_preguntas,
+                encuesta.nro_preguntas,
                 encuesta.activar,
                 JSON.stringify(encuesta.preguntas),
                 encuesta.admin_creacion,
@@ -91,12 +91,41 @@ class EncuestaRepository implements IRepository<IEncuesta> {
     });
   }
 
+  async get(): Promise<IEncuesta | null> {
+    const sqlSelectStatement = `SELECT * FROM encuesta`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [],
+          (_: ResultSet, response: ResultSet) => {
+            console.log(response);
+            if (response.rows.length > 0) {
+              const encuesta = response.rows.item(0);
+              console.log('Encuesta obtenida:', encuesta);
+              console.log('Encuesta obtenida:', encuesta);
+              resolve(encuesta);
+            } else {
+              console.log('No se encontraron encuestas');
+              resolve(null);
+            }
+          },
+          (error: ResultSet) => {
+            console.error('Error al obtener encuesta:', error);
+            reject(new Error('Fallo obtener encuesta'));
+          },
+        );
+      });
+    });
+  }
+
   async update(id: string, encuesta: IEncuesta): Promise<boolean> {
     const sqlUpdateStatement = `
         UPDATE encuesta
         SET 
             codigo = ?, 
-            numero_preguntas = ?, 
+            nro_preguntas = ?, 
             activar = ?, 
             preguntas = ?, 
             admin_modificacion = ?, 
@@ -110,7 +139,7 @@ class EncuestaRepository implements IRepository<IEncuesta> {
           sqlUpdateStatement,
           [
             encuesta.codigo,
-            encuesta.numero_preguntas,
+            encuesta.nro_preguntas,
             encuesta.activar,
             JSON.stringify(encuesta.preguntas),
             encuesta.admin_modificacion,

@@ -18,6 +18,10 @@ class EncuestaService {
   async fillEncuesta(encuesta: IEncuesta[]): Promise<boolean> {
     return this.encuestaRepository.fillTable(encuesta);
   }
+
+  async getEncuesta(): Promise<IEncuesta | null> {
+    return this.encuestaRepository.get();
+  }
 }
 
 const encuestaService = new EncuestaService();

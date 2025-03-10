@@ -6,3 +6,5 @@ export * from './logos';
 export * from './getUbication';
 export * from './getPermissions';
 export * from './getUbication';
+export * from './uriToBlob';
+export * from './calculateDV';

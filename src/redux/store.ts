@@ -18,7 +18,8 @@ import visitaReducer from './slices/visitaSlice';
 import productReducer from './slices/productSlice';
 import operationReducer from './slices/operationSlice';
 import frecuenciaFinderReducer from './slices/frecuenciasFinderSlice';
-import uploadArchivesReducer from './slices/uploadArchivesSlice'; // Importa el reducer
+import uploadArchivesReducer from './slices/uploadArchivesSlice';
+import encuestaReducer from './slices/encuestaSlice';
 
 export const store = configureStore({
   reducer: {
@@ -40,7 +41,8 @@ export const store = configureStore({
     product: productReducer,
     operation: operationReducer,
     frecuenciaFinder: frecuenciaFinderReducer,
-    uploadArchives: uploadArchivesReducer, // Añade el reducer aquí
+    uploadArchives: uploadArchivesReducer,
+    encuesta: encuestaReducer, // Añade el reducer aquí
   },
 });
 

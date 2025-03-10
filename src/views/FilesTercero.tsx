@@ -11,17 +11,25 @@ import {CoolButton} from '../components';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {setObjInfoAlert} from '../redux/slices/infoAlertSlice';
+import {FilesApiServices} from '../data_queries/api/queries';
+import {convert} from 'react-native-html-to-pdf';
 
 const FilesTercero = () => {
   const dispatch = useAppDispatch();
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+  const objConfig = useAppSelector(store => store.config.objConfig);
 
   const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
   const [camaraComercioFile, setCamaraComercioFile] =
     useState<DocumentPickerResponse | null>(null);
   const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
     null,
+  );
+
+  const filesApiServices = new FilesApiServices(
+    objConfig.direccionIp,
+    objConfig.puerto,
   );
 
   const handleFileSelection = async (type: string) => {
@@ -61,6 +69,40 @@ const FilesTercero = () => {
     }
   };
 
+  const uploadFiles = async () => {
+    if (rutFile) {
+      await filesApiServices._uploadFiles(
+        await convertToFile(rutFile),
+        objTercero,
+      );
+    }
+    // if (camaraComercioFile) {
+    //   await filesApiServices._uploadFiles(
+    //     await convertToFile(camaraComercioFile),
+    //     objTercero,
+    //   );
+    // }
+    // if (cedulaFile) {
+    //   await filesApiServices._uploadFiles(
+    //     await convertToFile(cedulaFile),
+    //     objTercero,
+    //   );
+    // }
+  };
+
+  const convertToFile = async (
+    file: DocumentPickerResponse,
+  ): Promise<File | null> => {
+    try {
+      const blob = await uriToBlob(file.uri);
+      const convertedFile = new File([blob], file.name, {type: file.type});
+      return convertedFile;
+    } catch (error) {
+      console.error('Error converting file:', error);
+      return null;
+    }
+  };
+
   const removeFile = (type: string) => {
     if (type === 'RUT') {
       setRutFile(null);
@@ -70,6 +112,24 @@ const FilesTercero = () => {
       setCedulaFile(null);
     }
   };
+
+  function uriToBlob(uri: string): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        // return the blob
+        resolve(xhr.response);
+      };
+      xhr.onerror = function () {
+        // something went wrong
+        reject(new Error('uriToBlob failed'));
+      };
+      // this helps us get a blob
+      xhr.responseType = 'blob';
+      xhr.open('GET', uri, true);
+      xhr.send(null);
+    });
+  }
 
   const addRut = () => handleFileSelection('RUT');
   const addCamaraComercio = () => handleFileSelection('Cámara de Comercio');
@@ -249,7 +309,9 @@ const FilesTercero = () => {
           colorButton="#09540B"
           colorText="#FFF"
           iconSize={26}
-          pressCoolButton={() => {}}
+          pressCoolButton={() => {
+            uploadFiles();
+          }}
         />
       </View>
       <View>

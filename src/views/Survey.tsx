@@ -7,9 +7,9 @@ import {
   VirtualizedList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {useAppDispatch} from '../redux/hooks';
+import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {IEncuesta, IPregunta} from '../common/types/IEncuesta';
 import {_Checkbox} from '../components/_Checkbox';
 import {_DatePicker} from '../components/_DatePicker';
@@ -21,47 +21,39 @@ const Survey = () => {
   const dispatch = useAppDispatch();
   const navigation: any = useNavigation();
 
-  const survey: IEncuesta = {
-    codigo: 3,
-    numero_preguntas: 5,
-    activar: 'S',
-    preguntas: [
-      {
-        tipo: 'checkbox',
-        pregunta_texto: 'Which features do you use the most?',
-        numero_resp_cerrada: 3,
-        opciones_respuesta_cerrada: ['Feature A', 'Feature B', 'Feature C'],
-      },
-      {
-        tipo: 'multiple-choice',
-        pregunta_texto: 'Do you feel valued at work?',
-        numero_resp_cerrada: 2,
-        opciones_respuesta_cerrada: ['Yes', 'No'],
-      },
-      {
-        tipo: 'text',
-        pregunta_texto: 'What can we improve?',
-        numero_resp_cerrada: 0,
-        opciones_respuesta_cerrada: [],
-      },
-      {
-        tipo: 'rating',
-        pregunta_texto: 'Rate our service',
-        numero_resp_cerrada: 0,
-        opciones_respuesta_cerrada: [],
-      },
-      {
-        tipo: 'date',
-        pregunta_texto: 'Select a date for your visit',
-        numero_resp_cerrada: 0,
-        opciones_respuesta_cerrada: [],
-      },
-    ],
-    admin_creacion: 'admin',
-    fecha_creacion: {anio: 2023, mes: 10, dia: 1},
-    admin_modificacion: 'admin',
-    fecha_modificacion: {anio: 2023, mes: 10, dia: 2},
-  };
+  const objEncuesta = useAppSelector(store => store.encuesta.objEncuesta);
+
+  // Verificar si objEncuesta es null
+  const survey: IEncuesta = objEncuesta
+    ? {
+        codigo: objEncuesta.codigo || '',
+        nro_preguntas: objEncuesta.nro_preguntas || '',
+        activar: objEncuesta.activar || 'S',
+        preguntas: JSON.parse(objEncuesta.preguntas || '[]')
+          .slice(0, parseInt(objEncuesta.nro_preguntas, 10))
+          .map((pregunta: any) => ({
+            tipo: pregunta.tipo_preg, // Usar tipo_pregunta directamente
+            pregunta_texto: pregunta.preg_texto,
+            numero_resp_cerrada: parseInt(pregunta.nro_resp_cerrada, 10),
+            opciones_respuesta_cerrada: pregunta.opciones_resp.map(
+              (opcion: any) => opcion.preg_cerrada,
+            ),
+          })),
+        admin_creacion: objEncuesta.admin_creacion || 'admin',
+        fecha_creacion: objEncuesta.fecha_creacion || '2023-10-02',
+        admin_modificacion: objEncuesta.admin_modificacion || 'admin',
+        fecha_modificacion: objEncuesta.fecha_modificacion || '2023-10-02',
+      }
+    : {
+        codigo: '',
+        nro_preguntas: '',
+        activar: 'S',
+        preguntas: [],
+        admin_creacion: 'admin',
+        fecha_creacion: '2023-10-02',
+        admin_modificacion: 'admin',
+        fecha_modificacion: '2023-10-02',
+      };
 
   const handleBackPress = () => {
     if (navigation.canGoBack()) {
@@ -90,19 +82,19 @@ const Survey = () => {
     return (
       <View style={styles.questionItem}>
         <Text style={styles.questionText}>{item.pregunta_texto}</Text>
-        <Text style={styles.questionRequired}>
+        {/* <Text style={styles.questionRequired}>
           {item.numero_resp_cerrada > 0 ? 'Required' : 'Optional'}
-        </Text>
-
-        {item.tipo === 'text' && (
+        </Text> */}
+        {item.tipo === '1' && (
           <_Input
-            placeholder="Type your answer here"
+            style={styles.textArea}
+            numberOfLines={10}
             value={responses[index] || ''}
             onChangeText={(text: string) => handleResponseChange(index, text)}
           />
         )}
 
-        {item.tipo === 'multiple-choice' && (
+        {item.tipo === '2' && (
           <_InputSelect
             value={responses[index] || ''}
             setValue={value => handleResponseChange(index, value)}
@@ -112,49 +104,6 @@ const Survey = () => {
                 value: idx.toString(),
               })) || []
             }
-          />
-        )}
-
-        {item.tipo === 'checkbox' &&
-          item.opciones_respuesta_cerrada.map((option, idx) => (
-            <View key={idx} style={styles.checkboxContainer}>
-              <_Checkbox
-                label={option}
-                status={responses[index]?.includes(option) || false}
-                onPress={() => {
-                  const currentResponses = responses[index] || [];
-                  if (currentResponses.includes(option)) {
-                    handleResponseChange(
-                      index,
-                      currentResponses.filter(
-                        (resp: string) => resp !== option,
-                      ),
-                    );
-                  } else {
-                    handleResponseChange(index, [...currentResponses, option]);
-                  }
-                }}
-              />
-            </View>
-          ))}
-
-        {item.tipo === 'rating' && (
-          <View style={styles.ratingContainer}>
-            {[1, 2, 3, 4, 5].map(rating => (
-              <TouchableOpacity
-                key={rating}
-                style={styles.ratingButton}
-                onPress={() => handleResponseChange(index, rating)}>
-                <Text>{rating}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {item.tipo === 'date' && (
-          <_DatePicker
-            date={responses[index] || new Date()}
-            setDate={date => handleResponseChange(index, date)}
           />
         )}
       </View>
@@ -169,7 +118,7 @@ const Survey = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Text style={styles.title}>Product Feature Survey</Text>
+          <Text style={styles.title}>Encuesta general</Text>
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleBackPress}>
@@ -196,7 +145,7 @@ const Survey = () => {
               console.log(responses);
             }}
             style={styles.submitButton}>
-            Submit
+            Guardar respuestas
           </Button>
         </View>
       </SafeAreaView>
@@ -246,7 +195,8 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: 'semibold',
+    marginBottom : 8,
   },
   questionRequired: {
     fontSize: 12,
@@ -269,6 +219,11 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 20, // Espacio entre la lista y el botón
+  },
+
+  textArea: {
+    height: 200,
+    textAlignVertical: 'top',
   },
 });
 

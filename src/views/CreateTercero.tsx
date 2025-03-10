@@ -263,11 +263,11 @@ const CreateTercero = () => {
             error={errors.nombre}
             // disabled={isDisabled}
           />
-          <_InputSelect<'CC' | 'TI'>
+          <_InputSelect<'CC' | 'NIT'>
             value={tercero.tipo ?? 'CC'}
             values={[
               {label: 'Cedula de ciudadania', value: 'CC'},
-              {label: 'Tarjeta de identidad', value: 'TI'},
+              {label: 'Numero de identicacion tributaria', value: 'NIT'},
             ]}
             setValue={value =>
               setTercero(prevState => ({...prevState, tipo: value}))
@@ -301,7 +301,6 @@ const CreateTercero = () => {
                 }
                 error={errors.dv}
                 disabled={isDisabled}
-                
               />
             </View>
           </View>

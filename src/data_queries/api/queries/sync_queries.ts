@@ -23,7 +23,6 @@ class SyncQueries {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON982.dll`,
         {},
       );
-
       if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'

@@ -7,7 +7,7 @@ import {useNavigation} from '@react-navigation/native';
 /* components */
 import {Visita, PrincipalHeader, Searcher, TercerosFinder} from '../components';
 /* types */
-import {ITerceros, IVisita} from '../common/types';
+import {ITerceros, IVisita, IEncuesta} from '../common/types';
 /* redux */
 import {useAppDispatch} from '../redux/hooks';
 import {
@@ -40,7 +40,7 @@ const visitas: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2025-03-06',
+    appointmentDate: '2025-03-10',
     location: {
       latitude: '',
       longitude: '',
@@ -54,7 +54,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-03-06',
+    appointmentDate: '2025-03-10',
     location: {
       latitude: '',
       longitude: '',
@@ -68,7 +68,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-03-06',
+    appointmentDate: '2025-03-10',
     location: {
       latitude: '',
       longitude: '',
@@ -91,6 +91,7 @@ const Visitas: React.FC = () => {
     bringAlmacenes();
     bringCartera();
     loadSettings();
+    loadEncuesta();
   }, []);
 
   const bringAlmacenes = async () => {
@@ -182,6 +183,23 @@ const Visitas: React.FC = () => {
       );
     }
   };
+
+  const loadEncuesta = async () => {
+    try {
+      const encuesta = await encuestaService.getEncuesta();
+
+      dispatch(setObjEncuesta(encuesta));
+    } catch (error: any) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'info',
+          description: `No se encontraron encuestas registradas`,
+        }),
+      );
+    }
+  };
+
   const loadFacturas = async (tercero: ITerceros) => {
     try {
       const facturas = await facturasService.getByAttribute(
