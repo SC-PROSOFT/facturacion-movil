@@ -73,7 +73,7 @@ export const InfoAlert = () => {
     switch (type) {
       case 'error':
       case 'info':
-        return 'Intentar de nuevo';
+        return 'Aceptar';
 
       case 'success':
         return 'Continuar';

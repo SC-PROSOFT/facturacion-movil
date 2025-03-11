@@ -12,6 +12,7 @@ import {
   pedidosService,
   facturasService,
   encuestaService,
+  filesService,
 } from './services';
 
 const db: any = SQLite.openDatabase({name: 'localdb16'}); // 14
@@ -43,6 +44,8 @@ const createTables = async (): Promise<boolean> => {
     await pedidosService.createTablePedidos();
     console.log('Creando tablas 10...');
     await facturasService.createTableFacturas();
+    console.log('Creando tablas 11...');
+    await filesService.createTableFiles();
 
     return true;
   } catch (error: any) {

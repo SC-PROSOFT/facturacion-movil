@@ -2,6 +2,7 @@ import {createAxiosInstance} from '../axiosInstance';
 import {useAppSelector} from '../../../redux/hooks';
 import {ISurvey, ITerceros} from '../../../common/types';
 import {calcularDigitoVerificacion} from '../../../utils';
+import {DocumentPickerResponse} from 'react-native-document-picker';
 
 class FilesApiServices {
   private axiosInstance;
@@ -12,7 +13,10 @@ class FilesApiServices {
     this.direccionIp = direccionIp;
   }
 
-  _uploadFiles = async (file: File, tercero: ITerceros): Promise<boolean> => {
+  _uploadFiles = async (
+    file: DocumentPickerResponse,
+    tercero: ITerceros,
+  ): Promise<boolean> => {
     try {
       const terceroModificado = {...tercero};
       terceroModificado.tipo =
@@ -26,18 +30,22 @@ class FilesApiServices {
       console.log('tercero =>>>>', terceroModificado.tipo);
 
       const formData = new FormData();
-      formData.append('archivo', file);
+      formData.append('archivo', {
+        uri: file.uri,
+        type: file.type,
+        name: file.name,
+      });
 
       // Aseguramos que la ruta esté bien construida
       const ruta = `D:\\WEB\\ANEXOS\\${terceroModificado.tipo}-${terceroModificado.codigo}`;
       console.log('ruta =>>>>', ruta);
 
       const response = await this.axiosInstance.post(
-        `/v1/contabilidad/guardar-archivo?ruta=${encodeURIComponent(ruta)}`, // Encode para evitar problemas con los backslashes
+        `/v1/contabilidad/guardar-archivo?ruta=${ruta}`, // Encode para evitar problemas con los backslashes
         formData, // FormData debe ir como cuerpo directamente
         {
           headers: {
-            'Content-Type': 'multipart/form-data', // Importante para que el servidor lo reconozca
+            'Content-Type': 'multipart/form-data', 
           },
         },
       );

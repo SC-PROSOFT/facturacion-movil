@@ -18,3 +18,4 @@ export * from './operationSlice';
 export * from './frecuenciasFinderSlice';
 export * from './uploadArchivesSlice';
 export * from './encuestaSlice';
+export * from './filesSlice';

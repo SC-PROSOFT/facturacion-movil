@@ -8,3 +8,4 @@ export * from './config_repository';
 export * from './pedidos_repository';
 export * from './facturas_repository';
 export * from './encuesta_repository';
+export * from './files_repository';

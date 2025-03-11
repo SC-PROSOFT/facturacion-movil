@@ -3,15 +3,6 @@ import {ResultSet} from 'react-native-sqlite-storage';
 import {IRepository, ITerceros} from '../../../common/types';
 
 import {db} from '../local_database_config';
-import {useAppDispatch, useAppSelector} from '../../../redux/hooks';
-import {
-  setObjInfoAlert,
-  setObjTercero,
-  addTerceroCreado,
-  addTerceroEditado,
-  setIsShowTercerosFinder,
-} from '../../../redux/slices';
-import {store} from '../../../redux/store';
 
 class TercerosRepository implements IRepository<ITerceros> {
   async createTable(): Promise<boolean> {
@@ -205,7 +196,7 @@ class TercerosRepository implements IRepository<ITerceros> {
           sqlInsertTerceroStatement,
           valuesTercero,
           async (_: ResultSet, result: ResultSet) => {
-            store.dispatch(addTerceroCreado(tercero));
+            // store.dispatch(addTerceroCreado(tercero));
             this.saveCreatedTerceroToDB(tercero);
             resolve(true);
           },
@@ -276,7 +267,7 @@ class TercerosRepository implements IRepository<ITerceros> {
           sqlUpdateTerceroStatement,
           valuesTercero,
           async (_: ResultSet, result: ResultSet) => {
-            store.dispatch(addTerceroEditado(tercero));
+            // store.dispatch(addTerceroEditado(tercero));
             this.saveEditedTerceroToDB(tercero);
             resolve(true);
           },

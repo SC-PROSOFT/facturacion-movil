@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -14,18 +14,21 @@ import {useNavigation} from '@react-navigation/native';
 /* utils */
 import {formatToMoney, getPermissions, getUbication} from '../utils';
 /* types */
-import {IOperation, IEncuesta} from '../common/types';
+import {IOperation, IEncuesta, IFiles} from '../common/types';
 /* components */
 import {Movimiento, Header} from '../components';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
+import {filesService} from '../data_queries/local_database/services';
 import {
   setObjOperator,
   setArrProductAdded,
   setObjOperation,
   setObjInfoAlert,
   setObjEncuesta,
+  setFile,
 } from '../redux/slices';
+import {showAlert} from '../utils/showAlert';
 
 const Tercero = () => {
   const navigation: any = useNavigation();
@@ -34,15 +37,30 @@ const Tercero = () => {
   const arrFactura = useAppSelector(store => store.tercerosFinder.arrFactura);
   const arrPedido = useAppSelector(store => store.tercerosFinder.arrPedido);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const toggleFilesObj = async () => {
+    try {
+      const files = await filesService.getFilesByCode(objTercero.codigo);
+      dispatch(setFile(files));
+      isShowAlert(files);
+    } catch (error: any) {
+      setShowAlert(true);
+    }
+  };
 
-  const shouldShowAlert = () => {
-    return !objTercero.rut_path || !objTercero.camaracomercio_path;
+  const isShowAlert = async (files: IFiles) => {
+    console.log('files', files);
+    if ((files?.files?.length ?? 0) == 0 || (files?.files?.length ?? 0) < 3) {
+      setShowAlert(true);
+    }
+    return setShowAlert(false);
   };
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (shouldShowAlert()) {
+    toggleFilesObj();
+    if (showAlert) {
       Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -58,7 +76,7 @@ const Tercero = () => {
         ]),
       ).start();
     }
-  }, [pulseAnim, shouldShowAlert]);
+  }, [pulseAnim]);
 
   const sumarTotalFacturaPedidos = (): number => {
     return [...arrFactura, ...arrPedido]
@@ -135,7 +153,7 @@ const Tercero = () => {
             borderRadius: 5,
           }}
           onPress={() => navigation.navigate('FilesTercero')}>
-          {shouldShowAlert() && (
+          {showAlert && (
             <Animated.View
               style={[styles.alertIndicator, {transform: [{scale: pulseAnim}]}]}
             />

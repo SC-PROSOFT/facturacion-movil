@@ -20,6 +20,7 @@ import operationReducer from './slices/operationSlice';
 import frecuenciaFinderReducer from './slices/frecuenciasFinderSlice';
 import uploadArchivesReducer from './slices/uploadArchivesSlice';
 import encuestaReducer from './slices/encuestaSlice';
+import filesReducer from './slices/filesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -42,7 +43,8 @@ export const store = configureStore({
     operation: operationReducer,
     frecuenciaFinder: frecuenciaFinderReducer,
     uploadArchives: uploadArchivesReducer,
-    encuesta: encuestaReducer, // Añade el reducer aquí
+    encuesta: encuestaReducer,
+    files: filesReducer, // Añade el reducer aquí
   },
 });
 

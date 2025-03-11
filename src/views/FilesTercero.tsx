@@ -1,31 +1,59 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DocumentPicker, {
   DocumentPickerResponse,
 } from 'react-native-document-picker';
 import {InfoAlert} from '../components';
-
+import {calcularDigitoVerificacion} from '../utils';
+import {ITerceros} from '../common/types';
 /* components */
 import {CoolButton} from '../components';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {setObjInfoAlert} from '../redux/slices/infoAlertSlice';
 import {FilesApiServices} from '../data_queries/api/queries';
+import {filesService} from '../data_queries/local_database/services';
+import {IFiles} from '../common/types';
 import {convert} from 'react-native-html-to-pdf';
+import {get} from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 const FilesTercero = () => {
   const dispatch = useAppDispatch();
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
+  const files = useAppSelector(store => store.files.file);
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
   const objConfig = useAppSelector(store => store.config.objConfig);
-
+  const [file, setFile] = useState<IFiles | null>(null);
+  const [copyFile, setCopyFile] = useState<IFiles | null>(null);
   const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
   const [camaraComercioFile, setCamaraComercioFile] =
     useState<DocumentPickerResponse | null>(null);
   const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
     null,
   );
+  const getFiles = async () => {
+    if (files) {
+      const parsedFiles = JSON.parse(files.files);
+      parsedFiles.forEach((file: DocumentPickerResponse) => {
+        if (file.name?.includes('RUT')) {
+          setRutFile(file);
+        } else if (file.name?.includes('CAMCOMERCIO')) {
+          setCamaraComercioFile(file);
+        } else if (file.name?.includes('DI')) {
+          setCedulaFile(file);
+        }
+      });
+      if (JSON.stringify(files) !== JSON.stringify(file)) {
+        setFile(files);
+        setCopyFile(files);
+      }
+    }
+  };
+
+  useEffect(() => {
+    getFiles();
+  }, [objTercero.codigo]);
 
   const filesApiServices = new FilesApiServices(
     objConfig.direccionIp,
@@ -33,12 +61,13 @@ const FilesTercero = () => {
   );
 
   const handleFileSelection = async (type: string) => {
+    console.log('type', type);
     try {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.pdf, DocumentPicker.types.images],
         allowMultiSelection: false,
       });
-
+      console.log('entre document picker');
       if (res && res[0]) {
         if (res[0].size > MAX_FILE_SIZE) {
           dispatch(
@@ -64,44 +93,109 @@ const FilesTercero = () => {
       if (DocumentPicker.isCancel(err)) {
         console.log('User cancelled the picker');
       } else {
+        console.log(err);
         throw err;
       }
     }
   };
 
   const uploadFiles = async () => {
+    const arrayFiles: DocumentPickerResponse[] = [];
+    const type =
+      /^\d{9,10}$/.test(objTercero.codigo) &&
+      objTercero.codigo.slice(-1) ===
+        calcularDigitoVerificacion(objTercero.codigo.slice(0, -1)).toString()
+        ? 'NIT'
+        : 'CC';
     if (rutFile) {
-      await filesApiServices._uploadFiles(
-        await convertToFile(rutFile),
-        objTercero,
-      );
+      rutFile.name = `${type}-${objTercero.codigo}-RUT.${rutFile?.name
+        ?.split('.')
+        .pop()}`;
+      arrayFiles.push(rutFile);
     }
-    // if (camaraComercioFile) {
-    //   await filesApiServices._uploadFiles(
-    //     await convertToFile(camaraComercioFile),
-    //     objTercero,
-    //   );
-    // }
-    // if (cedulaFile) {
-    //   await filesApiServices._uploadFiles(
-    //     await convertToFile(cedulaFile),
-    //     objTercero,
-    //   );
-    // }
+    if (camaraComercioFile) {
+      camaraComercioFile.name = `${type}-${
+        objTercero.codigo
+      }-CAMCOMERCIO.${camaraComercioFile?.name?.split('.').pop()}`;
+      arrayFiles.push(camaraComercioFile);
+    }
+    if (cedulaFile) {
+      cedulaFile.name = `${type}-${objTercero.codigo}-DI.${cedulaFile?.name
+        ?.split('.')
+        .pop()}`;
+      arrayFiles.push(cedulaFile);
+    }
+    if (files) {
+      console.log('arrayFiles', arrayFiles);
+      const response = await filesService.updateFile(files.codigo, arrayFiles);
+      if (response) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'success',
+            description: 'Archivos subidos correctamente.',
+          }),
+        );
+      } else {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: 'Error al subir los archivos.',
+          }),
+        );
+      }
+    } else {
+      const iFile: IFiles = {
+        codigo: objTercero.codigo,
+        nombre: objTercero.nombre,
+        tipo: type,
+        files: arrayFiles,
+      };
+
+      try {
+        const response = await filesService.addFile(iFile);
+        if (response) {
+          dispatch(
+            setObjInfoAlert({
+              visible: true,
+              type: 'success',
+              description: 'Archivos subidos correctamente.',
+            }),
+          );
+        } else {
+          dispatch(
+            setObjInfoAlert({
+              visible: true,
+              type: 'error',
+              description: 'Error al subir los archivos.',
+            }),
+          );
+        }
+      } catch (error) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: 'Error al subir los archivos.',
+          }),
+        );
+      }
+    }
   };
 
-  const convertToFile = async (
-    file: DocumentPickerResponse,
-  ): Promise<File | null> => {
-    try {
-      const blob = await uriToBlob(file.uri);
-      const convertedFile = new File([blob], file.name, {type: file.type});
-      return convertedFile;
-    } catch (error) {
-      console.error('Error converting file:', error);
-      return null;
-    }
-  };
+  // const convertToFile = async (
+  //   file: DocumentPickerResponse,
+  // ): Promise<File | null> => {
+  //   try {
+  //     const blob = await uriToBlob(file.uri);
+  //     const convertedFile = new File([blob], file.name, {type: file.type});
+  //     return convertedFile;
+  //   } catch (error) {
+  //     console.error('Error converting file:', error);
+  //     return null;
+  //   }
+  // };
 
   const removeFile = (type: string) => {
     if (type === 'RUT') {
@@ -112,24 +206,6 @@ const FilesTercero = () => {
       setCedulaFile(null);
     }
   };
-
-  function uriToBlob(uri: string): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.onload = function () {
-        // return the blob
-        resolve(xhr.response);
-      };
-      xhr.onerror = function () {
-        // something went wrong
-        reject(new Error('uriToBlob failed'));
-      };
-      // this helps us get a blob
-      xhr.responseType = 'blob';
-      xhr.open('GET', uri, true);
-      xhr.send(null);
-    });
-  }
 
   const addRut = () => handleFileSelection('RUT');
   const addCamaraComercio = () => handleFileSelection('Cámara de Comercio');
