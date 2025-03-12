@@ -1,7 +1,7 @@
 import React, {useRef} from 'react';
 import {Provider as StoreProvider} from 'react-redux';
 import {StatusBar, View} from 'react-native';
-import {MD3LightTheme as DefaultTheme, PaperProvider} from 'react-native-paper';
+import {MD3LightTheme as DefaultTheme, PaperProvider,} from 'react-native-paper';
 import Toast, {BaseToast, ErrorToast} from 'react-native-toast-message';
 
 /* store */
