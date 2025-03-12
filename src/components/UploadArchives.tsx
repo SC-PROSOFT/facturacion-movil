@@ -15,6 +15,7 @@ import {CoolButton} from '../components';
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
 import {setIsShowUploadArchives} from '../redux/slices/uploadArchivesSlice';
 import {setObjInfoAlert} from '../redux/slices/infoAlertSlice';
+import {calcularDigitoVerificacion} from '../utils';
 
 interface UploadArchivesProps {
   onFilesUpload: (files: {
@@ -30,6 +31,7 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
     const isShowUploadArchives = useAppSelector(
       store => store.uploadArchives.isShowUploadArchives,
     );
+    const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
     const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
     const [camaraComercioFile, setCamaraComercioFile] =
       useState<DocumentPickerResponse | null>(null);
@@ -60,6 +62,50 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
       dispatch(setIsShowUploadArchives(false));
     };
 
+    const assignFile = (type: string, file: DocumentPickerResponse) => {
+      switch (type) {
+        case 'RUT':
+          setRutFile(file);
+          break;
+        case 'Cámara de Comercio':
+          setCamaraComercioFile(file);
+          break;
+        case 'Cédula':
+          setCedulaFile(file);
+          break;
+        default:
+          break;
+      }
+    };
+
+    const selectFile = async (
+      setFile: React.Dispatch<
+        React.SetStateAction<DocumentPickerResponse | null>
+      >,
+      type: string,
+    ) => {
+      try {
+        const res = await DocumentPicker.pick({
+          type: [DocumentPicker.types.allFiles],
+        });
+        if (res && res[0]) {
+          const selectedFile = res[0];
+          const fileType =
+            /^\d{9,10}$/.test(objTercero.codigo) &&
+            objTercero.codigo.slice(-1) ===
+              calcularDigitoVerificacion(objTercero.codigo.slice(0, -1)).toString()
+              ? 'NIT'
+              : 'CC';
+          selectedFile.name = `${fileType}-${objTercero.codigo}${type}.${selectedFile.name
+            ?.split('.')
+            .pop()}`;
+          setFile(selectedFile);
+        }
+      } catch (error) {
+        console.log('error =>>>>', error);
+      }
+    };
+
     const handleUpload = async () => {
       if (!rutFile || !camaraComercioFile || !cedulaFile) {
         dispatch(
@@ -75,21 +121,6 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
       onFilesUpload({rutFile, camaraComercioFile, cedulaFile});
       setIsLoading(false);
       closeUploadArchives();
-    };
-
-    const selectFile = async (
-      setFile: React.Dispatch<
-        React.SetStateAction<DocumentPickerResponse | null>
-      >,
-    ) => {
-      try {
-        const res = await DocumentPicker.pick({
-          type: [DocumentPicker.types.allFiles],
-        });
-        setFile(res[0]);
-      } catch (error) {
-        console.log('error =>>>>', error);
-      }
     };
 
     const styles = StyleSheet.create({
@@ -177,7 +208,7 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
               <View style={styles.buttonView}>
                 <TouchableOpacity
                   style={styles.btnSelect}
-                  onPress={() => selectFile(setRutFile)}>
+                  onPress={() => selectFile(setRutFile, 'RUT')}>
                   <Text style={styles.textSelect}>RUT</Text>
                 </TouchableOpacity>
                 {rutFile && (
@@ -188,7 +219,7 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
               <View style={styles.buttonView}>
                 <TouchableOpacity
                   style={styles.btnSelect}
-                  onPress={() => selectFile(setCamaraComercioFile)}>
+                  onPress={() => selectFile(setCamaraComercioFile, 'CAMCOMERCIO')}>
                   <Text style={styles.textSelect}>Cámara de Comercio</Text>
                 </TouchableOpacity>
                 {camaraComercioFile && (
@@ -200,7 +231,7 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
               <View style={styles.buttonView}>
                 <TouchableOpacity
                   style={styles.btnSelect}
-                  onPress={() => selectFile(setCedulaFile)}>
+                  onPress={() => selectFile(setCedulaFile, 'DI')}>
                   <Text style={styles.textSelect}>Cédula</Text>
                 </TouchableOpacity>
                 {cedulaFile && (

@@ -122,11 +122,11 @@ const CreateRuta = () => {
             </View>
           </View>
 
-          <_InputSelect<'CC' | 'TI'>
+          <_InputSelect<'CC' | 'NIT'>
             value={tercero.tipo ?? 'CC'}
             values={[
               {label: 'Cedula de ciudadania', value: 'CC'},
-              {label: 'Tarjeta de identidad', value: 'TI'},
+              {label: 'Número de identificación tributaria', value: 'NIT'},
             ]}
             setValue={value =>
               setTercero(prevState => ({...prevState, tipo: value}))

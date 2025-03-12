@@ -26,7 +26,7 @@ import {
 /* types */
 import {ITerceros} from '../common/types';
 /* utils */
-import {getUbication} from '../utils';
+import {getUbication, calcularDigitoVerificacion} from '../utils';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {
@@ -38,6 +38,8 @@ import {
 } from '../redux/slices';
 /* services */
 import {tercerosService} from '../data_queries/local_database/services';
+import {filesService} from '../data_queries/local_database/services';
+import {setFile} from '../redux/slices';
 
 const CreateTercero = () => {
   const dispatch = useAppDispatch();
@@ -82,6 +84,12 @@ const CreateTercero = () => {
   const [isCodigoValid, setIsCodigoValid] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
+  const [camaraComercioFile, setCamaraComercioFile] =
+    useState<DocumentPickerResponse | null>(null);
+  const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
+    null,
+  );
 
   const validateFields = () => {
     const newErrors = {
@@ -109,7 +117,6 @@ const CreateTercero = () => {
   };
 
   const checkCodigoExists = async () => {
-    console.log('tercero =>>>>', 'Entre');
     if (!tercero.codigo) {
       setErrors(prevErrors => ({
         ...prevErrors,
@@ -120,7 +127,6 @@ const CreateTercero = () => {
     }
 
     try {
-      console.log('tercero =>>>>', 'tercero.codigo =>', tercero.codigo);
       calculateDV(tercero.codigo);
       setIsLoading(true);
 
@@ -168,10 +174,8 @@ const CreateTercero = () => {
     let factor = resid > 0 ? resid : 0;
 
     if (factor === 0 || factor === 1) {
-      console.log('factor =>>>>', factor);
       setTercero(prevState => ({...prevState, dv: factor.toString()}));
     } else {
-      console.log('factor =>>>>', factor);
       setTercero(prevState => ({...prevState, dv: (11 - factor).toString()}));
     }
   };
@@ -181,12 +185,21 @@ const CreateTercero = () => {
       return;
     }
 
-    console.log('tercero =>>>>', tercero);
     setIsLoading(true);
     try {
       const response = await tercerosService.createTercero(tercero);
 
-      console.log('response =>>>>', response);
+      if (response) {
+        try {
+          await uploadFiles();
+        } catch (error) {
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: 'Error al subir los archivos.',
+          });
+        }
+      }
       setIsLoading(false);
       navigation.navigate('TabNavPrincipal');
     } catch (error: any) {
@@ -226,8 +239,64 @@ const CreateTercero = () => {
     camaraComercioFile: DocumentPickerResponse | null;
     cedulaFile: DocumentPickerResponse | null;
   }) => {
-    console.log('Archivos subidos:', files);
-    // Aquí puedes actualizar el estado o realizar otras acciones con los archivos subidos
+    setRutFile(files.rutFile);
+    setCamaraComercioFile(files.camaraComercioFile);
+    setCedulaFile(files.cedulaFile);
+  };
+
+  const uploadFiles = async () => {
+    const arrayFiles: DocumentPickerResponse[] = [];
+    const type =
+      /^\d{9,10}$/.test(tercero.codigo) &&
+      tercero.codigo.slice(-1) ===
+        calcularDigitoVerificacion(tercero.codigo.slice(0, -1)).toString()
+        ? 'NIT'
+        : 'CC';
+
+    const addFileToArray = (
+      file: DocumentPickerResponse | null,
+      suffix: string,
+    ) => {
+      if (file) {
+        file.name = `${type}-${tercero.codigo}${suffix}.${file?.name
+          ?.split('.')
+          .pop()}`;
+        arrayFiles.push(file);
+      }
+    };
+
+    addFileToArray(rutFile, 'RUT');
+    addFileToArray(camaraComercioFile, 'CAMCOMERCIO');
+    addFileToArray(cedulaFile, 'DI');
+
+    try {
+      const iFile = {
+        codigo: tercero.codigo,
+        nombre: tercero.nombre,
+        tipo: type,
+        files: arrayFiles,
+      };
+
+      const response = await filesService.addFile(iFile);
+
+      if (response) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'success',
+            description: 'Archivos subidos correctamente.',
+          }),
+        );
+      }
+    } catch (error) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: 'Error al subir los archivos.',
+        }),
+      );
+    }
   };
 
   const screenWidth = Dimensions.get('window').width;
@@ -238,10 +307,9 @@ const CreateTercero = () => {
         style={{
           paddingHorizontal: 15,
           paddingTop: 10,
-          opacity: isLoading ? 0.5 : 1, // Efecto de opacidad
+          opacity: isLoading ? 0.5 : 1,
         }}
-        scrollEnabled={!isLoading} // Deshabilitar scroll mientras se carga
-      >
+        scrollEnabled={!isLoading}>
         <Text style={{color: '#092254', fontSize: 22, marginBottom: 10}}>
           Informacion cliente
         </Text>
