@@ -288,6 +288,11 @@ const CreateTercero = () => {
           }),
         );
       }
+      handleFilesUpload({
+        rutFile: null,
+        camaraComercioFile: null,
+        cedulaFile: null,
+      });
     } catch (error) {
       dispatch(
         setObjInfoAlert({
