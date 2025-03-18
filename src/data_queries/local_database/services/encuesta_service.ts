@@ -1,6 +1,6 @@
 import {EncuestaRepository} from '../repositories';
 
-import {IEncuesta} from '../../../common/types';
+import {IEncuesta, IRespEncuesta} from '../../../common/types';
 
 const encuestaRepository = new EncuestaRepository();
 
@@ -21,6 +21,22 @@ class EncuestaService {
 
   async getEncuesta(): Promise<IEncuesta | null> {
     return this.encuestaRepository.get();
+  }
+
+  async createTableRespEncuesta(): Promise<boolean> {
+    return this.encuestaRepository.createTableRespuesta();
+  }
+
+  async createRespEncuesta(respuesta: IRespEncuesta): Promise<boolean> {
+    return this.encuestaRepository.createRespuesta(respuesta);
+  }
+
+  async deleteTableRespEncuesta(): Promise<boolean> {
+    return this.encuestaRepository.deleteTableResp();
+  }
+
+  async getRespEncuesta(): Promise<IRespEncuesta[]> {
+    return this.encuestaRepository.getAllResp();
   }
 }
 

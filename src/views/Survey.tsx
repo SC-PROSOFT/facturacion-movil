@@ -1,29 +1,30 @@
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
   VirtualizedList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {IEncuesta, IPregunta} from '../common/types/IEncuesta';
-import {_Checkbox} from '../components/_Checkbox';
-import {_DatePicker} from '../components/_DatePicker';
-import {_InputSelect} from '../components/_InputSelect';
-import {_Input} from '../components/_Input';
+import {IRespEncuesta, IRespuestas} from '../common/types/IRespEncuesta';
+import {_Input, _InputSelect} from '../components';
 import {Button} from 'react-native-paper';
+import {encuestaService} from '../data_queries/local_database/services';
+import {setObjInfoAlert} from '../redux/slices';
 
 const Survey = () => {
   const dispatch = useAppDispatch();
   const navigation: any = useNavigation();
 
+  const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const objEncuesta = useAppSelector(store => store.encuesta.objEncuesta);
+  const objOperador = useAppSelector(store => store.operator.objOperator);
 
-  // Verificar si objEncuesta es null
   const survey: IEncuesta = objEncuesta
     ? {
         codigo: objEncuesta.codigo || '',
@@ -63,7 +64,14 @@ const Survey = () => {
     }
   };
 
-  const [responses, setResponses] = useState<{[key: number]: any}>({});
+  const initialResponses = survey.preguntas.reduce((acc, pregunta, index) => {
+    acc[index] = pregunta.tipo === '2' ? '1' : '';
+    return acc;
+  }, {} as {[key: number]: any});
+
+  const [responses, setResponses] = useState<{[key: number]: any}>(
+    initialResponses,
+  );
 
   const handleResponseChange = (index: number, value: any) => {
     setResponses(prevResponses => ({
@@ -82,9 +90,6 @@ const Survey = () => {
     return (
       <View style={styles.questionItem}>
         <Text style={styles.questionText}>{item.pregunta_texto}</Text>
-        {/* <Text style={styles.questionRequired}>
-          {item.numero_resp_cerrada > 0 ? 'Required' : 'Optional'}
-        </Text> */}
         {item.tipo === '1' && (
           <_Input
             style={styles.textArea}
@@ -96,12 +101,12 @@ const Survey = () => {
 
         {item.tipo === '2' && (
           <_InputSelect
-            value={responses[index] || ''}
-            setValue={value => handleResponseChange(index, value)}
+            value={responses[index] || '1'}
+            setValue={(value: string) => handleResponseChange(index, value)}
             values={
               item.opciones_respuesta_cerrada.map((option, idx) => ({
                 label: option,
-                value: idx.toString(),
+                value: (idx + 1).toString(), // Aquí aseguramos que el valor sea el texto de la opción
               })) || []
             }
           />
@@ -113,6 +118,48 @@ const Survey = () => {
   const getItem = (data: IPregunta[], index: number) => data[index];
 
   const getItemCount = (data: IPregunta[]) => data.length;
+
+  const handleSubmit = async () => {
+    const formattedResponses: IRespEncuesta = {
+      codigo: survey.codigo,
+      codigo_tercero: objTercero.codigo, // Reemplaza con el valor adecuado
+      codigo_opera: objOperador.codigo, // Reemplaza con el valor adecuado
+      respuesta: survey.preguntas.map((pregunta, index) => ({
+        preg_abierta: pregunta.tipo === '1' ? responses[index] || '' : '',
+        preg_cerrada: pregunta.tipo === '2' ? responses[index] || '' : '',
+      })),
+      admin_creacion: survey.admin_creacion,
+      fecha_creacion: survey.fecha_creacion,
+      admin_modificacion: survey.admin_modificacion,
+      fecha_modificacion: survey.fecha_modificacion,
+    };
+
+    console.log('Respuestas:', formattedResponses);
+
+    try {
+      const response = await encuestaService.createRespEncuesta(
+        formattedResponses,
+      );
+      if (response) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'success',
+            description: 'Respuestas guardadas correctamente',
+          }),
+        );
+      }
+    } catch (error) {
+      console.error('Error al guardar respuestas:', error);
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: 'Error al guardar respuestas',
+        }),
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -141,9 +188,7 @@ const Survey = () => {
           />
           <Button
             mode="contained"
-            onPress={() => {
-              console.log(responses);
-            }}
+            onPress={handleSubmit}
             style={styles.submitButton}>
             Guardar respuestas
           </Button>
@@ -196,7 +241,7 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 16,
     fontWeight: 'semibold',
-    marginBottom : 8,
+    marginBottom: 8,
   },
   questionRequired: {
     fontSize: 12,
@@ -220,7 +265,6 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 20, // Espacio entre la lista y el botón
   },
-
   textArea: {
     height: 200,
     textAlignVertical: 'top',

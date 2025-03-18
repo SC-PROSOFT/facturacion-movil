@@ -40,6 +40,10 @@ const createTables = async (): Promise<boolean> => {
     await rememberAccountService.createTableRememberAccount();
     console.log('Creando tablas 8...');
     await encuestaService.createTableEncuesta();
+    console.log('Creando tablas 8.1...');
+    await encuestaService.deleteTableRespEncuesta();
+    console.log('Creando tablas 8.2...');
+    await encuestaService.createTableRespEncuesta();
     console.log('Creando tablas 9...');
     await pedidosService.createTablePedidos();
     console.log('Creando tablas 10...');

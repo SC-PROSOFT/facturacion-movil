@@ -13,3 +13,4 @@ export * from './ISurvey';
 export * from './IEncuesta';
 export * from './IFrecuencia';
 export * from './IFiles';
+export * from './IRespEncuesta';

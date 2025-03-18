@@ -1,5 +1,5 @@
 import {ResultSet} from 'react-native-sqlite-storage';
-import {IEncuesta, IRepository} from '../../../common/types';
+import {IEncuesta, IRepository, IRespEncuesta} from '../../../common/types';
 import {db} from '../local_database_config';
 
 class EncuestaRepository implements IRepository<IEncuesta> {
@@ -156,6 +156,125 @@ class EncuestaRepository implements IRepository<IEncuesta> {
         );
       });
     });
+  }
+  async createTableRespuesta(): Promise<boolean> {
+    const sqlCreateStatement = `
+        CREATE TABLE IF NOT EXISTS respuesta (
+            codigo TEXT , 
+            codigo_tercero TEXT,
+            codigo_opera TEXT ,
+            respuesta TEXT , 
+            admin_creacion TEXT ,
+            fecha_creacion TEXT , 
+            admin_modificacion TEXT ,
+            fecha_modificacion TEXT
+        )
+        `;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlCreateStatement,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            console.log('Tabla respuesta creada');
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            console.error('Error al crear tabla respuesta:', error);
+            reject(new Error('Fallo crear tabla respuesta'));
+          },
+        );
+      });
+    });
+  }
+
+  async createRespuesta(data: IRespEncuesta): Promise<boolean> {
+    const respuesta = data;
+    const sqlInsertStatement = `
+        INSERT INTO respuesta (
+            codigo, 
+            codigo_tercero, 
+            codigo_opera, 
+            respuesta, 
+            admin_creacion, 
+            fecha_creacion, 
+            admin_modificacion, 
+            fecha_modificacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        console.log('Insertando nueva respuesta:', respuesta);
+        tx.executeSql(
+          sqlInsertStatement,
+          [
+            respuesta.codigo,
+            respuesta.codigo_tercero,
+            respuesta.codigo_opera,
+            JSON.stringify(respuesta.respuesta),
+            respuesta.admin_creacion,
+            respuesta.fecha_creacion,
+            respuesta.admin_modificacion,
+            respuesta.fecha_modificacion,
+          ],
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            console.error('Error al insertar respuesta:', error);
+            reject(new Error('Fallo insertar respuesta'));
+          },
+        );
+      });
+    });
+  }
+
+  async deleteTableResp(): Promise<boolean> {
+    const sqlDeleteStatement = `DELETE FROM respuesta`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlDeleteStatement,
+          [],
+          (_: ResultSet, response: ResultSet) => {
+            console.log('Tabla respuesta eliminada');
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            console.error('Error al eliminar tabla respuesta:', error);
+            reject(new Error('Fallo eliminar tabla respuesta'));
+          },
+        );
+      });
+    });
+  }
+
+  async getAllResp(): Promise<IRespEncuesta[]> {
+    const sqlSelectStatement = `SELECT * FROM respuesta`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [],
+          (_: ResultSet, response: ResultSet) => {
+            const respuestas: IRespEncuesta[] = [];
+            for (let i = 0; i < response.rows.length; i++) {
+              const respuesta = response.rows.item(i);
+              respuestas.push(respuesta);
+            }
+            resolve(respuestas);
+          },
+          (error: ResultSet) => {
+            console.error('Error al obtener respuestas:', error);
+            reject(new Error('Fallo obtener respuestas'));
+          },
+        );
+      });
+    });
+    
   }
 }
 
