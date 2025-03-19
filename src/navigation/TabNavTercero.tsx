@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   createBottomTabNavigator,
   BottomTabNavigationOptions,
@@ -12,6 +12,8 @@ import {getCurrentOperator} from '../utils';
 /* redux */
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
 import {setArrProductAdded, setObjOperator} from '../redux/slices';
+/* services */
+import {encuestaService} from '../data_queries/local_database/services';
 
 const Tab = createBottomTabNavigator();
 
@@ -19,6 +21,36 @@ const TabNavTercero = () => {
   const dispatch = useAppDispatch();
 
   const operator = useAppSelector(store => store.operator.objOperator);
+  const tercero = useAppSelector(store => store.tercerosFinder.objTercero);
+  const isShowEncuesta = useAppSelector(store => store.encuesta.isShowEncuesta);
+  const [respuestasEncuestas, setRespuestasEncuestas] = useState<any[]>([]);
+  const [isEncuestaDisabled, setIsEncuestaDisabled] = useState(true);
+
+  useEffect(() => {
+    // Obtener respuestas de encuestas del tercero
+    const fetchRespuestasEncuestas = async () => {
+      try {
+        const encuesta = await encuestaService.getEncuesta(); // Reemplazar 'codigo_actual' con el código dinámico
+        const respuestas = await encuestaService.getRespEncuestaByCodigo(
+          tercero.codigo,
+        );
+        setRespuestasEncuestas(respuestas);
+
+        // Verificar si el código de encuesta ya existe
+        const encuestaRespondida = respuestas.some(
+          respuesta => respuesta.codigo === encuesta?.codigo.toString(), // Reemplaza 'codigo_actual' con el código dinámico
+        );
+        console.log('encuesta', encuesta);
+        console.log('respuestas:', respuestas);
+        console.log('encuestaRespondida:', encuestaRespondida);
+        setIsEncuestaDisabled(encuestaRespondida);
+      } catch (error: any) {
+        console.error('Error al obtener respuestas de encuestas:', error);
+      }
+    };
+
+    fetchRespuestasEncuestas();
+  }, [tercero.codigo]);
 
   const optionsTabScreenLeft = ({
     icon,
@@ -70,15 +102,21 @@ const TabNavTercero = () => {
         options={({route}) => ({
           headerShown: false,
           tabBarIcon: () => (
-            <Icon name="notebook-plus" style={{color: '#0B2863'}} size={25} />
+            <Icon
+              name="notebook-plus"
+              style={{
+                color: isEncuestaDisabled ? '#ccc' : '#0B2863', // Cambiar color si está desactivado
+              }}
+              size={25}
+            />
           ),
           tabBarLabelStyle: {
-            color: '#0B2863',
+            color: isEncuestaDisabled ? '#ccc' : '#0B2863', // Cambiar color si está desactivado
             fontSize: 10,
             fontWeight: 'bold',
           },
           tabBarStyle: {
-            display: route.name === 'Encuesta' ? 'none' : 'flex',
+            display: route.name == 'Encuesta' ? 'none' : 'flex',
             height: 70,
             width: '50%',
             paddingBottom: 10,
@@ -97,6 +135,14 @@ const TabNavTercero = () => {
             paddingVertical: 0.5,
           },
           tabBarActiveBackgroundColor: '#B6BFD1',
+        })}
+        listeners={({navigation}) => ({
+          tabPress: e => {
+            if (isEncuestaDisabled) {
+              // Prevenir navegación si está desactivado
+              e.preventDefault();
+            }
+          },
         })}
       />
       <Tab.Screen
@@ -188,7 +234,6 @@ const TabNavTercero = () => {
             const currentOperator = await getCurrentOperator(operator.codigo);
             dispatch(setObjOperator(currentOperator));
             dispatch(setArrProductAdded([]));
-
             navigation.navigate('ElaborarPedido');
           },
         })}

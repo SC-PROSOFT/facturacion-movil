@@ -38,6 +38,21 @@ class EncuestaService {
   async getRespEncuesta(): Promise<IRespEncuesta[]> {
     return this.encuestaRepository.getAllResp();
   }
+
+  async getRespEncuestaByGuardado(guardado: string): Promise<IRespEncuesta[]> {
+    return this.encuestaRepository.getRespEncuestaByGuardado(guardado);
+  }
+
+  async updateRespEncuestaByGuardado(
+    codigo: string,
+    guardado: string,
+  ): Promise<boolean> {
+    return this.encuestaRepository.updateRespEncuestaGuardado(codigo, guardado);
+  }
+
+  async getRespEncuestaByCodigo(codigo: string): Promise<IRespEncuesta[]> {
+    return this.encuestaRepository.getRespEncuestaByTercero(codigo);
+  }
 }
 
 const encuestaService = new EncuestaService();

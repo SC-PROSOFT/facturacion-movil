@@ -22,11 +22,13 @@ import {
   pedidosService,
   facturasService,
   tercerosService,
+  encuestaService,
 } from '../data_queries/local_database/services';
 import {ITerceros} from '../common/types';
 import {
   FacturasApiService,
   PedidosApiService,
+  EncuestaApiServices,
 } from '../data_queries/api/queries';
 import Toast from 'react-native-toast-message';
 import {useFocusEffect} from '@react-navigation/native';
@@ -411,24 +413,109 @@ const SyncDispositivo = () => {
     }
   };
 
-  const toggleUploadData = async () => {
-    setShowProgressWindow(true);
+  const updateEncuestas: () => void = async () => {
+    setLoading(true);
 
-    const {direccionIp, puerto} = objConfig;
-    const syncQueries = new SyncQueries(direccionIp, puerto);
-    setSyncQueriesScope(syncQueries);
+    console.log(objConfig.direccionIp, objConfig.puerto);
+
+    const encuestaApiService = new EncuestaApiServices(
+      objConfig.direccionIp,
+      objConfig.puerto,
+    );
+
+    console.log('updating encuestas');
 
     try {
-      setDialogContent('Trayendo terceros');
-      const resGetTerceros = await syncQueries._getTerceros();
+      // Obtener solo las encuestas con guardado = 'N'
+      const encuestas = await encuestaService.getRespEncuestaByGuardado('N');
 
-      setDisabledCancel(true);
+      if (encuestas.length === 0) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'info',
+            description: 'No hay encuestas pendientes de sincronización',
+          }),
+        );
+        setLoading(false);
+        return;
+      }
 
-      await pedidosService.deleteTablaPedidos();
-      await facturasService.deleteTablaFacturas();
+      const results = await Promise.allSettled(
+        encuestas.map(async encuesta => {
+          const response = await encuestaApiService._saveRespEncuesta(encuesta);
+          // Si la encuesta se sube correctamente, actualizar guardado a 'S'
+          await encuestaService.updateRespEncuestaByGuardado(
+            encuesta.codigo,
+            'S',
+          );
+          return response;
+        }),
+      );
 
-      setDialogContent('Descargando terceros');
-      await tercerosService.fillTerceros(resGetTerceros);
+      const successfulUpdates = results.filter(
+        result => result.status === 'fulfilled',
+      ).length;
+
+      const failedUpdates = results.filter(
+        result => result.status === 'rejected',
+      );
+
+      if (successfulUpdates > 0) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'success',
+            description: `${successfulUpdates} encuestas actualizadas correctamente`,
+          }),
+        );
+      }
+
+      if (failedUpdates.length > 0) {
+        failedUpdates.forEach(failure => {
+          dispatch(
+            setObjInfoAlert({
+              visible: true,
+              type: 'error',
+              description: failure.reason.message || 'Error desconocido',
+            }),
+          );
+        });
+      }
+    } catch (error: any) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: error.message || 'Error al obtener encuestas',
+        }),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleUploadData = async () => {
+    setShowProgressWindow(true);
+    console.log('Uploading data');
+    const {direccionIp, puerto} = objConfig;
+    // const syncQueries = new SyncQueries(direccionIp, puerto);
+    // setSyncQueriesScope(syncQueries);
+    // console.log("syncQueries", syncQueries);
+
+    try {
+      // setDialogContent('Trayendo terceros');
+      // const resGetTerceros = await syncQueries._getTerceros();
+
+      // setDisabledCancel(true);
+
+      // await pedidosService.deleteTablaPedidos();
+      // await facturasService.deleteTablaFacturas();
+
+      // setDialogContent('Descargando terceros');
+      // await tercerosService.fillTerceros(resGetTerceros);
+      setDialogContent('Subiendo respuestas de encuestas');
+      await updateEncuestas();
 
       setDisabledCancel(false);
       setShowProgressWindow(false);

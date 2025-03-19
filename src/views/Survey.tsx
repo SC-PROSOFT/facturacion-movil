@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import {_Input, _InputSelect} from '../components';
 import {Button} from 'react-native-paper';
 import {encuestaService} from '../data_queries/local_database/services';
 import {setObjInfoAlert} from '../redux/slices';
+import {setIsShowEncuesta} from '../redux/slices';
+import {useRoute} from '@react-navigation/native';
 
 const Survey = () => {
   const dispatch = useAppDispatch();
@@ -24,6 +26,7 @@ const Survey = () => {
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const objEncuesta = useAppSelector(store => store.encuesta.objEncuesta);
   const objOperador = useAppSelector(store => store.operator.objOperator);
+  const objConfig = useAppSelector(store => store.config.objConfig);
 
   const survey: IEncuesta = objEncuesta
     ? {
@@ -132,20 +135,22 @@ const Survey = () => {
       fecha_creacion: survey.fecha_creacion,
       admin_modificacion: survey.admin_modificacion,
       fecha_modificacion: survey.fecha_modificacion,
+      guardado: 'N',
     };
 
-    console.log('Respuestas:', formattedResponses);
+    // console.log('Respuestas:', formattedResponses);
 
     try {
       const response = await encuestaService.createRespEncuesta(
         formattedResponses,
       );
       if (response) {
+        dispatch(setIsShowEncuesta(false));
         dispatch(
           setObjInfoAlert({
             visible: true,
             type: 'success',
-            description: 'Respuestas guardadas correctamente',
+            description: 'Respuesta guardada correctamente',
           }),
         );
       }
@@ -156,9 +161,12 @@ const Survey = () => {
           visible: true,
           type: 'error',
           description: 'Error al guardar respuestas',
+          redirectRoute: 'TabNavPrincipal',
         }),
       );
     }
+
+    // Aquí puedes enviar `formattedResponses` a tu API o DLL
   };
 
   return (

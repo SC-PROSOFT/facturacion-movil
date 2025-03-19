@@ -7,7 +7,7 @@ interface EncuestaState {
 }
 
 const initialState: EncuestaState = {
-  isShowEncuesta: false,
+  isShowEncuesta: true,
   objEncuesta:
     {
       codigo: '',

@@ -167,7 +167,8 @@ class EncuestaRepository implements IRepository<IEncuesta> {
             admin_creacion TEXT ,
             fecha_creacion TEXT , 
             admin_modificacion TEXT ,
-            fecha_modificacion TEXT
+            fecha_modificacion TEXT,
+            guardado TEXT
         )
         `;
 
@@ -200,8 +201,9 @@ class EncuestaRepository implements IRepository<IEncuesta> {
             admin_creacion, 
             fecha_creacion, 
             admin_modificacion, 
-            fecha_modificacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            fecha_modificacion,
+            guardado
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
@@ -231,7 +233,7 @@ class EncuestaRepository implements IRepository<IEncuesta> {
   }
 
   async deleteTableResp(): Promise<boolean> {
-    const sqlDeleteStatement = `DELETE FROM respuesta`;
+    const sqlDeleteStatement = `DROP TABLE IF EXISTS respuesta`;
 
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
@@ -274,7 +276,84 @@ class EncuestaRepository implements IRepository<IEncuesta> {
         );
       });
     });
-    
+  }
+
+  async getRespEncuestaByGuardado(guardado: string): Promise<IRespEncuesta[]> {
+    const sqlSelectStatement = `SELECT * FROM respuesta WHERE guardado = ?`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [guardado],
+          (_: ResultSet, response: ResultSet) => {
+            const respuestas: IRespEncuesta[] = [];
+            for (let i = 0; i < response.rows.length; i++) {
+              const respuesta = response.rows.item(i);
+              respuestas.push(respuesta);
+            }
+            resolve(respuestas);
+          },
+          (error: ResultSet) => {
+            console.error('Error al obtener respuestas:', error);
+            reject(new Error('Fallo obtener respuestas'));
+          },
+        );
+      });
+    });
+  }
+
+  async getRespEncuestaByTercero(
+    codigoTercero: string,
+  ): Promise<IRespEncuesta[]> {
+    const sqlSelectStatement = `SELECT * FROM respuesta WHERE codigo_tercero = ?`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [codigoTercero],
+          (_: ResultSet, response: ResultSet) => {
+            const respuestas: IRespEncuesta[] = [];
+            for (let i = 0; i < response.rows.length; i++) {
+              const respuesta = response.rows.item(i);
+              respuestas.push(respuesta);
+            }
+            resolve(respuestas);
+          },
+          (error: ResultSet) => {
+            console.error('Error al obtener respuestas:', error);
+            reject(new Error('Fallo obtener respuestas'));
+          },
+        );
+      });
+    });
+  }
+
+  async updateRespEncuestaGuardado(
+    codigo: string,
+    guardado: string,
+  ): Promise<boolean> {
+    const sqlUpdateStatement = `UPDATE respuesta SET guardado = ? WHERE codigo = ?`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlUpdateStatement,
+          [guardado, codigo],
+          (_: ResultSet, response: ResultSet) => {
+            console.log(
+              `Encuesta con código ${codigo} actualizada a guardado = ${guardado}`,
+            );
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            console.error('Error al actualizar guardado:', error);
+            reject(new Error('Fallo actualizar guardado'));
+          },
+        );
+      });
+    });
   }
 }
 
