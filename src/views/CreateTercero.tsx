@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  StyleSheet,
 } from 'react-native';
 import {Text, ActivityIndicator} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -22,6 +23,8 @@ import {
   IconButton,
   FrecuenciaFinder,
   UploadArchives,
+  RutaFinder,
+  ZonaFinder,
 } from '../components';
 /* types */
 import {ITerceros} from '../common/types';
@@ -35,6 +38,8 @@ import {
   setIsShowTercerosFinder,
   setIsShowFrecuenciaFinder,
   setIsShowUploadArchives,
+  setIsShowZonaFinder,
+  setIsShowRutaFinder,
 } from '../redux/slices';
 /* services */
 import {tercerosService} from '../data_queries/local_database/services';
@@ -63,13 +68,20 @@ const CreateTercero = () => {
     email: '',
     reteica: 'N',
     frecuencia: '',
+    frecuencia2: '',
+    frecuencia3: '',
     zona: '',
     ruta: '',
     latitude: '',
     longitude: '',
     rut_path: '',
     camaracomercio_path: '',
+    cc_path: '',
   });
+
+  const [activeFrecuenciaField, setActiveFrecuenciaField] = useState<
+    'frecuencia' | 'frecuencia2' | 'frecuencia3' | null
+  >(null);
 
   const [errors, setErrors] = useState({
     codigo: '',
@@ -187,19 +199,45 @@ const CreateTercero = () => {
 
     setIsLoading(true);
     try {
-      const response = await tercerosService.createTercero(tercero);
+      // Calcular el tipo de tercero (NIT o CC)
+      const type =
+        /^\d{9,10}$/.test(tercero.codigo) &&
+        tercero.codigo.slice(-1) ===
+          calcularDigitoVerificacion(tercero.codigo.slice(0, -1)).toString()
+          ? 'NIT'
+          : 'CC';
+
+      // Construir la ruta base
+      const basePath = `D:\\WEB\\ANEXOS\\${type}-${tercero.codigo}`;
+
+      // Asignar las rutas de los archivos al tercero
+      const updatedTercero = {
+        ...tercero,
+        rut_path: rutFile ? `${basePath}\\${rutFile.name}` : '',
+        camaracomercio_path: camaraComercioFile
+          ? `${basePath}\\${camaraComercioFile.name}`
+          : '',
+        cc_path: cedulaFile ? `${basePath}\\${cedulaFile.name}` : '',
+      };
+
+      // Crear el tercero en la base de datos
+      const response = await tercerosService.createTercero(updatedTercero);
 
       if (response) {
         try {
+          // Subir los archivos
           await uploadFiles();
         } catch (error) {
-          setObjInfoAlert({
-            visible: true,
-            type: 'error',
-            description: 'Error al subir los archivos.',
-          });
+          dispatch(
+            setObjInfoAlert({
+              visible: true,
+              type: 'error',
+              description: 'Error al subir los archivos.',
+            }),
+          );
         }
       }
+
       setIsLoading(false);
       navigation.navigate('TabNavPrincipal');
     } catch (error: any) {
@@ -232,6 +270,24 @@ const CreateTercero = () => {
         }),
       );
     }
+  };
+
+  const handleOpenFrequencyFinder = (
+    field: 'frecuencia' | 'frecuencia2' | 'frecuencia3',
+  ) => {
+    setActiveFrecuenciaField(field); // Establece el campo activo
+    dispatch(setIsShowFrecuenciaFinder(true)); // Abre el FrequencyFinder
+  };
+
+  const handleSelectFrecuencia = (frecuencia: string) => {
+    // Asigna la frecuencia seleccionada al campo activo
+    if (activeFrecuenciaField) {
+      setTercero(prevState => ({
+        ...prevState,
+        [activeFrecuenciaField]: frecuencia,
+      }));
+    }
+    setActiveFrecuenciaField(null); // Resetea el campo activo
   };
 
   const handleFilesUpload = (files: {
@@ -305,6 +361,29 @@ const CreateTercero = () => {
   };
 
   const screenWidth = Dimensions.get('window').width;
+
+  const styles = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      flexWrap: 'wrap', // Permite que los elementos se envuelvan si no caben
+      justifyContent: 'space-between',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+      width: '48%', // Cada fila ocupa el 48% del ancho para que quepan dos por línea
+    },
+    inputContainer: {
+      flex: 2,
+      marginRight: 6,
+    },
+    buttonContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
 
   return (
     <View style={{flex: 1}}>
@@ -494,34 +573,12 @@ const CreateTercero = () => {
 
           <View style={{flexDirection: 'row', gap: 8}}>
             <View
-              style={{flex: 1.8, flexDirection: 'row', alignItems: 'center'}}>
-              <View style={{flex: 4}}>
-                <_Input
-                  label="Frecuencia"
-                  name="frecuencia"
-                  onChangeText={(text: string) =>
-                    setTercero(prevState => ({...prevState, frecuencia: text}))
-                  }
-                  error={errors.frecuencia}
-                  disabled={isDisabled}
-                />
-              </View>
-              <View style={{flex: 1.5, marginLeft: 6}}>
-                <IconButton
-                  iconName="calendar-refresh"
-                  iconColor="#FFF"
-                  iconSize={36}
-                  onPress={() => dispatch(setIsShowFrecuenciaFinder(true))}
-                  // disabled={isDisabled}
-                />
-              </View>
-            </View>
-            <View
               style={{flex: 1.5, flexDirection: 'row', alignItems: 'center'}}>
               <View style={{flex: 4}}>
                 <_Input
                   label="Zona"
                   name="zona"
+                  value={tercero.zona}
                   onChangeText={(text: string) =>
                     setTercero(prevState => ({...prevState, zona: text}))
                   }
@@ -534,18 +591,18 @@ const CreateTercero = () => {
                   iconName="map-marker-path"
                   iconColor="#FFF"
                   iconSize={36}
-                  onPress={() => dispatch(setIsShowTercerosFinder(true))}
+                  onPress={() => dispatch(setIsShowZonaFinder(true))}
                   // disabled={isDisabled}
                 />
               </View>
             </View>
-          </View>
-          <View style={{width: screenWidth / 2}}>
-            <View style={{flexDirection: 'row', gap: 6}}>
+            <View
+              style={{flex: 1.8, flexDirection: 'row', alignItems: 'center'}}>
               <View style={{flex: 1}}>
                 <_Input
                   label="Ruta"
                   name="ruta"
+                  value={tercero.ruta}
                   onChangeText={(text: string) =>
                     setTercero(prevState => ({...prevState, ruta: text}))
                   }
@@ -553,13 +610,80 @@ const CreateTercero = () => {
                   disabled={isDisabled}
                 />
               </View>
-              <View style={{flex: 0.35}}>
+              <View style={{flex: 0.33, marginLeft: 6}}>
                 <IconButton
                   iconName="call-split"
                   iconColor="#FFF"
                   iconSize={36}
-                  onPress={() => dispatch(setIsShowTercerosFinder(true))}
+                  onPress={() => dispatch(setIsShowRutaFinder(true))}
                   // disabled={isDisabled}
+                />
+              </View>
+            </View>
+          </View>
+          <View style={styles.container}>
+            {/* Input y botón 1 */}
+            <View style={styles.row}>
+              <View style={styles.inputContainer}>
+                <_Input
+                  label="Frec 1"
+                  name="frecuencia"
+                  value={tercero.frecuencia}
+                  onChangeText={(text: string) =>
+                    setTercero(prevState => ({...prevState, frecuencia: text}))
+                  }
+                />
+              </View>
+              <View style={styles.buttonContainer}>
+                <IconButton
+                  iconName="calendar-refresh"
+                  iconColor="#FFF"
+                  iconSize={36}
+                  onPress={() => handleOpenFrequencyFinder('frecuencia')}
+                />
+              </View>
+            </View>
+
+            {/* Input y botón 2 */}
+            <View style={styles.row}>
+              <View style={styles.inputContainer}>
+                <_Input
+                  label="Frec 2"
+                  name="frecuencia2"
+                  value={tercero.frecuencia2}
+                  onChangeText={(text: string) =>
+                    setTercero(prevState => ({...prevState, frecuencia2: text}))
+                  }
+                />
+              </View>
+              <View style={styles.buttonContainer}>
+                <IconButton
+                  iconName="calendar-refresh"
+                  iconColor="#FFF"
+                  iconSize={36}
+                  onPress={() => handleOpenFrequencyFinder('frecuencia2')}
+                />
+              </View>
+            </View>
+
+            {/* Input y botón 3 */}
+            <View style={styles.row}>
+              <View style={styles.inputContainer}>
+                <_Input
+                  label="Frec 3"
+                  name="frecuencia3"
+                  value={tercero.frecuencia3}
+                  onChangeText={(text: string) =>
+                    setTercero(prevState => ({...prevState, frecuencia3: text}))
+                  }
+                />
+              </View>
+              <View style={styles.buttonContainer}>
+                <IconButton
+                  iconName="calendar-refresh"
+                  iconColor="#FFF"
+                  iconSize={36}
+                  onPress={() => handleOpenFrequencyFinder('frecuencia3')}
                 />
               </View>
             </View>
@@ -611,10 +735,21 @@ const CreateTercero = () => {
             pressCoolButton={() => saveTercero()}
           />
         </View>
-
-        {/* Agrega el componente FrecuenciaFinder aquí */}
       </ScrollView>
-      <FrecuenciaFinder />
+      <FrecuenciaFinder
+        toggleFrecuencia={frecuencia => handleSelectFrecuencia(frecuencia.zona)}
+      />
+      <ZonaFinder
+        toggleZona={zona =>
+          setTercero(prevState => ({...prevState, zona: zona.zona}))
+        }
+      />
+
+      <RutaFinder
+        toggleRuta={ruta =>
+          setTercero(prevState => ({...prevState, ruta: ruta.zona}))
+        }
+      />
       <UploadArchives onFilesUpload={handleFilesUpload} />
       {isLoading && (
         <View

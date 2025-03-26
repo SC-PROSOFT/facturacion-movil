@@ -9,3 +9,7 @@ export * from './pedidos_repository';
 export * from './facturas_repository';
 export * from './encuesta_repository';
 export * from './files_repository';
+export * from './frecuencia_repository';
+export * from './zona_repository';
+export * from './ruta_repository';
+export * from './visitas_repository';

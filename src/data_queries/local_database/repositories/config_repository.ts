@@ -38,6 +38,7 @@ class ConfigRepository implements IRepository<IConfig> {
             resolve(true);
           },
           (error: Error) => {
+            console.log(error);
             reject(new Error('Fallo crear tabla config'));
           },
         );

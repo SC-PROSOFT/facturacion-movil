@@ -345,7 +345,7 @@ const ProductSheet: React.FC<ProductSheetProps> = ({}) => {
     <Modal visible={isShowProductSheet} style={styles.container}>
       <View style={styles.titleContainer}>
         <Text allowFontScaling={false} style={styles.title}>
-          Detalles del producto
+          Detalles del productomm
         </Text>
 
         <IconButton

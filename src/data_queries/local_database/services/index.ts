@@ -9,3 +9,4 @@ export * from './pedidos_service';
 export * from './facturas_service';
 export * from './encuesta_service';
 export * from './files_service';
+export * from './visita_service';

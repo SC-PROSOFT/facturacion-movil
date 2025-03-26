@@ -126,7 +126,7 @@ const Survey = () => {
     const formattedResponses: IRespEncuesta = {
       codigo: survey.codigo,
       codigo_tercero: objTercero.codigo, // Reemplaza con el valor adecuado
-      codigo_opera: objOperador.codigo, // Reemplaza con el valor adecuado
+      codigo_vende: objTercero.vendedor, // Reemplaza con el valor adecuado
       respuesta: survey.preguntas.map((pregunta, index) => ({
         preg_abierta: pregunta.tipo === '1' ? responses[index] || '' : '',
         preg_cerrada: pregunta.tipo === '2' ? responses[index] || '' : '',
@@ -161,7 +161,6 @@ const Survey = () => {
           visible: true,
           type: 'error',
           description: 'Error al guardar respuestas',
-          redirectRoute: 'TabNavPrincipal',
         }),
       );
     }

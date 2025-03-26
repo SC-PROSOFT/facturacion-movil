@@ -18,12 +18,14 @@ export interface ITerceros {
   email: string;
   reteica: 'S' | 'N'; // S = true, N = false
   frecuencia: string;
+  frecuencia2: string;
+  frecuencia3: string;
   zona: string;
   ruta: string;
   latitude: string;
   longitude: string;
   rut_path: string;
   camaracomercio_path: string;
-
+  cc_path: string;
   estado?: '1' | '2'; // 1 = Creado, 2 = Actualizado
 }

@@ -19,3 +19,8 @@ export * from './frecuenciasFinderSlice';
 export * from './uploadArchivesSlice';
 export * from './encuestaSlice';
 export * from './filesSlice';
+export * from './zonaFinderSilce';
+export * from './rutaFinderSlice';
+export * from './visitasSlice';
+
+

@@ -2,16 +2,13 @@ import {IEncuesta, IRespEncuesta, IRespuestas} from '../../../common/types';
 import {createAxiosInstance} from '../axiosInstance';
 import {useAppDispatch, useAppSelector} from '../../../redux/hooks';
 
-
 class EncuestaApiServices {
   private axiosInstance;
   private direccionIp;
 
-  
   constructor(direccionIp: string, puerto: string) {
     this.axiosInstance = createAxiosInstance(direccionIp, puerto);
     this.direccionIp = direccionIp;
-
   }
 
   _constructRespEncuesta = (respuesta: IRespEncuesta) => {
@@ -19,7 +16,7 @@ class EncuestaApiServices {
       datosh: `00000086005264920250220112018|COMER24|CONTROL`,
       cod_resp_encu: respuesta.codigo,
       cod_terce_resp_encu: respuesta.codigo_tercero,
-      cod_ven_resp_encu: respuesta.codigo_opera,
+      cod_ven_resp_encu: respuesta.codigo_vende,
       fecha_cre_encu: respuesta.fecha_creacion,
     };
 
@@ -71,15 +68,18 @@ class EncuestaApiServices {
   _saveRespEncuesta = async (respuesta: IRespEncuesta): Promise<boolean> => {
     let body = this._constructRespEncuesta(respuesta);
     try {
-      // const response = await this.axiosInstance.post(
-      //   `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/INV126.dll`,
-      //   {body},
-      // );
-      console.log('body =>', body);
+      const response = await this.axiosInstance.post(
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/INV126.dll`,
+        body,
+      );
+      console.log('response =>', response);
+      if (response.data.data.STATUS !== '00') {
+        throw new Error(response.data.data.MENSAJE);
+      }
       return true;
     } catch (error: any) {
       console.error('error =>', error);
-      return false;
+      throw error;
     }
   };
 }

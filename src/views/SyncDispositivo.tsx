@@ -23,15 +23,19 @@ import {
   facturasService,
   tercerosService,
   encuestaService,
+  filesService,
 } from '../data_queries/local_database/services';
 import {ITerceros} from '../common/types';
 import {
   FacturasApiService,
   PedidosApiService,
   EncuestaApiServices,
+  TercerosApiServices,
+  FilesApiServices,
 } from '../data_queries/api/queries';
 import Toast from 'react-native-toast-message';
 import {useFocusEffect} from '@react-navigation/native';
+import {TercerosRepository} from '../data_queries/local_database/repositories';
 
 interface ProgressWindowProps {
   visible: boolean;
@@ -413,6 +417,96 @@ const SyncDispositivo = () => {
     }
   };
 
+  const updateTerceros: () => void = async () => {
+    setLoading(true);
+
+    const tercerosApiService = new TercerosApiServices(
+      objConfig.direccionIp,
+      objConfig.puerto,
+    );
+
+    try {
+      setDialogContent('Subiendo terceros');
+
+      // Obtener terceros creados y editados
+      const createdTerceros = await tercerosService.getCreated();
+      const editedTerceros = await tercerosService.getModified();
+
+      // Subir terceros creados
+      const createdResults = await Promise.allSettled(
+        createdTerceros.map(async tercero => {
+          const response = await tercerosApiService._saveTercero(tercero);
+          if (response) {
+            // Eliminar el tercero de la tabla de creados si se subió correctamente
+            await tercerosService.deleteTerceroFromCreated(tercero.codigo);
+          }
+          return response;
+        }),
+      );
+
+      // Subir terceros editados
+      const editedResults = await Promise.allSettled(
+        editedTerceros.map(async tercero => {
+          const response = await tercerosApiService._updateTercero(tercero);
+          if (response) {
+            // Eliminar el tercero de la tabla de editados si se subió correctamente
+            await tercerosService.deleteTerceroFromEdited(tercero.codigo);
+          }
+          return response;
+        }),
+      );
+
+      // Contar resultados exitosos y fallidos
+      const successfulCreated = createdResults.filter(
+        result => result.status === 'fulfilled' && result.value === true,
+      ).length;
+
+      const failedCreated = createdResults.filter(
+        result => result.status === 'rejected',
+      ).length;
+
+      const successfulEdited = editedResults.filter(
+        result => result.status === 'fulfilled' && result.value === true,
+      ).length;
+
+      const failedEdited = editedResults.filter(
+        result => result.status === 'rejected',
+      ).length;
+
+      // Mostrar mensajes al usuario
+      if (successfulCreated > 0 || successfulEdited > 0) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'success',
+            description: `${successfulCreated} terceros creados y ${successfulEdited} terceros editados subidos correctamente`,
+          }),
+        );
+      }
+
+      if (failedCreated > 0 || failedEdited > 0) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: `${failedCreated} terceros creados y ${failedEdited} terceros editados fallaron al subir`,
+          }),
+        );
+      }
+
+      setLoading(false);
+    } catch (error: any) {
+      setLoading(false);
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: error.message || 'Error al subir terceros',
+        }),
+      );
+    }
+  };
+
   const updateEncuestas: () => void = async () => {
     setLoading(true);
 
@@ -428,23 +522,13 @@ const SyncDispositivo = () => {
     try {
       // Obtener solo las encuestas con guardado = 'N'
       const encuestas = await encuestaService.getRespEncuestaByGuardado('N');
-
-      if (encuestas.length === 0) {
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'info',
-            description: 'No hay encuestas pendientes de sincronización',
-          }),
-        );
-        setLoading(false);
-        return;
-      }
+      console.log('encuestas', encuestas);
+      
 
       const results = await Promise.allSettled(
         encuestas.map(async encuesta => {
           const response = await encuestaApiService._saveRespEncuesta(encuesta);
-          // Si la encuesta se sube correctamente, actualizar guardado a 'S'
+
           await encuestaService.updateRespEncuestaByGuardado(
             encuesta.codigo,
             'S',
@@ -452,7 +536,7 @@ const SyncDispositivo = () => {
           return response;
         }),
       );
-
+      console.log('results', results);
       const successfulUpdates = results.filter(
         result => result.status === 'fulfilled',
       ).length;
@@ -495,6 +579,118 @@ const SyncDispositivo = () => {
     }
   };
 
+  const updateFiles = async () => {
+    setLoading(true); // Mostrar indicador de carga
+    const filesApiService = new FilesApiServices(
+      objConfig.direccionIp,
+      objConfig.puerto,
+    );
+
+    try {
+      setDialogContent('Subiendo archivos');
+      const files = await filesService.getAllFiles(); // Obtener todos los archivos desde la base de datos local
+
+      if (files.length === 0) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'info',
+            description: 'No hay archivos pendientes de sincronización',
+          }),
+        );
+        setLoading(false);
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        files.map(async file => {
+          // Validar si el archivo tiene una lista de files
+          if (!file.files || file.files.length === 0) {
+            throw new Error(
+              `El archivo con código ${file.codigo} no contiene datos válidos`,
+            );
+          }
+
+          // Obtener el tercero relacionado con el archivo
+          const tercero = await tercerosService.getByAttribute(
+            'codigo',
+            file.codigo,
+          );
+          if (!tercero) {
+            throw new Error(
+              `No se encontró el tercero con código ${file.codigo}`,
+            );
+          }
+
+          // Subir cada archivo individualmente
+          const uploadResults = await Promise.allSettled(
+            file.files.map(async singleFile => {
+              const response = await filesApiService._uploadFiles(
+                singleFile,
+                tercero,
+              );
+              return response;
+            }),
+          );
+
+          // Verificar si todos los archivos individuales se subieron correctamente
+          const successfulUploads = uploadResults.filter(
+            result => result.status === 'fulfilled' && result.value === true,
+          ).length;
+
+          if (successfulUploads !== file.files.length) {
+            throw new Error(
+              `Algunos archivos del código ${file.codigo} no se pudieron subir`,
+            );
+          }
+
+          return true; // Indicar que todos los archivos de este grupo se subieron correctamente
+        }),
+      );
+
+      const successfulUploads = results.filter(
+        result => result.status === 'fulfilled' && result.value === true,
+      ).length;
+
+      const failedUploads = results.filter(
+        result => result.status === 'rejected',
+      );
+
+      if (successfulUploads > 0) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'success',
+            description: `${successfulUploads} archivos subidos correctamente`,
+          }),
+        );
+      }
+
+      if (failedUploads.length > 0) {
+        failedUploads.forEach(failure => {
+          dispatch(
+            setObjInfoAlert({
+              visible: true,
+              type: 'error',
+              description:
+                failure.reason?.message || 'Error desconocido al subir archivo',
+            }),
+          );
+        });
+      }
+    } catch (error: any) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: error.message || 'Error al subir archivos',
+        }),
+      );
+    } finally {
+      setLoading(false); // Ocultar indicador de carga
+    }
+  };
+
   const toggleUploadData = async () => {
     setShowProgressWindow(true);
     console.log('Uploading data');
@@ -504,23 +700,21 @@ const SyncDispositivo = () => {
     // console.log("syncQueries", syncQueries);
 
     try {
-      // setDialogContent('Trayendo terceros');
-      // const resGetTerceros = await syncQueries._getTerceros();
-
-      // setDisabledCancel(true);
-
-      // await pedidosService.deleteTablaPedidos();
-      // await facturasService.deleteTablaFacturas();
-
-      // setDialogContent('Descargando terceros');
-      // await tercerosService.fillTerceros(resGetTerceros);
+      setDialogContent('Subiendo terceros');
+      await updateTerceros();
+      setDialogContent('Subiendo facturas');
+      await updateFacturas();
+      setDialogContent('Subiendo pedidos');
+      await updatePedidos();
+      setDialogContent('Subiendo archivos');
+      await updateFiles();
       setDialogContent('Subiendo respuestas de encuestas');
       await updateEncuestas();
 
       setDisabledCancel(false);
       setShowProgressWindow(false);
       loadRecord();
-      dispatch(showAlert('05'));
+      // dispatch(showAlert('05'));
     } catch (error: any) {
       setShowProgressWindow(false);
       dispatch(

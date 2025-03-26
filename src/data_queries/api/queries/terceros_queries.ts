@@ -12,12 +12,13 @@ class TercerosApiServices {
     this.direccionIp = direccionIp;
   }
 
-  _constructTercero = (tercero: ITerceros) => {
-    let datos = `COMER24|7|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}`;
+  _constructTercero = (tercero: ITerceros, novedad: string) => {
+    let datos = `COMER24|${novedad}|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_path}|${tercero.camaracomercio_path}`;
     return datos;
   };
 
   _getTerceros = async (): Promise<ITerceros[]> => {
+    console.log('get terce');
     try {
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
@@ -32,7 +33,7 @@ class TercerosApiServices {
   };
 
   _saveTercero = async (tercero: ITerceros): Promise<boolean> => {
-    const innerFormatTercero = this._constructTercero(tercero);
+    const innerFormatTercero = this._constructTercero(tercero, '7');
 
     const datosh = innerFormatTercero;
 
@@ -48,12 +49,10 @@ class TercerosApiServices {
       console.log('response get terce =>', response);
       return true;
     } catch (error) {
-      console.error('error =>', error);
-      return false;
+      throw error;
     }
   };
   _updateTercero = async (tercero: ITerceros): Promise<boolean> => {
-    const body = {};
     const innerFormatTercero = (tercero: ITerceros) => {
       return [
         tercero.codigo,
@@ -72,6 +71,8 @@ class TercerosApiServices {
         tercero.email,
         tercero.reteica,
         tercero.frecuencia,
+        tercero.frecuencia2,
+        tercero.frecuencia3,
         tercero.zona,
         tercero.ruta,
         tercero.latitude,
@@ -82,13 +83,22 @@ class TercerosApiServices {
     };
 
     try {
-      const response = console.log('response =>', innerFormatTercero(tercero));
+      const innerFormatTercero = this._constructTercero(tercero, '8');
 
+      const datosh = innerFormatTercero;
+
+      let body = {
+        datosh: datosh,
+      };
+      const response = await this.axiosInstance.post(
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
+        {body},
+      );
       console.log('response =>', response);
       return true;
     } catch (error) {
-      console.error('error =>', error);
-      return false;
+      console.log('error =>', error);
+      throw error;
     }
   };
 }

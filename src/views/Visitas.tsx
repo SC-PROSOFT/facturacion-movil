@@ -30,6 +30,7 @@ import {
   facturasService,
   pedidosService,
   encuestaService,
+  visitaService,
 } from '../data_queries/local_database/services';
 
 const visitas: IVisita[] = [
@@ -40,11 +41,14 @@ const visitas: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2025-03-19',
+    appointmentDate: '2025-03-25T22:37:55.853Z',
     location: {
       latitude: '',
       longitude: '',
     },
+    zona: '',
+    ruta: '',
+    frecuencia: '',
 
     id_tercero: '0000001035',
   },
@@ -54,12 +58,14 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-03-19',
+    appointmentDate: '2025-03-25',
     location: {
       latitude: '',
       longitude: '',
     },
-
+    zona: '',
+    ruta: '',
+    frecuencia: '',
     id_tercero: '0000002276',
   },
   {
@@ -68,11 +74,14 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-03-19',
+    appointmentDate: '2025-03-26',
     location: {
       latitude: '',
       longitude: '',
     },
+    zona: '',
+    ruta: '',
+    frecuencia: '',
     id_tercero: '0000000112',
   },
 ];
@@ -84,7 +93,7 @@ const Visitas: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const [search, setSearch] = useState<string>('');
-
+  const [visit, setVisit] = useState<IVisita[]>([]);
   const lastAppointmentDate = useRef<any>(null);
 
   useEffect(() => {
@@ -92,6 +101,7 @@ const Visitas: React.FC = () => {
     bringCartera();
     loadSettings();
     loadEncuesta();
+    loadVisitas();
   }, []);
 
   const bringAlmacenes = async () => {
@@ -103,6 +113,16 @@ const Visitas: React.FC = () => {
     const cartera = await carteraService.getAllCartera();
 
     dispatch(setArrCartera(cartera));
+  };
+
+  const loadVisitas = async () => {
+    try {
+      console.log('Entro a load');
+      const visitas = await visitaService.getAllVisitas();
+      console.log('visitas', visitas);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const loadSettings = async () => {

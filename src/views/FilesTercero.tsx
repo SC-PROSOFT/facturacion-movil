@@ -19,12 +19,17 @@ import {CoolButton} from '../components';
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {setObjInfoAlert} from '../redux/slices/infoAlertSlice';
 import {FilesApiServices} from '../data_queries/api/queries';
-import {filesService} from '../data_queries/local_database/services';
+import {
+  filesService,
+  tercerosService,
+} from '../data_queries/local_database/services';
 import {IFiles} from '../common/types';
 import {setFile} from '../redux/slices';
+import {useNavigation} from '@react-navigation/native';
 
 const FilesTercero = () => {
   const dispatch = useAppDispatch();
+  const navigation: any = useNavigation();
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const files = useAppSelector(store => store.files.file);
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
@@ -43,6 +48,13 @@ const FilesTercero = () => {
 
   const getFiles = async () => {
     setIsLoading(true);
+    // let files = null;
+    // try {
+    //   files = await filesService.getFilesByCode(objTercero.codigo);
+    // } catch (error) {
+    //   setIsLoading(false);
+    // }
+    // console.log(files);
     if (files) {
       try {
         const parsedFiles = JSON.parse(files.files);
@@ -74,6 +86,7 @@ const FilesTercero = () => {
   };
 
   useEffect(() => {
+    console.log(objTercero);
     getFiles();
   }, [objTercero.codigo]);
 
@@ -165,10 +178,12 @@ const FilesTercero = () => {
     addFileToArray(rutFile, 'RUT');
     addFileToArray(camaraComercioFile, 'CAMCOMERCIO');
     addFileToArray(cedulaFile, 'DI');
-
+   
     try {
+      console.log('files', arrayFiles);
       let response;
       if (files.files?.length ?? 0 > 0) {
+        console.log('update');
         response = await filesService.updateFile(files.codigo, arrayFiles);
       } else {
         const iFile: IFiles = {
@@ -177,15 +192,33 @@ const FilesTercero = () => {
           tipo: type,
           files: arrayFiles,
         };
+        console.log('add');
         response = await filesService.addFile(iFile);
       }
 
       if (response) {
+        // Actualizar los paths en el tercero
+        
+        console.log(response)
+        const terceroModificado = {...objTercero};
+        terceroModificado.tipo =
+          /^\d{9,10}$/.test(objTercero.codigo) &&
+          objTercero.codigo.slice(-1) ===
+            calcularDigitoVerificacion(
+              objTercero.codigo.slice(0, -1),
+            ).toString()
+            ? 'NIT'
+            : 'CC';
+        const ruta = `D:\\WEB\\ANEXOS\\${terceroModificado.tipo}-${terceroModificado.codigo}`;
+        terceroModificado.rut_path = `${ruta}\\${rutFile?.name}`;
+        terceroModificado.camaracomercio_path = `${ruta}\\${camaraComercioFile?.name}`;
+        terceroModificado.cc_path = `${ruta}\\${cedulaFile?.name}`;
+        await tercerosService.updateTercero(terceroModificado);
         dispatch(
           setObjInfoAlert({
             visible: true,
             type: 'success',
-            description: 'Archivos subidos correctamente.',
+            description: 'Archivos subidos correctamente y paths actualizados.',
           }),
         );
       } else {
@@ -206,6 +239,7 @@ const FilesTercero = () => {
       const archivos = await filesService.getFilesByCode(objTercero.codigo);
       dispatch(setFile(archivos));
       setIsLoading(false);
+      navigation.navigate('TabNavTercero');
     }
   };
 

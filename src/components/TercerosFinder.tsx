@@ -41,17 +41,17 @@ export const TercerosFinder = React.memo(
     const [quantityTerceros, setQuantityTerceros] = useState(0);
     const [page, setPage] = useState(1);
     const pageSize = 20;
+    const [isLoadingTerceros, setIsLoadingTerceros] = useState(false);
 
     useEffect(() => {
       adjustScreenSize();
     }, []);
 
     useEffect(() => {
-      if (isShowTercerosFinder) {
+      if (isShowTercerosFinder && !isLoadingTerceros) {
         loadAllTerceros();
       }
     }, [isShowTercerosFinder]);
-
     useEffect(() => {
       return () => {
         debouncedFilterTerceros.cancel();
@@ -72,7 +72,6 @@ export const TercerosFinder = React.memo(
 
     const filterTerceros = async (text: string) => {
       if (text.length === 0) {
-
         setFilteredTerceros(tempTerceros);
         return;
       }
@@ -86,6 +85,7 @@ export const TercerosFinder = React.memo(
         );
 
         setFilteredTerceros(filtered);
+        console.log('Filtered Terceros:', filtered);
       } catch (error) {
         console.error('Error al filtrar terceros:', error);
       }
@@ -98,11 +98,14 @@ export const TercerosFinder = React.memo(
     };
 
     const loadAllTerceros = async () => {
+      if (isLoadingTerceros) return; // Evitar múltiples ejecuciones
+      setIsLoadingTerceros(true);
       setIsLoading(true);
-      const {filtrarTercerosPorVendedor} = objConfig;
-      const {cod_vendedor} = objOperador;
 
       try {
+        const {filtrarTercerosPorVendedor} = objConfig;
+        const {cod_vendedor} = objOperador;
+
         const quantityTerceros = await tercerosService.getQuantityByTable(
           searchTable,
         );
@@ -113,7 +116,9 @@ export const TercerosFinder = React.memo(
           1, // Reset page to 1
           pageSize,
         );
+        console.log('All Terceros:', allTerceros);
 
+        console.log(terceros);
         if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
           const filteredTerceros = allTerceros.filter(
             tercero => tercero.vendedor === cod_vendedor,
@@ -130,6 +135,7 @@ export const TercerosFinder = React.memo(
         console.error('Error al obtener terceros:', error);
       } finally {
         setIsLoading(false);
+        setIsLoadingTerceros(false);
         setIsFirstLoad(false);
       }
     };
@@ -251,7 +257,7 @@ export const TercerosFinder = React.memo(
         </View>
       </TouchableOpacity>
     );
-
+    console.log('Terceros:', filteredTerceros);
     return (
       <Modal
         visible={isShowTercerosFinder}
@@ -306,10 +312,10 @@ export const TercerosFinder = React.memo(
               renderItem={renderItem}
               getItemCount={data => data.length}
               getItem={(data, index) => data[index]}
-              keyExtractor={item => item.codigo.toString()}
+              keyExtractor={(item, index) => index.toString()}
               keyboardShouldPersistTaps="always"
               onEndReached={loadMoreTerceros}
-              onEndReachedThreshold={0.5}
+              onEndReachedThreshold={0.7}
               ListFooterComponent={
                 isLoading ? (
                   <View style={styles.loaderContainer}>

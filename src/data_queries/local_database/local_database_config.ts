@@ -13,6 +13,10 @@ import {
   facturasService,
   encuestaService,
   filesService,
+  frecuenciaService,
+  zonaService,
+  rutaService,
+  visitaService,
 } from './services';
 
 const db: any = SQLite.openDatabase({name: 'localdb16'}); // 14
@@ -32,6 +36,12 @@ const createTables = async (): Promise<boolean> => {
     await carteraService.createTableCartera();
     console.log('Creando tablas 6...');
     await tercerosService.createTableTerceros();
+    console.log('Creando tablas 6.12...');
+     await visitaService.deleteTableVisitas();
+    await visitaService.createTableVisitas();
+    // await tercerosService.dropAllTables();
+    // await tercerosService.dropTableCreates();
+    // await tercerosService.dropTableEdits();
     console.log('Creando tablas 6.1...');
     await tercerosService.createTableTercerosCreates();
     console.log('Creando tablas 6.2...');
@@ -41,6 +51,7 @@ const createTables = async (): Promise<boolean> => {
     console.log('Creando tablas 8...');
     await encuestaService.createTableEncuesta();
     console.log('Creando tablas 8.1...');
+    // await encuestaService.deleteTableRespEncuesta();
     await encuestaService.createTableRespEncuesta();
     console.log('Creando tablas 9...');
     await pedidosService.createTablePedidos();
@@ -48,6 +59,12 @@ const createTables = async (): Promise<boolean> => {
     await facturasService.createTableFacturas();
     console.log('Creando tablas 11...');
     await filesService.createTableFiles();
+    console.log('Creando tablas 12...');
+    await frecuenciaService.createTableFrecuencia();
+    console.log('Creando tablas 13...');
+    await zonaService.createTableZona();
+    console.log('Creando tablas 14...');
+    await rutaService.createTableRuta();
 
     return true;
   } catch (error: any) {

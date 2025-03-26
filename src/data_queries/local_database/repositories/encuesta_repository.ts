@@ -162,7 +162,7 @@ class EncuestaRepository implements IRepository<IEncuesta> {
         CREATE TABLE IF NOT EXISTS respuesta (
             codigo TEXT , 
             codigo_tercero TEXT,
-            codigo_opera TEXT ,
+            codigo_vende TEXT ,
             respuesta TEXT , 
             admin_creacion TEXT ,
             fecha_creacion TEXT , 
@@ -196,7 +196,7 @@ class EncuestaRepository implements IRepository<IEncuesta> {
         INSERT INTO respuesta (
             codigo, 
             codigo_tercero, 
-            codigo_opera, 
+            codigo_vende, 
             respuesta, 
             admin_creacion, 
             fecha_creacion, 
@@ -213,12 +213,13 @@ class EncuestaRepository implements IRepository<IEncuesta> {
           [
             respuesta.codigo,
             respuesta.codigo_tercero,
-            respuesta.codigo_opera,
+            respuesta.codigo_vende,
             JSON.stringify(respuesta.respuesta),
             respuesta.admin_creacion,
             respuesta.fecha_creacion,
             respuesta.admin_modificacion,
             respuesta.fecha_modificacion,
+            respuesta.guardado,
           ],
           (_: ResultSet, response: ResultSet) => {
             resolve(true);
@@ -286,6 +287,34 @@ class EncuestaRepository implements IRepository<IEncuesta> {
         tx.executeSql(
           sqlSelectStatement,
           [guardado],
+          (_: ResultSet, response: ResultSet) => {
+            const respuestas: IRespEncuesta[] = [];
+            for (let i = 0; i < response.rows.length; i++) {
+              const respuesta = response.rows.item(i);
+              respuestas.push(respuesta);
+            }
+            resolve(respuestas);
+          },
+          (error: ResultSet) => {
+            console.error('Error al obtener respuestas:', error);
+            reject(new Error('Fallo obtener respuestas'));
+          },
+        );
+      });
+    });
+  }
+
+  async getByTerceroAndGuardado(
+    codigoTercero: string,
+    guardado: string,
+  ): Promise<IRespEncuesta[]> {
+    const sqlSelectStatement = `SELECT * FROM respuesta WHERE codigo_tercero = ? AND guardado = ?`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [codigoTercero, guardado],
           (_: ResultSet, response: ResultSet) => {
             const respuestas: IRespEncuesta[] = [];
             for (let i = 0; i < response.rows.length; i++) {

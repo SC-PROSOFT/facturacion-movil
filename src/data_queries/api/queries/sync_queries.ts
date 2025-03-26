@@ -122,11 +122,13 @@ class SyncQueries {
 
   _getTerceros = async (): Promise<ITerceros[]> => {
     try {
+      console.log("Entre");
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802.dll`,
         {},
       );
-
+      console.log('response get terce =>', response);
+      
       if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'
@@ -171,6 +173,83 @@ class SyncQueries {
       }
     }
   };
+
+  _getEncuestaRespuestas = async (
+    encuesta: IEncuesta,
+  ): Promise<IEncuesta[]> => {
+    try {
+      const response = await this.axiosInstance.post(
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/INV126.dll`,
+        {},
+      );
+
+      if (
+        response.data.data.STATUS == '35' ||
+        response.data.data.STATUS == '30'
+      ) {
+        throw new Error('La configuracion no es correcta');
+      }
+      return response.data.data.MENSAJE.ENCUESTA;
+    } catch (error: any) {
+      console.log('error =>', error);
+      if (error?.message == 'La configuracion no es correcta') {
+        throw new Error(error.message);
+      } else if (error?.message == 'La solicitud fue cancelada') {
+        throw new Error('La sincronizacion fue cancelada');
+      } else {
+        throw new Error('Error al obtener cartera');
+      }
+    }
+  };
+
+  _getFrecuencias = async (): Promise<any> => {
+    try {
+      let datos = {
+        llave: '3',
+      };
+      const response = await this.axiosInstance.post(
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON810.dll`,
+        datos,
+      );
+      return response.data.data.MENSAJE.ZONAS;
+    } catch (error) {
+      console.error('error =>', error);
+      return [];
+    }
+  };
+
+  _getZonas = async (): Promise<any> => {
+    try {
+      let datos = {
+        llave: '1',
+      };
+      const response = await this.axiosInstance.post(
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON810.dll`,
+        datos,
+      );
+      return response.data.data.MENSAJE.ZONAS;
+    } catch (error) {
+      console.error('error =>', error);
+      return [];
+    }
+  };
+
+  _getRutas = async (): Promise<any> => {
+    try {
+      let datos = {
+        llave: '2',
+      };
+      const response = await this.axiosInstance.post(
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON810.dll`,
+        datos,
+      );
+      return response.data.data.MENSAJE.ZONAS;
+    } catch (error) {
+      console.error('error =>', error);
+      return [];
+    }
+  };
+
   _cancelSyncQueries = () => {
     if (this.axiosInstance.cancelRequest) {
       this.axiosInstance.cancelRequest();

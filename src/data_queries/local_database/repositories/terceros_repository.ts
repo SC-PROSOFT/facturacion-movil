@@ -25,6 +25,8 @@ class TercerosRepository implements IRepository<ITerceros> {
         email TEXT,
         reteica TEXT, 
         frecuencia TEXT,
+        frecuencia2 TEXT,
+        frecuencia3 TEXT,
         zona TEXT, 
         ruta TEXT,
         latitude TEXT,
@@ -69,6 +71,8 @@ class TercerosRepository implements IRepository<ITerceros> {
         email TEXT,
         reteica INTEGER,
         frecuencia TEXT,
+        frecuencia2 TEXT,
+        frecuencia3 TEXT,
         zona TEXT,
         ruta TEXT,
         latitude REAL,
@@ -113,6 +117,8 @@ class TercerosRepository implements IRepository<ITerceros> {
         email TEXT,
         reteica INTEGER,
         frecuencia TEXT,
+        frecuencia2 TEXT,
+        frecuencia3 TEXT,
         zona TEXT,
         ruta TEXT,
         latitude REAL,
@@ -156,13 +162,15 @@ class TercerosRepository implements IRepository<ITerceros> {
         email,
         reteica,
         frecuencia,
+        frecuencia2,
+        frecuencia3,
         zona,
         ruta,
         latitude,
         longitude,
         rut_path,
         camaracomercio_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
    `;
 
     const valuesTercero = [
@@ -182,6 +190,8 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.email,
       tercero.reteica,
       tercero.frecuencia,
+      tercero.frecuencia2,
+      tercero.frecuencia3,
       tercero.zona,
       tercero.ruta,
       tercero.latitude,
@@ -227,6 +237,8 @@ class TercerosRepository implements IRepository<ITerceros> {
         email = ?,
         reteica = ?,
         frecuencia = ?,
+        frecuencia2 = ?,
+        frecuencia3 = ?,
         zona = ?,
         ruta = ?,
         latitude = ?,
@@ -252,6 +264,8 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.email,
       tercero.reteica,
       tercero.frecuencia,
+      tercero.frecuencia2,
+      tercero.frecuencia3,
       tercero.zona,
       tercero.ruta,
       tercero.latitude,
@@ -325,7 +339,7 @@ class TercerosRepository implements IRepository<ITerceros> {
       const placeholders = terceros
         .map(
           () =>
-            '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)',
         )
         .join(', ');
 
@@ -348,6 +362,8 @@ class TercerosRepository implements IRepository<ITerceros> {
           email,
           reteica, 
           frecuencia,
+          frecuencia2,
+          frecuencia3,
           zona, 
           ruta,
           latitude,
@@ -375,6 +391,8 @@ class TercerosRepository implements IRepository<ITerceros> {
         tercero.email,
         tercero.reteica,
         tercero.frecuencia,
+        tercero.frecuencia2,
+        tercero.frecuencia3,
         tercero.zona,
         tercero.ruta,
         tercero.latitude,
@@ -779,13 +797,15 @@ class TercerosRepository implements IRepository<ITerceros> {
         email,
         reteica,
         frecuencia,
+        frecuencia2,
+        frecuencia3,
         zona,
         ruta,
         latitude,
         longitude,
         rut_path,
         camaracomercio_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
    `;
 
     const valuesTercero = [
@@ -805,6 +825,8 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.email,
       tercero.reteica,
       tercero.frecuencia,
+      tercero.frecuencia2,
+      tercero.frecuencia3,
       tercero.zona,
       tercero.ruta,
       tercero.latitude,
@@ -849,13 +871,15 @@ class TercerosRepository implements IRepository<ITerceros> {
         email,
         reteica,
         frecuencia,
+        frecuencia2,
+        frecuencia3,
         zona,
         ruta,
         latitude,
         longitude,
         rut_path,
         camaracomercio_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?)
    `;
 
     const valuesTercero = [
@@ -875,6 +899,8 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.email,
       tercero.reteica,
       tercero.frecuencia,
+      tercero.frecuencia2,
+      tercero.frecuencia3,
       tercero.zona,
       tercero.ruta,
       tercero.latitude,
@@ -935,6 +961,76 @@ class TercerosRepository implements IRepository<ITerceros> {
           },
           (error: ResultSet) => {
             reject(new Error('Fallo obtener terceros editados'));
+          },
+        );
+      });
+    });
+  }
+
+  async deleteFromTable(tableName: string, codigo: string): Promise<boolean> {
+    const sqlSelectStatement = `DELETE FROM ${tableName} WHERE codigo = ?`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [codigo],
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo borrar tercero'));
+          },
+        );
+      });
+    });
+  }
+
+  async dropAllTables(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `DROP TABLE terceros`,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo borrar tabla terceros'));
+          },
+        );
+      });
+    });
+  }
+
+  async dropAllTablesCreates(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `DROP TABLE terceros_creados`,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo borrar tabla terceros creados'));
+          },
+        );
+      });
+    });
+  }
+
+  async dropAllTablesEdits(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `DROP TABLE terceros_editados`,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo borrar tabla terceros editados'));
           },
         );
       });

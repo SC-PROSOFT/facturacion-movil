@@ -101,6 +101,26 @@ class TercerosService {
   async getModified(): Promise<ITerceros[]> {
     return this.tercerosRepository.getEditedTerceros();
   }
+
+  async deleteTerceroFromCreated(codigo: string): Promise<boolean> {
+    return this.tercerosRepository.deleteFromTable('terceros_nuevos', codigo);
+  }
+
+  async deleteTerceroFromEdited(codigo: string): Promise<boolean> {
+    return this.tercerosRepository.deleteFromTable('terceros_editados', codigo);
+  }
+
+  async dropAllTables(): Promise<boolean> {
+    return this.tercerosRepository.dropAllTables();
+  }
+
+  async dropTableCreates(): Promise<boolean> {
+    return this.tercerosRepository.dropAllTablesCreates();
+  }
+
+  async dropTableEdits(): Promise<boolean> {
+    return this.tercerosRepository.dropAllTablesEdits();
+  }
 }
 
 const tercerosService = new TercerosService();

@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 
 import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
-
+import {generateVisits} from '../utils';
 import {
   Divider,
   Dialog,
@@ -46,6 +46,10 @@ import {
   pedidosService,
   facturasService,
   encuestaService,
+  frecuenciaService,
+  rutaService,
+  zonaService,
+  visitaService,
 } from '../data_queries/local_database/services';
 /* utils */
 import {showAlert} from '../utils/showAlert';
@@ -301,27 +305,37 @@ const Sync = () => {
     setSyncQueriesScope(syncQueries);
 
     try {
-      setDialogContent('Trayendo operadores - 1/5');
+      setDialogContent('Trayendo operadores - 1/9');
       const resGetOperadores = await syncQueries._getOperadores();
 
-      setDialogContent('Trayendo articulos - 2/5');
+      setDialogContent('Trayendo articulos - 2/9');
       const resGetArticulos = await syncQueries._getArticulos();
 
-      setDialogContent('Trayendo almacenes - 3/5');
+      setDialogContent('Trayendo almacenes - 3/9');
       const resGetAlmacenes = await syncQueries._getAlmacenes();
 
-      setDialogContent('Trayendo cartera - 4/5');
+      setDialogContent('Trayendo cartera - 4/9');
       const resGetCartera = await syncQueries._getCartera();
-      setDialogContent('Trayendo encuesta - 5/5');
+      setDialogContent('Trayendo encuesta - 5/9');
       const resGetEncuesta = await syncQueries._getEncuesta();
-      console.log('Encuesta obtenida:', resGetEncuesta);
-      setDialogContent('Trayendo terceros - 5/5');
-      const resGetTerceros = await syncQueries._getTerceros();
+      setDialogContent('Treyendo terceros - 6/9');
+       const resGetTerceros = await syncQueries._getTerceros();
+       console.log("tercero traidos",resGetTerceros);
+      setDialogContent('Generando visitas - 7/9');
+      const resVisitas = await generateVisits(resGetTerceros);
+      setDialogContent('Trayendo zonas - 7/9');
+      const resGetZonas = await syncQueries._getZonas();
+      console.log('resGetZonas:', resGetZonas);
+      setDialogContent('Trayendo rutas - 8/9');
+      const resGetRutas = await syncQueries._getRutas();
+      setDialogContent('Trayendo frecuencias - 9/9');
+      const resGetFrecuencias = await syncQueries._getFrecuencias();
 
       setDisabledCancel(true);
 
       await pedidosService.deleteTablaPedidos();
       await facturasService.deleteTablaFacturas();
+      // await visitaService.deleteTableVisitas();
 
       setDialogContent('Descargando operadores - 1/5');
       await operadoresService.fillOperadores(resGetOperadores);
@@ -333,9 +347,16 @@ const Sync = () => {
       await carteraService.fillCartera(resGetCartera);
       setDialogContent('Descargando encuesta - 5/5');
       await encuestaService.fillEncuesta(resGetEncuesta);
-      console.log('Encuesta descargada e insertada correctamente');
       setDialogContent('Descargando terceros - 5/5');
-      await tercerosService.fillTerceros(resGetTerceros);
+      // await tercerosService.fillTerceros(resGetTerceros);
+      setDialogContent('Descargando visitas - 5/5');
+      await visitaService.fillVisitas(resVisitas);
+      setDialogContent('Descargando zonas - 5/5');
+      await zonaService.fillZona(resGetZonas);
+      setDialogContent('Descargando rutas - 5/5');
+      await rutaService.fillRuta(resGetRutas);
+      setDialogContent('Descargando frecuencias - 5/5');
+      await frecuenciaService.fillFrecuencia(resGetFrecuencias);
 
       setDisabledCancel(false);
 
