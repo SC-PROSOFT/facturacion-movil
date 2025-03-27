@@ -120,16 +120,16 @@ const ProductSheet: React.FC<ProductSheetProps> = ({}) => {
         type: 'error',
         text1: 'Debes ingresar una cantidad',
       });
-    } else if (productAdded.valorUnidad == 0 || productAdded.valorUnidad < 1) {
-      Toast.show({
-        type: 'error',
-        text1: 'Debes seleccionar un precio',
-      });
-    } else if (valorTotal <= 0) {
-      Toast.show({
-        type: 'error',
-        text1: 'El subtotal debe ser mayor a 0',
-      });
+    // } else if (productAdded.valorUnidad == 0 || productAdded.valorUnidad < 1) {
+    //   Toast.show({
+    //     type: 'error',
+    //     text1: 'Debes seleccionar un precio',
+    //   });
+    // } else if (valorTotal <= 0) {
+    //   Toast.show({
+    //     type: 'error',
+    //     text1: 'El subtotal debe ser mayor a 0',
+    //   });
     } else {
       dispatch(
         setArrProductAdded([
@@ -345,7 +345,7 @@ const ProductSheet: React.FC<ProductSheetProps> = ({}) => {
     <Modal visible={isShowProductSheet} style={styles.container}>
       <View style={styles.titleContainer}>
         <Text allowFontScaling={false} style={styles.title}>
-          Detalles del productomm
+          Detalles del producto
         </Text>
 
         <IconButton

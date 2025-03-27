@@ -122,13 +122,12 @@ class SyncQueries {
 
   _getTerceros = async (): Promise<ITerceros[]> => {
     try {
-      console.log("Entre");
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802.dll`,
         {},
       );
       console.log('response get terce =>', response);
-      
+
       if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'

@@ -21,11 +21,11 @@ class TercerosApiServices {
     console.log('get terce');
     try {
       const response = await this.axiosInstance.post(
-        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802.dll`,
         {},
       );
-      console.log('response get terce =>', response);
-      return response.data.data.terceros;
+      console.log('response get terce =>', response.data.data.STATUS);
+      return response.data.data.MENSAJE.LISTADO;
     } catch (error) {
       console.error('error =>', error);
       return [];

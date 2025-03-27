@@ -121,7 +121,6 @@ class FacturasRepository implements IRepository<IOperation | IOperationDb> {
         tercero_nombre,
         tercero_plazo,
         tercero_tel,
-        tercer_dv,
         tercero_vendedor,
         tercero_tipo,
         tercero_departamento,
@@ -226,6 +225,7 @@ class FacturasRepository implements IRepository<IOperation | IOperationDb> {
             }
           },
           (error: Error) => {
+            console.log('error', JSON.stringify(error));
             reject(new Error(`[Error al crear invoiceHistory]: ${error}`));
           },
         );

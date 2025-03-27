@@ -1,15 +1,20 @@
-import React, {useState, useEffect, useRef} from 'react';
-
-import {View, StyleSheet, VirtualizedList, SafeAreaView} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  StyleSheet,
+  SectionList,
+  SafeAreaView,
+  ActivityIndicator,
+} from 'react-native';
 import {Text} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
 
 /* components */
 import {Visita, PrincipalHeader, Searcher, TercerosFinder} from '../components';
 /* types */
-import {ITerceros, IVisita, IEncuesta} from '../common/types';
+import {ITerceros, IVisita} from '../common/types';
 /* redux */
-import {useAppDispatch} from '../redux/hooks';
+import {useAppDispatch, useAppSelector} from '../redux/hooks';
 import {
   setArrAlmacenes,
   setArrCartera,
@@ -20,8 +25,9 @@ import {
   setArrFactura,
   setArrPedido,
   setObjEncuesta,
+  setArrVisita,
 } from '../redux/slices';
-/* local db */
+/* local db services */
 import {
   almacenesService,
   carteraService,
@@ -33,7 +39,11 @@ import {
   visitaService,
 } from '../data_queries/local_database/services';
 
-const visitas: IVisita[] = [
+/**
+ * Obtiene la fecha local actual en formato "YYYY-MM-DD"
+ */
+
+const add: IVisita[] = [
   {
     client: 'Raul Arauco',
     adress: 'Carrera 24 # 55-64',
@@ -41,7 +51,7 @@ const visitas: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2025-03-25T22:37:55.853Z',
+    appointmentDate: '2025-03-27',
     location: {
       latitude: '',
       longitude: '',
@@ -58,7 +68,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-03-25',
+    appointmentDate: '2025-03-27',
     location: {
       latitude: '',
       longitude: '',
@@ -74,7 +84,7 @@ const visitas: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-03-26',
+    appointmentDate: '2025-03-28',
     location: {
       latitude: '',
       longitude: '',
@@ -86,40 +96,71 @@ const visitas: IVisita[] = [
   },
 ];
 
-const currentDate = new Date().toISOString().slice(0, 10);
+const getLocalDateString = (): string => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Suma un día a una fecha recibida en formato "YYYY-MM-DD", interpretándola como fecha local.
+ */
+const addOneDay = (dateString: string): string => {
+  const parts = dateString.split('-');
+  const year = Number(parts[0]);
+  const month = Number(parts[1]) - 1; // meses 0-11
+  const day = Number(parts[2]);
+  const date = new Date(year, month, day);
+  date.setDate(date.getDate() + 1);
+  const newYear = date.getFullYear();
+  const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const newDay = String(date.getDate()).padStart(2, '0');
+  return `${newYear}-${newMonth}-${newDay}`;
+};
 
 const Visitas: React.FC = () => {
   const navigation: any = useNavigation();
   const dispatch = useAppDispatch();
-
   const [search, setSearch] = useState<string>('');
-  const [visit, setVisit] = useState<IVisita[]>([]);
-  const lastAppointmentDate = useRef<any>(null);
+  const [visitas, setVisitas] = useState<IVisita[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Se obtienen las fechas locales
+  const currentDate = getLocalDateString(); // Ej: "2025-03-27"
+  const tomorrow = addOneDay(currentDate); // Ej: "2025-03-28"
 
   useEffect(() => {
-    bringAlmacenes();
-    bringCartera();
-    loadSettings();
-    loadEncuesta();
-    loadVisitas();
+    // Cargamos todos los datos y luego quitamos el loader.
+    Promise.all([
+      bringAlmacenes(),
+      bringCartera(),
+      loadSettings(),
+      loadEncuesta(),
+      loadVisitas(),
+    ])
+      .then(() => setLoading(false))
+      .catch(() => setLoading(false));
   }, []);
 
   const bringAlmacenes = async () => {
     const almacenes = await almacenesService.getAllAlmacenes();
-
     dispatch(setArrAlmacenes(almacenes));
   };
+
   const bringCartera = async () => {
     const cartera = await carteraService.getAllCartera();
-
     dispatch(setArrCartera(cartera));
   };
 
   const loadVisitas = async () => {
     try {
-      console.log('Entro a load');
-      const visitas = await visitaService.getAllVisitas();
-      console.log('visitas', visitas);
+      console.log('Entro a loadVisitas');
+      const visitasData = await visitaService.getAllVisitas();
+      // Se asume que las visitas ya tienen appointmentDate en formato "YYYY-MM-DD"
+      setVisitas([...visitasData, ...add]);
+      dispatch(setArrVisita(visitasData));
     } catch (error) {
       console.log(error);
     }
@@ -128,7 +169,6 @@ const Visitas: React.FC = () => {
   const loadSettings = async () => {
     try {
       const config = await configService.getConfig();
-
       dispatch(
         setObjConfig({
           direccionIp: config.direccionIp,
@@ -138,11 +178,9 @@ const Visitas: React.FC = () => {
           localizacionGps: config.localizacionGps,
           filtrarTercerosPorVendedor: config.filtrarTercerosPorVendedor,
           modificarPrecio: config.modificarPrecio,
-
           descargasIp: config.descargasIp,
           datosIp: config.datosIp,
           directorioContabilidad: config.directorioContabilidad,
-
           empresa: config.empresa,
           nit: config.nit,
           direccion: config.direccion,
@@ -152,62 +190,14 @@ const Visitas: React.FC = () => {
           tarifaIva3: config.tarifaIva3,
         }),
       );
-    } catch (error) {}
-  };
-  const addOneDay = (dateString: string) => {
-    // Convertir la fecha en formato "YYYY-MM-DD" a un objeto Date
-    const date = new Date(dateString);
-
-    // Sumar un día (86400000 ms en un día)
-    date.setDate(date.getDate() + 1);
-
-    // Formatear la fecha de nuevo a "YYYY-MM-DD"
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Mes de 0 a 11, sumamos 1
-    const day = String(date.toISOString()).slice(8, 10);
-
-    return `${year}-${month}-${day}`;
-  };
-  const filterVisitas = (visitas: IVisita[]) => {
-    const tomorrow = addOneDay(currentDate);
-    const trimmedSearch = search.trim();
-
-    return visitas.filter(
-      visita =>
-        visita.appointmentDate >= currentDate &&
-        visita.appointmentDate <= tomorrow &&
-        (!trimmedSearch || visita.client.includes(trimmedSearch)),
-    );
-  };
-  const toggleVisita = async (visita: IVisita) => {
-    try {
-      const tercero = await tercerosService.getByAttribute(
-        'codigo',
-        visita.id_tercero,
-      );
-
-      loadFacturas(tercero);
-      loadPedidos(tercero);
-
-      dispatch(setObjVisita(visita));
-      dispatch(setObjTercero(tercero));
-
-      navigation.navigate('TabNavTercero');
-    } catch (error: any) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error.message,
-        }),
-      );
+    } catch (error) {
+      // Manejo de error si es necesario
     }
   };
 
   const loadEncuesta = async () => {
     try {
       const encuesta = await encuestaService.getEncuesta();
-
       dispatch(setObjEncuesta(encuesta));
     } catch (error: any) {
       dispatch(
@@ -226,7 +216,6 @@ const Visitas: React.FC = () => {
         'tercero_codigo',
         tercero.codigo,
       );
-
       dispatch(setArrFactura(facturas));
     } catch (error: any) {
       dispatch(
@@ -238,20 +227,42 @@ const Visitas: React.FC = () => {
       );
     }
   };
+
   const loadPedidos = async (tercero: ITerceros) => {
     try {
       const pedidos = await pedidosService.getByAttribute(
         'tercero_codigo',
         tercero.codigo,
       );
-
       dispatch(setArrPedido(pedidos));
     } catch (error: any) {
       dispatch(
         setObjInfoAlert({
           visible: true,
           type: 'info',
-          description: `No se encontraron pedidos registradas a ${tercero.nombre}`,
+          description: `No se encontraron pedidos registrados a ${tercero.nombre}`,
+        }),
+      );
+    }
+  };
+
+  const toggleVisita = async (visita: IVisita) => {
+    try {
+      const tercero = await tercerosService.getByAttribute(
+        'codigo',
+        visita.id_tercero,
+      );
+      loadFacturas(tercero);
+      loadPedidos(tercero);
+      dispatch(setObjVisita(visita));
+      dispatch(setObjTercero(tercero));
+      navigation.navigate('TabNavTercero');
+    } catch (error: any) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: error.message,
         }),
       );
     }
@@ -259,87 +270,93 @@ const Visitas: React.FC = () => {
 
   const toggleTercero = async (tercero: ITerceros) => {
     console.log('tercero =>>>>', tercero);
-    visitas.filter(visita => {
+    visitas.forEach(visita => {
       if (visita.id_tercero === tercero.codigo) {
         setSearch(visita.client);
       }
     });
   };
 
-  const renderItem = ({item, index}: {item: IVisita; index: any}) => {
-    let showHeader = false;
-
-    if (item.appointmentDate !== lastAppointmentDate.current) {
-      showHeader = true;
-      lastAppointmentDate.current = item.appointmentDate;
-    }
-
-    return (
-      <>
-        {showHeader && (
-          <Text style={styles.sectionTitle}>
-            {item.appointmentDate === currentDate ? 'Hoy' : 'Mañana'}
-          </Text>
-        )}
-        <Visita
-          key={index}
-          visita={item}
-          disabled={item.appointmentDate === currentDate ? false : true}
-          toggleVisita={() => toggleVisita(item)}
-        />
-      </>
+  // Función que agrupa y ordena las visitas en secciones
+  const getSections = () => {
+    const trimmedSearch = search.trim().toLowerCase();
+    const filteredVisitas = visitas.filter(
+      visita =>
+        !trimmedSearch || visita.client.toLowerCase().includes(trimmedSearch),
     );
+
+    // Filtrar visitas según appointmentDate
+    const visitasHoy = filteredVisitas
+      .filter(visita => visita.appointmentDate === currentDate)
+      .sort((a, b) => a.id_tercero.localeCompare(b.id_tercero));
+    const visitasManana = filteredVisitas
+      .filter(visita => visita.appointmentDate === tomorrow)
+      .sort((a, b) => a.id_tercero.localeCompare(b.id_tercero));
+
+    const sections = [];
+    if (visitasHoy.length > 0) {
+      sections.push({title: 'Hoy', data: visitasHoy, disabled: false});
+    }
+    if (visitasManana.length > 0) {
+      sections.push({title: 'Mañana', data: visitasManana, disabled: true});
+    }
+    return sections;
   };
 
+  const renderSectionHeader = ({section}: {section: {title: string}}) => (
+    <Text style={styles.sectionTitle}>{section.title}</Text>
+  );
+
+  const renderItem = ({item, section}: {item: IVisita; section: any}) => (
+    <Visita
+      visita={item}
+      disabled={section.disabled}
+      toggleVisita={() => toggleVisita(item)}
+    />
+  );
+
   return (
-    <View>
+    <View style={{flex: 1}}>
       <PrincipalHeader>
         <Searcher search={search} setSearch={setSearch} />
       </PrincipalHeader>
-
-      <SafeAreaView>
-        <VirtualizedList
-          data={filterVisitas(visitas)}
+      <SafeAreaView style={{flex: 1}}>
+        <SectionList
+          sections={getSections()}
+          keyExtractor={(item, index) => item.id_tercero + index.toString()}
+          renderSectionHeader={renderSectionHeader}
           renderItem={renderItem}
-          getItemCount={data => data.length}
-          getItem={(data, index) => data[index]}
-          keyExtractor={(item, index) => index.toString()}
           ListFooterComponent={<View style={{height: 100}} />}
-          style={{
-            paddingHorizontal: 15,
-            paddingVertical: 5,
-            height: 780,
-          }}
+          contentContainerStyle={{paddingHorizontal: 15, paddingVertical: 5}}
         />
       </SafeAreaView>
       <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
+      {loading && (
+        <View style={styles.loaderOverlay}>
+          <ActivityIndicator size="large" color="#092254" />
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 15,
-    marginBottom: 140,
-  },
-  searcher: {
-    width: '100%',
-    backgroundColor: '#092254',
-  },
   sectionTitle: {
     color: '#0B2863',
     fontSize: 24,
     marginBottom: 5,
+    marginTop: 15,
   },
-  logoutButton: {
-    flexDirection: 'row',
+  loaderOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#485E8A',
-    paddingHorizontal: 10,
-    paddingRight: 5,
-    borderRadius: 5,
-    marginTop: 5,
-    alignSelf: 'flex-start', // Hace que el botón se ajuste al contenido
+    zIndex: 9999,
   },
 });
 

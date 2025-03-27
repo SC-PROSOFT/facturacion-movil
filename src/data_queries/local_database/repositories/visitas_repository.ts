@@ -6,7 +6,7 @@ class VisitasRepository implements IRepository<IVisita> {
   async createTable(): Promise<boolean> {
     const sqlCreateStatement = `
       CREATE TABLE IF NOT EXISTS visitas (
-        id TEXT PRIMARY KEY,
+        id TEXT ,
         client TEXT,
         adress TEXT,
         status TEXT,

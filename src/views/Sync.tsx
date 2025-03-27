@@ -35,7 +35,7 @@ import {
   CarteraFinder,
 } from '../components';
 /* queries */
-import {SyncQueries} from '../data_queries/api/queries';
+import {SyncQueries, TercerosApiServices} from '../data_queries/api/queries';
 /* local database services */
 import {
   operadoresService,
@@ -301,7 +301,7 @@ const Sync = () => {
     const {direccionIp, puerto} = objConfig;
 
     const syncQueries = new SyncQueries(direccionIp, puerto);
-
+    const tercerosQueries = new TercerosApiServices(direccionIp, puerto);
     setSyncQueriesScope(syncQueries);
 
     try {
@@ -319,8 +319,7 @@ const Sync = () => {
       setDialogContent('Trayendo encuesta - 5/9');
       const resGetEncuesta = await syncQueries._getEncuesta();
       setDialogContent('Treyendo terceros - 6/9');
-       const resGetTerceros = await syncQueries._getTerceros();
-       console.log("tercero traidos",resGetTerceros);
+      const resGetTerceros = await tercerosQueries._getTerceros();
       setDialogContent('Generando visitas - 7/9');
       const resVisitas = await generateVisits(resGetTerceros);
       setDialogContent('Trayendo zonas - 7/9');

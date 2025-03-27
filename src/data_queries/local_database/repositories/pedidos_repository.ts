@@ -103,7 +103,6 @@ class PedidosRepository implements IRepository<IOperation | IOperationDb> {
         tercero_nombre,
         tercero_plazo,
         tercero_tel,
-        tercer_dv,
         tercero_vendedor,        
         guardadoEnServer,
         sincronizado,
@@ -178,6 +177,7 @@ class PedidosRepository implements IRepository<IOperation | IOperationDb> {
             }
           },
           (error: Error) => {
+            console.log('error =>', JSON.stringify(error));
             reject(new Error(`[Error al crear orderHistory]: ${error}`));
           },
         );
