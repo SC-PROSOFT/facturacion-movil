@@ -94,8 +94,10 @@ const CreateTercero = () => {
   });
 
   const [isCodigoValid, setIsCodigoValid] = useState(false);
+  const [isAlreadyValidate, setIsAlreadyValidate] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [codeTemp, setCodeTemp] = useState('');
   const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
   const [camaraComercioFile, setCamaraComercioFile] =
     useState<DocumentPickerResponse | null>(null);
@@ -129,6 +131,11 @@ const CreateTercero = () => {
   };
 
   const checkCodigoExists = async () => {
+    console.log(codeTemp, tercero.codigo);
+    if (isCodigoValid && codeTemp == tercero.codigo) {
+      setIsDisabled(false);
+      return;
+    }
     if (!tercero.codigo) {
       setErrors(prevErrors => ({
         ...prevErrors,
@@ -160,6 +167,7 @@ const CreateTercero = () => {
       } else {
         setIsLoading(false);
         setIsCodigoValid(true);
+        setCodeTemp(tercero.codigo);
         setIsDisabled(false);
       }
     } catch (error) {
@@ -173,7 +181,6 @@ const CreateTercero = () => {
     const weights = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43];
     let acum = 0;
 
-    // Asegúrate de que el NIT tenga al menos 10 caracteres
     nit = nit.padStart(10, '0');
 
     for (let i = 0; i < 10; i++) {
@@ -219,13 +226,10 @@ const CreateTercero = () => {
           : '',
         cc_path: cedulaFile ? `${basePath}\\${cedulaFile.name}` : '',
       };
-
-      // Crear el tercero en la base de datos
       const response = await tercerosService.createTercero(updatedTercero);
 
       if (response) {
         try {
-          // Subir los archivos
           await uploadFiles();
         } catch (error) {
           dispatch(
@@ -288,6 +292,11 @@ const CreateTercero = () => {
       }));
     }
     setActiveFrecuenciaField(null); // Resetea el campo activo
+  };
+
+  const openFileModal = async () => {
+    setObjTercero(tercero);
+    dispatch(setIsShowUploadArchives(true));
   };
 
   const handleFilesUpload = (files: {
@@ -359,7 +368,9 @@ const CreateTercero = () => {
       );
     }
   };
-
+  const numericOnly = (text: string) => {
+    text = text.replace(/[^0-9]/g, '');
+  };
   const screenWidth = Dimensions.get('window').width;
 
   const styles = StyleSheet.create({
@@ -432,11 +443,12 @@ const CreateTercero = () => {
               <_Input
                 label="Identificacion"
                 name="codigo"
-                maxLength={15}
+                maxLength={10}
                 keyboardType="numeric"
-                onChangeText={(text: string) =>
-                  setTercero(prevState => ({...prevState, codigo: text}))
-                }
+                onChangeText={(text: string) => {
+                  numericOnly(text);
+                  setTercero(prevState => ({...prevState, codigo: text}));
+                }}
                 onBlur={checkCodigoExists}
                 error={errors.codigo}
               />
@@ -448,9 +460,10 @@ const CreateTercero = () => {
                 keyboardType="numeric"
                 maxLength={1}
                 value={tercero.dv} // Asegúrate de que el valor esté vinculado al estado
-                onChangeText={(text: string) =>
-                  setTercero(prevState => ({...prevState, dv: text}))
-                }
+                onChangeText={(text: string) => {
+                  numericOnly(text);
+                  setTercero(prevState => ({...prevState, dv: text}));
+                }}
                 error={errors.dv}
                 disabled={isDisabled}
               />
@@ -461,10 +474,12 @@ const CreateTercero = () => {
               <_Input
                 label="Telefono"
                 name="tel"
+                maxLength={10}
                 keyboardType="numeric"
-                onChangeText={(text: string) =>
-                  setTercero(prevState => ({...prevState, tel: text}))
-                }
+                onChangeText={(text: string) => {
+                  numericOnly(text);
+                  setTercero(prevState => ({...prevState, tel: text}));
+                }}
                 disabled={isDisabled}
               />
             </View>
@@ -474,12 +489,13 @@ const CreateTercero = () => {
                 label="Plazo"
                 name="plazo"
                 maxLength={3}
-                onChangeText={(text: string) =>
+                onChangeText={(text: string) => {
+                  numericOnly(text);
                   setTercero(prevState => ({
                     ...prevState,
                     plazo: parseInt(text),
-                  }))
-                }
+                  }));
+                }}
                 disabled={isDisabled}
               />
             </View>
@@ -696,7 +712,7 @@ const CreateTercero = () => {
                 padding: 3,
                 borderRadius: 5,
               }}
-              onPress={() => dispatch(setIsShowUploadArchives(true))}
+              onPress={() => openFileModal()}
               disabled={isDisabled}>
               <Icon name="attachment" size={36} color={'#FFF'} />
             </TouchableOpacity>
@@ -750,7 +766,7 @@ const CreateTercero = () => {
           setTercero(prevState => ({...prevState, ruta: ruta.zona}))
         }
       />
-      <UploadArchives onFilesUpload={handleFilesUpload} />
+      <UploadArchives onFilesUpload={handleFilesUpload} tercero={tercero} />
       {isLoading && (
         <View
           style={{
