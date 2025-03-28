@@ -29,11 +29,11 @@ import {
   setFile,
 } from '../redux/slices';
 import {showAlert} from '../utils/showAlert';
+import {useFocusEffect} from '@react-navigation/native'; // Importa useFocusEffect
 
 const Tercero = () => {
   const navigation: any = useNavigation();
   const dispatch = useAppDispatch();
-
   const arrFactura = useAppSelector(store => store.tercerosFinder.arrFactura);
   const arrPedido = useAppSelector(store => store.tercerosFinder.arrPedido);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
@@ -41,6 +41,7 @@ const Tercero = () => {
   const toggleFilesObj = async () => {
     try {
       const files = await filesService.getFilesByCode(objTercero.codigo);
+      console.log('Encuesta', files);
       dispatch(setFile(files));
       isShowAlert(files);
     } catch (error: any) {
@@ -57,9 +58,12 @@ const Tercero = () => {
   };
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
-
+  useFocusEffect(
+    React.useCallback(() => {
+      toggleFilesObj(); // Ejecutar toggleFilesObj cada vez que la vista sea visible
+    }, []),
+  );
   useEffect(() => {
-    toggleFilesObj();
     if (showAlert) {
       Animated.loop(
         Animated.sequence([
@@ -201,6 +205,14 @@ const Tercero = () => {
             getItem={(data, index) => data[index]}
             keyExtractor={(item, index) => index.toString()}
             ListFooterComponent={<View style={{height: 100}} />}
+            ListEmptyComponent={
+              <View style={{alignItems: 'center', marginTop: 100}}>
+                <Text
+                  style={{color: '#504D54', fontSize: 16, fontWeight: 'bold'}}>
+                  SIN MOVIMIENTOS ESTE MES
+                </Text>
+              </View>
+            }
             style={{
               paddingHorizontal: 15,
               paddingVertical: 5,
