@@ -16,6 +16,7 @@ import {useAppDispatch, useAppSelector} from '../redux/hooks';
 import {setIsShowUploadArchives} from '../redux/slices/uploadArchivesSlice';
 import {setObjInfoAlert} from '../redux/slices/infoAlertSlice';
 import {calcularDigitoVerificacion} from '../utils';
+import {ITerceros} from '../common/types';
 
 interface UploadArchivesProps {
   onFilesUpload: (files: {
@@ -23,15 +24,15 @@ interface UploadArchivesProps {
     camaraComercioFile: DocumentPickerResponse | null;
     cedulaFile: DocumentPickerResponse | null;
   }) => void;
+  tercero: ITerceros; // Nueva prop para recibir el objeto tercero
 }
 
 export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
-  ({onFilesUpload}) => {
+  ({onFilesUpload, tercero}) => {
     const dispatch = useAppDispatch();
     const isShowUploadArchives = useAppSelector(
       store => store.uploadArchives.isShowUploadArchives,
     );
-    const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
     const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
     const [camaraComercioFile, setCamaraComercioFile] =
       useState<DocumentPickerResponse | null>(null);
@@ -91,14 +92,14 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
         if (res && res[0]) {
           const selectedFile = res[0];
           const fileType =
-            /^\d{9,10}$/.test(objTercero.codigo) &&
-            objTercero.codigo.slice(-1) ===
-              calcularDigitoVerificacion(objTercero.codigo.slice(0, -1)).toString()
+            /^\d{9,10}$/.test(tercero.codigo) &&
+            tercero.codigo.slice(-1) ===
+              calcularDigitoVerificacion(tercero.codigo.slice(0, -1)).toString()
               ? 'NIT'
               : 'CC';
-          selectedFile.name = `${fileType}-${objTercero.codigo}${type}.${selectedFile.name
-            ?.split('.')
-            .pop()}`;
+          selectedFile.name = `${fileType}-${
+            tercero.codigo
+          }${type}.${selectedFile.name?.split('.').pop()}`;
           setFile(selectedFile);
         }
       } catch (error) {
@@ -219,7 +220,9 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
               <View style={styles.buttonView}>
                 <TouchableOpacity
                   style={styles.btnSelect}
-                  onPress={() => selectFile(setCamaraComercioFile, 'CAMCOMERCIO')}>
+                  onPress={() =>
+                    selectFile(setCamaraComercioFile, 'CAMCOMERCIO')
+                  }>
                   <Text style={styles.textSelect}>Cámara de Comercio</Text>
                 </TouchableOpacity>
                 {camaraComercioFile && (
