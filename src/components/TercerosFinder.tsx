@@ -116,17 +116,18 @@ export const TercerosFinder = React.memo(
           1, // Reset page to 1
           pageSize,
         );
-        console.log('All Terceros:', allTerceros);
+        
 
-        console.log(terceros);
         if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
           const filteredTerceros = allTerceros.filter(
             tercero => tercero.vendedor === cod_vendedor,
           );
+          console.log('Filtered Terceros:', filteredTerceros);  
           setTempTerceros(filteredTerceros);
           setTerceros(filteredTerceros);
           setFilteredTerceros(filteredTerceros);
         } else {
+          console.log('All Terceros:', allTerceros);
           setTempTerceros(allTerceros);
           setTerceros(allTerceros);
           setFilteredTerceros(allTerceros);
@@ -257,7 +258,6 @@ export const TercerosFinder = React.memo(
         </View>
       </TouchableOpacity>
     );
-    console.log('Terceros:', filteredTerceros);
     return (
       <Modal
         visible={isShowTercerosFinder}
