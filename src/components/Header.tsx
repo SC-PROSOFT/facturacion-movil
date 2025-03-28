@@ -32,8 +32,8 @@ const Header: React.FC<HeaderProps> = ({children}) => {
 
     if (navigation.canGoBack()) {
       navigation.goBack();
-    } else {
-      navigation.navigate('TabNavPrincipal');
+    } else if (navigation.canGoBack('Home')) {
+      navigation.navigate('Home');
     }
   };
 
