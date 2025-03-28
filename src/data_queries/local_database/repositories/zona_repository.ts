@@ -62,16 +62,13 @@ class ZonaRepository implements IRepository<IZona> {
       db.transaction((tx: any) => {
         tx.executeSql(
           sqlSelectStatement,
-          [],
+          null,
           (_: ResultSet, response: ResultSet) => {
-            const zonas: IZona[] = [];
-            for (let i = 0; i < response.rows.length; i++) {
-              zonas.push(response.rows.item(i));
-            }
-            resolve(zonas);
+            console.log('response.rows.raw() =>', response.rows.raw());
+            resolve(response.rows.raw());
           },
           (error: ResultSet) => {
-            reject(new Error('Fallo obtener zonas'));
+            reject(new Error('Fallo obtener terceros'));
           },
         );
       });
@@ -91,6 +88,25 @@ class ZonaRepository implements IRepository<IZona> {
           },
           (error: ResultSet) => {
             reject(new Error('Fallo eliminar tabla zona'));
+          },
+        );
+      });
+    });
+  }
+
+  async deleteZonas(): Promise<boolean> {
+    const sqlDeleteStatement = `DELETE FROM zona`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlDeleteStatement,
+          [],
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo eliminar zonas'));
           },
         );
       });
