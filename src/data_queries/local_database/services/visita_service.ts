@@ -78,6 +78,14 @@ class ZonaService {
   async getAllZonas(): Promise<IZona[]> {
     return this.zonaRepository.get();
   }
+
+  async dropTableZona(): Promise<boolean> {
+    return this.zonaRepository.deleteTable();
+  }
+
+  async deleteZonas(): Promise<boolean> {
+    return this.zonaRepository.deleteZonas();
+  }
 }
 
 class RutaService {
