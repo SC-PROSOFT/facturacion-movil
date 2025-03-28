@@ -84,6 +84,7 @@ export const ZonaFinder = React.memo(({toggleZona}: ZonaFinderProps) => {
 
     try {
       const allZonas = await zonaService.getAllZonas();
+      console.log('allZonas:', allZonas);
       setTempZonas(allZonas);
       setZonas(allZonas);
       setFilteredZonas(allZonas);
