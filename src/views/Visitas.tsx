@@ -51,7 +51,7 @@ const add: IVisita[] = [
     observation:
       'Se realiza pedido normal como esta establecido en los procesos de la empresa',
     saleValue: 350000,
-    appointmentDate: '2025-03-27',
+    appointmentDate: '2025-03-29',
     location: {
       latitude: '',
       longitude: '',
@@ -68,7 +68,7 @@ const add: IVisita[] = [
     status: '2',
     observation: '',
     saleValue: 350000,
-    appointmentDate: '2025-03-27',
+    appointmentDate: '2025-03-28',
     location: {
       latitude: '',
       longitude: '',
