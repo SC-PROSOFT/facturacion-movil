@@ -75,7 +75,7 @@ const TabNavPrincipal = () => {
       />
       <Tab.Screen
         name="Sinc. facturas"
-        component={ActualizarFacturas}
+        component={ActualizarPedidos}
         options={optionsTabScreen({icon: 'receipt'})}
       />
       <Tab.Screen

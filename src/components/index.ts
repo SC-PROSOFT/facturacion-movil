@@ -39,3 +39,5 @@ export * from './UploadArchives';
 export * from './ZonaFinder';
 export * from './RutaFinder';
 export * from './VisitaSinPedido';
+export * from './AwayLocation';
+export * from './SearchLocation';

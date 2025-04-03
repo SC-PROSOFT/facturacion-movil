@@ -126,8 +126,6 @@ class SyncQueries {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802.dll`,
         {},
       );
-      console.log('response get terce =>', response);
-
       if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'
@@ -135,7 +133,16 @@ class SyncQueries {
         throw new Error('La configuracion no es correcta');
       }
 
-      return response.data.data.MENSAJE.LISTADO;
+      const normalizedData = response.data.data.MENSAJE.LISTADO.map(
+        (tercero: any) => ({
+          ...tercero,
+          frecuencia: tercero.frecuencia || tercero.frecuencia_1 || '',
+          frecuencia2: tercero.frecuencia2 || tercero.frecuencia_2 || '',
+          frecuencia3: tercero.frecuencia3 || tercero.frecuencia_3 || '',
+        }),
+      );
+
+      return normalizedData;
     } catch (error: any) {
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);

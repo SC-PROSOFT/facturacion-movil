@@ -19,7 +19,8 @@ class VisitasRepository implements IRepository<IVisita> {
         frecuencia TEXT,
         ruta TEXT,
         frecuencia_2 TEXT,
-        frecuencia_3 TEXT
+        frecuencia_3 TEXT,
+        vendedor TEXT
       );
     `;
 
@@ -46,8 +47,8 @@ class VisitasRepository implements IRepository<IVisita> {
     const sqlInsertStatement = `
       INSERT INTO visitas (
         id, client, adress, status, observation, saleValue, appointmentDate, 
-        latitude, longitude, zona, frecuencia, ruta, frecuencia_2, frecuencia_3
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        latitude, longitude, zona, frecuencia, ruta, frecuencia_2, frecuencia_3, vendedor
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
     return new Promise((resolve, reject) => {
@@ -74,6 +75,7 @@ class VisitasRepository implements IRepository<IVisita> {
               visita.ruta,
               visita.frecuencia_2 || '',
               visita.frecuencia_3 || '',
+              visita.vendedor,
             ],
             (_: ResultSet, response: ResultSet) => {
               insertedCount++;
@@ -120,6 +122,7 @@ class VisitasRepository implements IRepository<IVisita> {
                 ruta: item.ruta,
                 frecuencia_2: item.frecuencia_2,
                 frecuencia_3: item.frecuencia_3,
+                vendedor: item.vendedor,
               });
             }
             resolve(visitas);
@@ -133,11 +136,51 @@ class VisitasRepository implements IRepository<IVisita> {
     });
   }
 
+  async getByCode(code: string): Promise<IVisita> {
+    const sqlSelectStatement = `SELECT * FROM visitas WHERE id = ?;`;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [code],
+          (_: ResultSet, response: ResultSet) => {
+            const item = response.rows.item(0);
+            const visita: IVisita = {
+              id_tercero: item.id,
+              client: item.client,
+              adress: item.adress,
+              status: item.status,
+              observation: item.observation,
+              saleValue: item.saleValue,
+              appointmentDate: item.appointmentDate,
+              location: {
+                latitude: item.latitude,
+                longitude: item.longitude,
+              },
+              zona: item.zona,
+              frecuencia: item.frecuencia,
+              ruta: item.ruta,
+              frecuencia_2: item.frecuencia_2,
+              frecuencia_3: item.frecuencia_3,
+              vendedor: item.vendedor,
+            };
+            resolve(visita);
+          },
+          (error: any) => {
+            console.error('Error al obtener visita por código:', error);
+            reject(new Error('Fallo obtener visita por código'));
+          },
+        );
+      });
+    });
+  }
+
   async update(id: string, data: IVisita): Promise<boolean> {
     const sqlUpdateStatement = `
       UPDATE visitas 
       SET client = ?, adress = ?, status = ?, observation = ?, saleValue = ?, appointmentDate = ?,
-          latitude = ?, longitude = ?, zona = ?, frecuencia = ?, ruta = ?, frecuencia_2 = ?, frecuencia_3 = ?
+          latitude = ?, longitude = ?, zona = ?, frecuencia = ?, ruta = ?, frecuencia_2 = ?, frecuencia_3 = ?, vendedor = ?
       WHERE id = ?;
     `;
     return new Promise((resolve, reject) => {
@@ -158,6 +201,7 @@ class VisitasRepository implements IRepository<IVisita> {
             data.ruta,
             data.frecuencia_2 || '',
             data.frecuencia_3 || '',
+            data.vendedor,
             id,
           ],
           (_: ResultSet, response: ResultSet) => {
@@ -172,8 +216,30 @@ class VisitasRepository implements IRepository<IVisita> {
     });
   }
 
+
+
   async deleteTable(): Promise<boolean> {
     const sqlDeleteStatement = `DROP TABLE IF EXISTS visitas;`;
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlDeleteStatement,
+          [],
+          (_: ResultSet, response: ResultSet) => {
+            console.log('Tabla visitas borrada');
+            resolve(true);
+          },
+          (error: any) => {
+            console.error('Error al borrar tabla visitas:', error);
+            reject(new Error('Fallo borrar tabla visitas'));
+          },
+        );
+      });
+    });
+  }
+
+  async deleteVisitas(): Promise<boolean> {
+    const sqlDeleteStatement = `DELETE FROM visitas;`;
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
         tx.executeSql(
@@ -183,8 +249,8 @@ class VisitasRepository implements IRepository<IVisita> {
             resolve(true);
           },
           (error: any) => {
-            console.error('Error al borrar tabla visitas:', error);
-            reject(new Error('Fallo borrar tabla visitas'));
+            console.error('Error al borrar visitas:', error);
+            reject(new Error('Fallo borrar visitas'));
           },
         );
       });

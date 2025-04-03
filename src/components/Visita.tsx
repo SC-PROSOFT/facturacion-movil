@@ -1,10 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Shadow } from 'react-native-shadow-2';
-import { Text, Avatar } from 'react-native-paper';
-import { GoogleMap } from '../components';
-import { IVisita } from '../common/types';
-import { formatToMoney } from '../utils';
+import {StyleSheet, View, TouchableOpacity} from 'react-native';
+import {Shadow} from 'react-native-shadow-2';
+import {Text, Avatar} from 'react-native-paper';
+import {GoogleMap} from '../components';
+import {IVisita} from '../common/types';
+import {formatToMoney} from '../utils';
+import {parse} from 'react-native-svg';
 
 interface VisitaProps {
   visita: IVisita;
@@ -13,7 +14,7 @@ interface VisitaProps {
 }
 
 const getIconOfStatus = (
-  status: '1' | '2' | '3'
+  status: '1' | '2' | '3',
 ): 'check' | 'dots-horizontal' | 'close' => {
   switch (status) {
     case '1':
@@ -26,7 +27,7 @@ const getIconOfStatus = (
 };
 
 const getColorOfStatus = (
-  status: '1' | '2' | '3'
+  status: '1' | '2' | '3',
 ): '#51B654' | '#F29D38' | '#D0392C' => {
   switch (status) {
     case '1':
@@ -80,17 +81,17 @@ const renderObservation = (observation: string) => {
   return <Text style={styles.observationText}>{text}</Text>;
 };
 
-const Visita: React.FC<VisitaProps> = ({ visita, disabled, toggleVisita }) => {
+const Visita: React.FC<VisitaProps> = ({visita, disabled, toggleVisita}) => {
   return (
     <Shadow distance={6} offset={[1, 5]} style={styles.shadow}>
       <TouchableOpacity
-        style={[styles.container, { opacity: disabled ? 0.5 : 1 }]}
+        style={[styles.container, {opacity: disabled ? 0.5 : 1}]}
         disabled={disabled}
         onPress={toggleVisita}>
         <View style={styles.iconContainer}>
           <Avatar.Icon
             icon={getIconOfStatus(visita.status)}
-            style={{ backgroundColor: getColorOfStatus(visita.status) }}
+            style={{backgroundColor: getColorOfStatus(visita.status)}}
             color="#fff"
             size={50}
           />
@@ -103,7 +104,7 @@ const Visita: React.FC<VisitaProps> = ({ visita, disabled, toggleVisita }) => {
           <Text style={styles.infoTextAdress}>
             {getAddressClient(visita.adress)}
           </Text>
-          <Text style={[styles.infoText, { fontWeight: 'bold', fontSize: 12 }]}>
+          <Text style={[styles.infoText, {fontWeight: 'bold', fontSize: 12}]}>
             {getStatusDescription(visita.status)}
           </Text>
           {visita.observation && renderObservation(visita.observation)}
@@ -113,7 +114,11 @@ const Visita: React.FC<VisitaProps> = ({ visita, disabled, toggleVisita }) => {
           <Text style={styles.saleValueText}>
             {formatToMoney(visita.saleValue)}
           </Text>
-          <GoogleMap latitude={4.141933} longitude={-73.624267} />
+
+          <GoogleMap
+            latitude={parseFloat(visita.location?.latitude)}
+            longitude={parseFloat(visita.location?.longitude)}
+          />
         </View>
       </TouchableOpacity>
     </Shadow>
@@ -180,4 +185,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export { Visita };
+export {Visita};

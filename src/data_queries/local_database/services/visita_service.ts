@@ -38,6 +38,14 @@ class VisitasService {
   async deleteTableVisitas(): Promise<boolean> {
     return this.visitaRepository.deleteTable();
   }
+
+  async getVisitaByCode(code: string): Promise<IVisita> {
+    return this.visitaRepository.getByCode(code);
+  }
+
+  async deleteVisitas(): Promise<boolean> {
+    return this.visitaRepository.deleteVisitas();
+  }
 }
 
 class FrecuenciaService {

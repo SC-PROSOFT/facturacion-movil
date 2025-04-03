@@ -311,6 +311,7 @@ const ModalLoadConfig: React.FC<ModalLoadConfigProps> = ({
 
   const loadConfig = async (ip: string, puerto: string) => {
     setIsLoadingSave(true);
+
     const configQueriesService = new ConfigQueriesService(ip, puerto);
 
     try {
@@ -344,6 +345,7 @@ const ModalLoadConfig: React.FC<ModalLoadConfigProps> = ({
       setIsLoadingSave(false);
     } catch (error) {
       setIsLoadingSave(false);
+      console.log(error);
       dispatch(
         setObjInfoAlert({
           visible: true,

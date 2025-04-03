@@ -60,54 +60,54 @@ export function generateVisits(terceros: ITerceros[]): IVisita[] {
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
   const datesToCheck = [today, tomorrow];
+  try {
+    terceros.forEach(tercero => {
+      // Normalizamos las frecuencias considerando ambas nomenclaturas:
+      const frecuencia1 =
+        tercero.frecuencia || (tercero as any).frecuencia_1 || '';
+      const frecuencia2 =
+        tercero.frecuencia2 || (tercero as any).frecuencia_2 || '';
+      const frecuencia3 =
+        tercero.frecuencia3 || (tercero as any).frecuencia_3 || '';
 
-  terceros.forEach(tercero => {
-    // Normalizamos las frecuencias considerando ambas nomenclaturas:
-    const frecuencia1 =
-      tercero.frecuencia || (tercero as any).frecuencia_1 || '';
-    const frecuencia2 =
-      tercero.frecuencia2 || (tercero as any).frecuencia_2 || '';
-    const frecuencia3 =
-      tercero.frecuencia3 || (tercero as any).frecuencia_3 || '';
+      datesToCheck.forEach(date => {
+        // Filtramos para asegurarnos de que solo se procesen los códigos definidos y no vacíos
+        const zoneCodes = [frecuencia1, frecuencia2, frecuencia3].filter(
+          code => code !== undefined && code !== null && code !== '',
+        );
+        const isScheduled = zoneCodes.some(zoneCode =>
+          isZoneScheduledForDate(zoneCode, date),
+        );
 
-    datesToCheck.forEach(date => {
-      // Filtramos para asegurarnos de que solo se procesen los códigos definidos y no vacíos
-      const zoneCodes = [
-        tercero.zona,
-        frecuencia1,
-        frecuencia2,
-        frecuencia3,
-      ].filter(code => code !== undefined && code !== null && code !== '');
+        if (isScheduled) {
+          const visita: IVisita = {
+            client: tercero.nombre,
+            adress: tercero.direcc,
+            status: '2', // Sin visitar
+            observation: '',
+            saleValue: 0,
+            appointmentDate: date.toISOString().split('T')[0],
+            location: {
+              latitude: tercero.latitude,
+              longitude: tercero.longitude,
+            },
+            id_tercero: tercero.codigo,
+            zona: tercero.zona,
+            ruta: tercero.ruta,
+            frecuencia: frecuencia1,
+            frecuencia_2: frecuencia2,
+            frecuencia_3: frecuencia3,
+            vendedor: tercero.vendedor,
+            // Aquí usamos la frecuencia normalizada
+          };
 
-      const isScheduled = zoneCodes.some(zoneCode =>
-        isZoneScheduledForDate(zoneCode, date),
-      );
-
-      if (isScheduled) {
-        const visita: IVisita = {
-          client: tercero.nombre,
-          adress: tercero.direcc,
-          status: '2', // Sin visitar
-          observation: '',
-          saleValue: 0,
-          appointmentDate: date.toISOString().split('T')[0],
-          location: {
-            latitude: tercero.latitude,
-            longitude: tercero.longitude,
-          },
-          id_tercero: tercero.codigo,
-          zona: tercero.zona,
-          ruta: tercero.ruta,
-          frecuencia: frecuencia1,
-          frecuencia_2: frecuencia2,
-          frecuencia_3: frecuencia3,
-          // Aquí usamos la frecuencia normalizada
-        };
-
-        visits.push(visita);
-      }
+          visits.push(visita);
+        }
+      });
     });
-  });
+  } catch (e) {
+    console.log(e);
+  }
 
   return visits;
 }

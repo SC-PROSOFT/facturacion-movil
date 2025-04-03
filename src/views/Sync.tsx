@@ -319,12 +319,11 @@ const Sync = () => {
       setDialogContent('Trayendo encuesta - 5/9');
       const resGetEncuesta = await syncQueries._getEncuesta();
       setDialogContent('Treyendo terceros - 6/9');
-      const resGetTerceros = await tercerosQueries._getTerceros();
+      const resGetTerceros = await syncQueries._getTerceros();
       setDialogContent('Generando visitas - 7/9');
       const resVisitas = await generateVisits(resGetTerceros);
       setDialogContent('Trayendo zonas - 7/9');
       const resGetZonas = await syncQueries._getZonas();
-      console.log('resGetZonas:', resGetZonas);
       setDialogContent('Trayendo rutas - 8/9');
       const resGetRutas = await syncQueries._getRutas();
       setDialogContent('Trayendo frecuencias - 9/9');
@@ -332,9 +331,10 @@ const Sync = () => {
 
       setDisabledCancel(true);
 
-      await pedidosService.deleteTablaPedidos();
+      // await pedidosService.deleteTablaPedidos();
       await facturasService.deleteTablaFacturas();
       await zonaService.deleteZonas();
+      await visitaService.deleteVisitas();
       // await visitaService.deleteTableVisitas();
 
       setDialogContent('Descargando operadores - 1/5');
@@ -348,7 +348,7 @@ const Sync = () => {
       setDialogContent('Descargando encuesta - 5/5');
       await encuestaService.fillEncuesta(resGetEncuesta);
       setDialogContent('Descargando terceros - 5/5');
-      // await tercerosService.fillTerceros(resGetTerceros);
+      await tercerosService.fillTerceros(resGetTerceros);
       setDialogContent('Descargando visitas - 5/5');
       await visitaService.fillVisitas(resVisitas);
       setDialogContent('Descargando zonas - 5/5');

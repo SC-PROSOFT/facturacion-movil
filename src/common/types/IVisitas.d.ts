@@ -16,6 +16,7 @@ export interface IVisita {
   frecuencia: string;
   frecuencia_2?: string;
   frecuencia_3?: string;
+  vendedor: string;
 }
 
 export interface IFrecuencia {

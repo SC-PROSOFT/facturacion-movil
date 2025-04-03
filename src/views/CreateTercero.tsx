@@ -32,6 +32,7 @@ import {ITerceros} from '../common/types';
 import {getUbication, calcularDigitoVerificacion} from '../utils';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
+import {generateVisits} from '../utils';
 import {
   setObjInfoAlert,
   setObjTercero,
@@ -42,8 +43,12 @@ import {
   setIsShowRutaFinder,
 } from '../redux/slices';
 /* services */
-import {tercerosService} from '../data_queries/local_database/services';
-import {filesService} from '../data_queries/local_database/services';
+import {
+  tercerosService,
+  filesService,
+  visitaService,
+} from '../data_queries/local_database/services';
+
 import {setFile} from '../redux/slices';
 
 const CreateTercero = () => {
@@ -104,6 +109,7 @@ const CreateTercero = () => {
   const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
     null,
   );
+  const objOperador = useAppSelector(store => store.operator.objOperator);
 
   const validateFields = () => {
     const newErrors = {
@@ -218,8 +224,10 @@ const CreateTercero = () => {
       const basePath = `D:\\WEB\\ANEXOS\\${type}-${tercero.codigo}`;
 
       // Asignar las rutas de los archivos al tercero
+      console.log(objOperador.cod_vendedor);
       const updatedTercero = {
         ...tercero,
+        vendedor: objOperador.cod_vendedor,
         rut_path: rutFile ? `${basePath}\\${rutFile.name}` : '',
         camaracomercio_path: camaraComercioFile
           ? `${basePath}\\${camaraComercioFile.name}`
@@ -227,16 +235,22 @@ const CreateTercero = () => {
         cc_path: cedulaFile ? `${basePath}\\${cedulaFile.name}` : '',
       };
       const response = await tercerosService.createTercero(updatedTercero);
-
       if (response) {
         try {
-          await uploadFiles();
+          const visitas = await generateVisits([updatedTercero]);
+          if (visitas.length > 0) {
+            console.log('visitas', visitas);
+            await visitaService.fillVisitas(visitas);
+          }
+          if (rutFile || camaraComercioFile || cedulaFile) {
+            await uploadFiles();
+          }
         } catch (error) {
           dispatch(
             setObjInfoAlert({
               visible: true,
               type: 'error',
-              description: 'Error al subir los archivos.',
+              description: 'Error intentando crear el tercero',
             }),
           );
         }

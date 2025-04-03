@@ -26,6 +26,7 @@ import {
   ProductTable,
   HeaderActionButtons,
   Header,
+  AwayFromUbication,
 } from '../components';
 /* redux */
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
@@ -38,6 +39,7 @@ import {
   setObjProduct,
   setObjInfoAlert,
   setObjOperator,
+  setObjVisita,
   setArrProductAdded,
   setArrPedido,
   setIntCartera,
@@ -46,6 +48,7 @@ import {
 import {
   carteraService,
   pedidosService,
+  visitaService,
 } from '../data_queries/local_database/services';
 /* queries */
 import {PedidosApiService} from '../data_queries/api/queries';
@@ -60,9 +63,10 @@ import {
 /* context */
 import {decisionAlertContext} from '../context';
 /* utils */
-import {sumarCartera, formatToMoney} from '../utils';
+import {sumarCartera, formatToMoney, checkLocation} from '../utils';
 import {generarPDF} from '../prints/generarPdf';
 import {getUbication} from '../utils/getUbication';
+
 /* errors */
 import {
   ValidationsBeforeSavingError,
@@ -98,7 +102,7 @@ interface State {
   total: string;
 
   articulosAdded: IProductAdded[];
-  observaciones: '';
+  observaciones: string;
 }
 interface InfoGeneralProps {
   state: State;
@@ -308,6 +312,7 @@ const InfoCliente: React.FC<InfoClienteProps> = ({
 }) => {
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const intCartera = useAppSelector(store => store.tercerosFinder.intCartera);
+  const objVisita = useAppSelector(store => store.visitas.objVisita);
 
   const styles = StyleSheet.create({
     container: {
@@ -790,6 +795,7 @@ const ElaborarPedido: React.FC = () => {
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const arrCartera = useAppSelector(store => store.sync.arrCartera);
   const objConfig = useAppSelector(store => store.config.objConfig);
+  const objVisita = useAppSelector(store => store.visitas.objVisita);
   const arrProductAdded = useAppSelector(
     state => state.product.arrProductAdded,
   );
@@ -833,10 +839,17 @@ const ElaborarPedido: React.FC = () => {
   const [detalleProducto, setDetalleProducto] = useState<
     detalleProductoState[]
   >([]);
-
+  const [isModalVisible, setIsModalVisible] = useState(false);
   useEffect(() => {
-    loadOperator();
-    loadCartera();
+    const initialize = async () => {
+      const ubi = await checkUbication();
+      if (ubi) {
+        loadOperator();
+        loadCartera();
+      }
+    };
+
+    initialize();
   }, [objOperador]);
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -861,6 +874,28 @@ const ElaborarPedido: React.FC = () => {
     };
   }, []);
 
+  const checkUbication = async () => {
+    setIsModalVisible(true);
+    try {
+      const res = await checkLocation(
+        objTercero.latitude,
+        objTercero.longitude,
+      );
+      switch (res) {
+        case 0:
+        case 3:
+          return true;
+        case 1:
+        case 2:
+        case 99:
+          return false;
+        default:
+          return false;
+      }
+    } catch (error: any) {
+      return false;
+    }
+  };
   const loadCartera = async () => {
     try {
       const cartera = await carteraService.getCarteraByAttribute(
@@ -871,14 +906,18 @@ const ElaborarPedido: React.FC = () => {
       dispatch(setIntCartera(carteraSumada));
       //🟦
     } catch (error: any) {
-      console.log(error);
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error,
-        }),
-      );
+      console.log('Error al cargar la cartera', error);
+      if (error === 'no hay cartera pendiente') {
+        return;
+      } else {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: error,
+          }),
+        );
+      }
     }
   };
   const loadOperator = () => {
@@ -915,11 +954,11 @@ const ElaborarPedido: React.FC = () => {
       validateBeforeSaving();
       const {latitude, longitude} = await getUbication();
       const pedido = estructurarPedido({latitude, longitude});
-      await pedidosApiService._savePedido(pedido, 'post');
+      // await pedidosApiService._savePedido(pedido, 'post');
       await pedidosService.savePedido({
         ...pedido,
-        sincronizado: 'S',
-        guardadoEnServer: 'S',
+        sincronizado: 'N',
+        guardadoEnServer: 'N',
       });
       dispatch(
         setObjOperator({
@@ -937,6 +976,7 @@ const ElaborarPedido: React.FC = () => {
       });
 
       setIsLoadingSave(false);
+      visitaRealizada();
     } catch (error: any) {
       if (error instanceof ValidationsBeforeSavingError) {
         Toast.show({
@@ -946,6 +986,7 @@ const ElaborarPedido: React.FC = () => {
         setIsLoadingSave(false);
       } else if (error instanceof ApiSaveOrderError) {
         saveOrderInLocalDatabaseOnly();
+        visitaRealizada();
       } else {
         console.log('Save err' + error);
         dispatch(
@@ -959,6 +1000,20 @@ const ElaborarPedido: React.FC = () => {
       }
     }
   };
+
+  const visitaRealizada = async () => {
+    try {
+      const visita = {
+        ...objVisita,
+        status: '1' as '1',
+        observation: state.observaciones,
+      };
+      await visitaService.updateVisita(visita, visita.id_tercero);
+    } catch (error) {
+      console.log('Error al actualizar la visita', error);
+    }
+  };
+
   const saveOrderInLocalDatabaseOnly = async (): Promise<void> => {
     try {
       const {latitude, longitude} = await getUbication();
@@ -1223,6 +1278,18 @@ const ElaborarPedido: React.FC = () => {
       <CarteraPopup />
       <ProductSheet />
       <ProductSheetEdit />
+      <AwayFromUbication
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        tercero={objTercero}
+        onSubmit={data => {
+          setState(prevState => ({
+            ...prevState,
+            observaciones: data.observacion,
+          }));
+          setIsModalVisible(false);
+        }}
+      />
     </View>
   );
 };

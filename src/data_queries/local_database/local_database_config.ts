@@ -37,7 +37,7 @@ const createTables = async (): Promise<boolean> => {
     console.log('Creando tablas 6...');
     await tercerosService.createTableTerceros();
     console.log('Creando tablas 6.12...');
-      // await visitaService.deleteTableVisitas();
+    //  await visitaService.deleteTableVisitas();
     await visitaService.createTableVisitas();
     // await tercerosService.dropAllTables();
     // await tercerosService.dropTableCreates();

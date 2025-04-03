@@ -24,17 +24,17 @@ const Header: React.FC<HeaderProps> = ({children}) => {
   const dispatch = useAppDispatch();
   const navigation: any = useNavigation();
 
-  const objVisita = useAppSelector(store => store.visita.objVisita);
+  const objVisita = useAppSelector(store => store.visitas.objVisita);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
 
   const handleBackPress = () => {
     dispatch(setArrProductAdded([]));
-
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else if (navigation.canGoBack('Home')) {
-      navigation.navigate('Home');
-    }
+    // if (navigation.canGoBack()) {
+    //   navigation.goBack();
+    // } else if (navigation.canGoBack('TabNavPrincipal')) {
+    //   navigation.navigate('TabNavPrincipal');
+    // }
+     navigation.navigate('TabNavPrincipal');
   };
 
   return (

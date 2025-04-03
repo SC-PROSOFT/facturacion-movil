@@ -13,7 +13,7 @@ class TercerosApiServices {
   }
 
   _constructTercero = (tercero: ITerceros, novedad: string) => {
-    let datos = `COMER24|${novedad}|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_path}|${tercero.camaracomercio_path}`;
+    let datos = `00000086005264920250220112018|COMER24|${novedad}|CONTROL|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_path}|${tercero.camaracomercio_path}`;
     return datos;
   };
 
@@ -24,7 +24,6 @@ class TercerosApiServices {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802.dll`,
         {},
       );
-      console.log('response get terce =>', response.data.data.STATUS);
       return response.data.data.MENSAJE.LISTADO;
     } catch (error) {
       console.error('error =>', error);
@@ -46,7 +45,6 @@ class TercerosApiServices {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
         {body},
       );
-      console.log('response get terce =>', response);
       return true;
     } catch (error) {
       throw error;
@@ -94,8 +92,14 @@ class TercerosApiServices {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
         {body},
       );
-      console.log('response =>', response);
-      return true;
+      console.log('response update tercero =>', response.data.data);
+      if (response.data.data.STATUS == '00') {
+        return true;
+      } else if (response.data.data.STATUS == '35') {
+        throw new Error('La configuracion no es correcta');
+      }
+
+      return false;
     } catch (error) {
       console.log('error =>', error);
       throw error;

@@ -9,3 +9,4 @@ export * from './getUbication';
 export * from './uriToBlob';
 export * from './calculateDV';
 export * from './calculateVisitas';
+export * from './checkLocation';

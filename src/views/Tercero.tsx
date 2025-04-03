@@ -16,10 +16,13 @@ import {formatToMoney, getPermissions, getUbication} from '../utils';
 /* types */
 import {IOperation, IEncuesta, IFiles} from '../common/types';
 /* components */
-import {Movimiento, Header} from '../components';
+import {Movimiento, Header, SearchLocation} from '../components';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
-import {filesService} from '../data_queries/local_database/services';
+import {
+  filesService,
+  tercerosService,
+} from '../data_queries/local_database/services';
 import {
   setObjOperator,
   setArrProductAdded,
@@ -27,9 +30,10 @@ import {
   setObjInfoAlert,
   setObjEncuesta,
   setFile,
+  setObjTercero,
 } from '../redux/slices';
 import {showAlert} from '../utils/showAlert';
-import {useFocusEffect} from '@react-navigation/native'; // Importa useFocusEffect
+import {useFocusEffect} from '@react-navigation/native';
 
 const Tercero = () => {
   const navigation: any = useNavigation();
@@ -38,29 +42,53 @@ const Tercero = () => {
   const arrPedido = useAppSelector(store => store.tercerosFinder.arrPedido);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [isNotLocation, setIsNotLocation] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const toggleFilesObj = async () => {
     try {
+      console.log(objTercero);
       const files = await filesService.getFilesByCode(objTercero.codigo);
-      console.log('Encuesta', files);
-      dispatch(setFile(files));
-      isShowAlert(files);
+      if (Array.isArray(files.files) && files.files.length >= 1) {
+        console.log('Hay archivos');
+        console.log(files);
+        dispatch(setFile(files));
+        isShowAlert(files);
+      } else {
+        console.log('No hay archivos');
+        setShowAlert(true);
+      }
     } catch (error: any) {
       setShowAlert(true);
     }
   };
 
-  const isShowAlert = async (files: IFiles) => {
-    console.log('files', files);
-    if ((files?.files?.length ?? 0) == 0 || (files?.files?.length ?? 0) < 3) {
-      setShowAlert(true);
+  const toggleLocation = async () => {
+    const {longitude, latitude} = objTercero;
+    if (!longitude || !latitude) {
+      setIsNotLocation(true);
+      return;
     }
-    return setShowAlert(false);
+  };
+
+  const isShowAlert = async (files: IFiles) => {
+    const parsedFiles =
+      typeof files.files === 'string' ? JSON.parse(files.files) : files.files;
+
+    console.log((parsedFiles?.length ?? 0) < 3);
+
+    if ((parsedFiles?.length ?? 0) === 0 || (parsedFiles?.length ?? 0) < 3) {
+      setShowAlert(true);
+      return;
+    }
+
+    setShowAlert(false);
   };
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   useFocusEffect(
     React.useCallback(() => {
-      toggleFilesObj(); // Ejecutar toggleFilesObj cada vez que la vista sea visible
+      toggleLocation();
+      toggleFilesObj();
     }, []),
   );
   useEffect(() => {
@@ -102,21 +130,44 @@ const Tercero = () => {
 
   const toggleGetGeolocation = async () => {
     console.log('Intente obtener la geolocalizacion');
-    try {
-      const migeo = await getUbication();
-      console.log('objTercero', objTercero);
-      console.log('migeo', migeo);
-    } catch (error: any) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'info',
-          description: `${error.message}`,
-        }),
-      );
-    }
+    setIsModalVisible(true); // Abre el modal
   };
 
+  const handleCloseModal = () => {
+    setIsModalVisible(false); // Cierra el modal
+  };
+
+  const handleSaveLocation = async (location: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    console.log('Ubicación guardada:', location);
+    // Aquí puedes actualizar el estado o realizar otras acciones
+
+    try {
+      const {latitude, longitude} = location;
+      console.log('Ubicación guardada:', location);
+      const terceroModificado = {
+        ...objTercero,
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
+      };
+      const response = await tercerosService.updateTercero(terceroModificado);
+      if (response) {
+        dispatch(setObjTercero(terceroModificado));
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    dispatch(
+      setObjInfoAlert({
+        visible: true,
+        type: 'success',
+        description: `Ubicación guardada: Latitud ${location.latitude}, Longitud ${location.longitude}`,
+      }),
+    );
+    // Cierra el modal
+  };
   const renderItem = ({item, index}: {item: IOperation; index: any}) => {
     return (
       <Movimiento
@@ -174,6 +225,11 @@ const Tercero = () => {
           onPress={() => {
             toggleGetGeolocation();
           }}>
+          {isNotLocation && (
+            <Animated.View
+              style={[styles.alertIndicator, {transform: [{scale: pulseAnim}]}]}
+            />
+          )}
           <Icon name="map-marker-radius" size={36} color={'#FFF'} />
         </TouchableOpacity>
       </View>
@@ -221,6 +277,11 @@ const Tercero = () => {
           />
         </SafeAreaView>
       </View>
+      <SearchLocation
+        visible={isModalVisible}
+        onClose={handleCloseModal}
+        onSave={handleSaveLocation}
+      />
     </View>
   );
 };

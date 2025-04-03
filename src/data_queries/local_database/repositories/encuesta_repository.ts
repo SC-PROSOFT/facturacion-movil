@@ -103,11 +103,8 @@ class EncuestaRepository implements IRepository<IEncuesta> {
             console.log(response);
             if (response.rows.length > 0) {
               const encuesta = response.rows.item(0);
-              console.log('Encuesta obtenida:', encuesta);
-              console.log('Encuesta obtenida:', encuesta);
               resolve(encuesta);
             } else {
-              console.log('No se encontraron encuestas');
               resolve(null);
             }
           },

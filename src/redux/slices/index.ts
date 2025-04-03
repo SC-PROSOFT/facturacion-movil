@@ -12,7 +12,6 @@ export * from './facturasFinderSlice';
 export * from './operatorSlice';
 export * from './configSlice';
 export * from './syncSlice';
-export * from './visitaSlice';
 export * from './productSlice';
 export * from './operationSlice';
 export * from './frecuenciasFinderSlice';
@@ -22,5 +21,3 @@ export * from './filesSlice';
 export * from './zonaFinderSilce';
 export * from './rutaFinderSlice';
 export * from './visitasSlice';
-
-

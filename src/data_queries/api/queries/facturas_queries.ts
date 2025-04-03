@@ -67,7 +67,7 @@ class FacturasApiService {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/COMER106.dll`,
         innerFormatFactura(factura),
       );
-
+      console.log(response.data.data);
       if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'

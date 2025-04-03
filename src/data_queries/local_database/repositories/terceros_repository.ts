@@ -144,6 +144,7 @@ class TercerosRepository implements IRepository<ITerceros> {
   }
 
   async create(tercero: ITerceros): Promise<boolean> {
+    console.log('tercero', tercero);
     const sqlInsertTerceroStatement = `
     INSERT INTO terceros (
         codigo,
@@ -316,146 +317,140 @@ class TercerosRepository implements IRepository<ITerceros> {
   }
 
   async fillTable(terceros: ITerceros[]): Promise<boolean> {
-    const innerDeleteTerceros = () => {
-      return new Promise((resolve, reject) => {
-        db.transaction((tx: any) => {
+    const batchSize = 40;
+    const totalRecords = terceros.length;
+    const totalBatches = Math.ceil(totalRecords / batchSize);
+
+    return new Promise((resolve, reject) => {
+      db.transaction(
+        (tx: any) => {
+          // Paso 1: Eliminar todos los registros previos en la tabla "terceros"
           tx.executeSql(
             `DELETE FROM terceros`,
-            null,
-            (_: ResultSet, response: ResultSet) => {
-              console.log('response =>', response);
-              resolve(true);
+            [],
+            () => {
+              console.log('Tabla "terceros" borrada correctamente.');
+
+              // Función recursiva para insertar cada lote
+              const insertBatch = (batchIndex: number) => {
+                if (batchIndex >= totalBatches) {
+                  // Todos los lotes han sido insertados correctamente
+                  resolve(true);
+                  return;
+                }
+
+                // Determinar el rango del lote actual
+                const start = batchIndex * batchSize;
+                const end = Math.min(start + batchSize, totalRecords);
+                const batch = terceros.slice(start, end);
+
+                // Construir los placeholders para cada registro del lote
+                const placeholders = batch
+                  .map(
+                    () =>
+                      '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                  )
+                  .join(', ');
+
+                const sqlInsertStatement = `
+                  INSERT INTO terceros (
+                    codigo,
+                    nombre,
+                    direcc,
+                    tel,
+                    vendedor,
+                    plazo,
+                    f_pago,
+                    ex_iva,
+                    clasificacion,
+                    tipo,
+                    departamento,
+                    ciudad,
+                    barrio,
+                    email,
+                    reteica, 
+                    frecuencia,
+                    frecuencia2,
+                    frecuencia3,
+                    zona, 
+                    ruta,
+                    latitude,
+                    longitude,
+                    rut_path,
+                    camaracomercio_path
+                  ) VALUES ${placeholders}
+                `;
+
+                // Construir el arreglo de valores para el lote actual
+                const values = batch.flatMap(tercero => [
+                  tercero.codigo,
+                  tercero.nombre,
+                  tercero.direcc,
+                  tercero.tel,
+                  tercero.vendedor,
+                  tercero.plazo,
+                  tercero.f_pago,
+                  tercero.ex_iva,
+                  tercero.clasificacion,
+                  tercero.tipo,
+                  tercero.departamento,
+                  tercero.ciudad,
+                  tercero.barrio,
+                  tercero.email,
+                  tercero.reteica,
+                  tercero.frecuencia,
+                  tercero.frecuencia2,
+                  tercero.frecuencia3,
+                  tercero.zona,
+                  tercero.ruta,
+                  tercero.latitude,
+                  tercero.longitude,
+                  tercero.rut_path,
+                  tercero.camaracomercio_path,
+                ]);
+
+                // Ejecutar la inserción del lote dentro de la misma transacción
+                tx.executeSql(
+                  sqlInsertStatement,
+                  values,
+                  (_: any, result: any) => {
+                    console.log(
+                      `Lote ${batchIndex + 1} insertado correctamente:`,
+                      result,
+                    );
+                    // Procesar el siguiente lote
+                    insertBatch(batchIndex + 1);
+                  },
+                  (error: any) => {
+                    console.error(
+                      'Error en la inserción del lote',
+                      batchIndex + 1,
+                      error,
+                    );
+                    reject(
+                      new Error(
+                        'Fallo guardar bloque terceros: ' + error.message,
+                      ),
+                    );
+                    return false;
+                  },
+                );
+              };
+
+              insertBatch(0);
             },
-            (error: ResultSet) => {
-              console.log(error);
-              reject(new Error('Fallo borrar terceros'));
+            (error: any) => {
+              console.error('Error al borrar registros:', error);
+              reject(new Error('Fallo borrar terceros: ' + error.message));
+              return false;
             },
           );
-        });
-      });
-    };
-
-    const innerInsertBlockOfTerceros = (terceros: ITerceros[]) => {
-      const placeholders = terceros
-        .map(
-          () =>
-            '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)',
-        )
-        .join(', ');
-
-      const sqlInsertStatement = `
-        INSERT INTO terceros (
-          codigo,
-          nombre,
-          direcc,
-          tel,
-          vendedor,
-          plazo,
-          f_pago,
-          ex_iva,
-          clasificacion,
-
-          tipo,
-          departamento,
-          ciudad,
-          barrio,
-          email,
-          reteica, 
-          frecuencia,
-          frecuencia2,
-          frecuencia3,
-          zona, 
-          ruta,
-          latitude,
-          longitude,
-          rut_path,
-          camaracomercio_path
-        ) VALUES ${placeholders}
-      `;
-
-      const values = terceros.flatMap(tercero => [
-        tercero.codigo,
-        tercero.nombre,
-        tercero.direcc,
-        tercero.tel,
-        tercero.vendedor,
-        tercero.plazo,
-        tercero.f_pago,
-        tercero.ex_iva,
-        tercero.clasificacion,
-
-        tercero.tipo,
-        tercero.departamento,
-        tercero.ciudad,
-        tercero.barrio,
-        tercero.email,
-        tercero.reteica,
-        tercero.frecuencia,
-        tercero.frecuencia2,
-        tercero.frecuencia3,
-        tercero.zona,
-        tercero.ruta,
-        tercero.latitude,
-        tercero.longitude,
-        tercero.rut_path,
-        tercero.camaracomercio_path,
-      ]);
-
-      return new Promise((resolve, reject) => {
-        db.transaction((tx: any) => {
-          tx.executeSql(
-            sqlInsertStatement,
-            values,
-            (_: ResultSet, result: ResultSet) => {
-              console.log('values', values);
-              console.log('result', result);
-              resolve(result.rows.raw());
-            },
-            (error: Error) => {
-              console.log('error', error);
-              reject(new Error('Fallo guardar bloque terceros'));
-            },
-          );
-        });
-      });
-    };
-
-    return new Promise(async (resolve, reject) => {
-      try {
-        await innerDeleteTerceros();
-
-        let tercerosTemp = [];
-        let contador = 0;
-        const bloques = 10;
-
-        if (terceros.length > bloques) {
-          let iteraciones = Math.floor(terceros.length / bloques);
-          for (let i = 0; i < iteraciones; i++) {
-            for (let j = 0; j < bloques; j++) {
-              tercerosTemp.push(terceros[contador]);
-              contador = contador + 1;
-            }
-            await innerInsertBlockOfTerceros(tercerosTemp);
-            tercerosTemp = [];
-          }
-          if (contador < terceros.length) {
-            let resta = terceros.length - contador;
-            for (let j = 1; j <= resta; j++) {
-              tercerosTemp.push(terceros[contador]);
-              contador = contador + 1;
-            }
-            await innerInsertBlockOfTerceros(tercerosTemp);
-            resolve(true);
-          } else {
-            resolve(true);
-          }
-        } else {
-          await innerInsertBlockOfTerceros(terceros);
-          resolve(true);
-        }
-      } catch (error: any) {
-        reject(new Error(error.message));
-      }
+        },
+        (txError: any) => {
+          console.error('Error en la transacción:', txError);
+          reject(new Error('Error en la transacción: ' + txError.message));
+        },
+      );
     });
   }
 

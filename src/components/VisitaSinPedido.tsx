@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import {Button, Dialog, Text, Portal} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useAppDispatch} from '../redux/hooks';
+import {useAppDispatch, useAppSelector} from '../redux/hooks';
 import {ITerceros} from '../common/types';
 import {_Input} from './_Input';
+import {visitaService} from '../data_queries/local_database/services';
 
 interface IModalProps {
   visible: boolean;
@@ -29,6 +30,7 @@ export const TercerosModal: React.FC<IModalProps> = ({
   onSubmit,
 }) => {
   const dispatch = useAppDispatch();
+  const objVisita = useAppSelector(store => store.visitas.objVisita);
   const [observacion, setObservacion] = useState('');
   const animation = useRef(new Animated.Value(0)).current;
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -61,6 +63,13 @@ export const TercerosModal: React.FC<IModalProps> = ({
   }, []);
 
   const handleSubmit = () => {
+    const modifiedVisita = {
+      ...objVisita,
+      status:  "1" as "1",
+      observation: observacion,
+    };
+    visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
+    console.log('modifiedVisita', modifiedVisita);
     onSubmit({observacion, status: true});
     onClose();
   };

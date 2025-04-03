@@ -310,6 +310,7 @@ const SyncDispositivo = () => {
           factura,
           factura.guardadoEnServer == 'S' ? 'put' : 'post',
         );
+
         await facturasService.updateFactura(
           factura.operador.nro_factura.toString(),
           {
@@ -390,6 +391,11 @@ const SyncDispositivo = () => {
       const pedido = pedidos[index];
 
       try {
+        console.log('pedido save', pedido.guardadoEnServer);
+        console.log(
+          'Verificacion de pedido',
+          pedido.guardadoEnServer == 'S' ? 'put' : 'post',
+        );
         await pedidosApiService._savePedido(
           pedido,
           pedido.guardadoEnServer == 'S' ? 'put' : 'post',
@@ -484,15 +490,15 @@ const SyncDispositivo = () => {
         );
       }
 
-      if (failedCreated > 0 || failedEdited > 0) {
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'error',
-            description: `${failedCreated} terceros creados y ${failedEdited} terceros editados fallaron al subir`,
-          }),
-        );
-      }
+      // if (failedCreated > 0 || failedEdited > 0) {
+      //   dispatch(
+      //     setObjInfoAlert({
+      //       visible: true,
+      //       type: 'error',
+      //       description: `${failedCreated} terceros creados y ${failedEdited} terceros editados fallaron al subir`,
+      //     }),
+      //   );
+      // }
 
       setLoading(false);
     } catch (error: any) {
@@ -523,7 +529,6 @@ const SyncDispositivo = () => {
       // Obtener solo las encuestas con guardado = 'N'
       const encuestas = await encuestaService.getRespEncuestaByGuardado('N');
       console.log('encuestas', encuestas);
-      
 
       const results = await Promise.allSettled(
         encuestas.map(async encuesta => {
@@ -580,7 +585,7 @@ const SyncDispositivo = () => {
   };
 
   const updateFiles = async () => {
-    setLoading(true); // Mostrar indicador de carga
+    setLoading(true); 
     const filesApiService = new FilesApiServices(
       objConfig.direccionIp,
       objConfig.puerto,
@@ -588,7 +593,7 @@ const SyncDispositivo = () => {
 
     try {
       setDialogContent('Subiendo archivos');
-      const files = await filesService.getAllFiles(); // Obtener todos los archivos desde la base de datos local
+      const files = await filesService.getAllFiles(); 
 
       if (files.length === 0) {
         dispatch(
@@ -601,11 +606,15 @@ const SyncDispositivo = () => {
         setLoading(false);
         return;
       }
-
       const results = await Promise.allSettled(
         files.map(async file => {
-          // Validar si el archivo tiene una lista de files
-          if (!file.files || file.files.length === 0) {
+          const parsedFiles =
+            typeof file.files === 'string'
+              ? JSON.parse(file.files)
+              : file.files;
+          const safeParsedFiles = Array.isArray(parsedFiles) ? parsedFiles : [];
+
+          if (safeParsedFiles.length === 0) {
             throw new Error(
               `El archivo con código ${file.codigo} no contiene datos válidos`,
             );
@@ -616,6 +625,7 @@ const SyncDispositivo = () => {
             'codigo',
             file.codigo,
           );
+
           if (!tercero) {
             throw new Error(
               `No se encontró el tercero con código ${file.codigo}`,
@@ -624,7 +634,7 @@ const SyncDispositivo = () => {
 
           // Subir cada archivo individualmente
           const uploadResults = await Promise.allSettled(
-            file.files.map(async singleFile => {
+            safeParsedFiles.map(async singleFile => {
               const response = await filesApiService._uploadFiles(
                 singleFile,
                 tercero,
@@ -638,7 +648,7 @@ const SyncDispositivo = () => {
             result => result.status === 'fulfilled' && result.value === true,
           ).length;
 
-          if (successfulUploads !== file.files.length) {
+          if (successfulUploads !== safeParsedFiles.length) {
             throw new Error(
               `Algunos archivos del código ${file.codigo} no se pudieron subir`,
             );
@@ -702,15 +712,14 @@ const SyncDispositivo = () => {
     try {
       setDialogContent('Subiendo terceros');
       await updateTerceros();
-      setDialogContent('Subiendo facturas');
-      await updateFacturas();
+      // setDialogContent('Subiendo facturas');
+      // await updateFacturas();
       setDialogContent('Subiendo pedidos');
       await updatePedidos();
       setDialogContent('Subiendo archivos');
       await updateFiles();
       setDialogContent('Subiendo respuestas de encuestas');
       await updateEncuestas();
-
       setDisabledCancel(false);
       setShowProgressWindow(false);
       loadRecord();

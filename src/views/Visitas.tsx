@@ -1,4 +1,5 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, memo} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {
   View,
   StyleSheet,
@@ -43,59 +44,6 @@ import {
  * Obtiene la fecha local actual en formato "YYYY-MM-DD"
  */
 
-const add: IVisita[] = [
-  {
-    client: 'Raul Arauco',
-    adress: 'Carrera 24 # 55-64',
-    status: '1',
-    observation:
-      'Se realiza pedido normal como esta establecido en los procesos de la empresa',
-    saleValue: 350000,
-    appointmentDate: '2025-03-29',
-    location: {
-      latitude: '',
-      longitude: '',
-    },
-    zona: '',
-    ruta: '',
-    frecuencia: '',
-
-    id_tercero: '0000001035',
-  },
-  {
-    client: 'Diego Parrado',
-    adress: 'Carrera 24 # 55-64',
-    status: '2',
-    observation: '',
-    saleValue: 350000,
-    appointmentDate: '2025-03-28',
-    location: {
-      latitude: '',
-      longitude: '',
-    },
-    zona: '',
-    ruta: '',
-    frecuencia: '',
-    id_tercero: '0000002276',
-  },
-  {
-    client: 'Diego Parrado',
-    adress: 'Carrera 24 # 55-64',
-    status: '2',
-    observation: '',
-    saleValue: 350000,
-    appointmentDate: '2025-03-28',
-    location: {
-      latitude: '',
-      longitude: '',
-    },
-    zona: '',
-    ruta: '',
-    frecuencia: '',
-    id_tercero: '0000000112',
-  },
-];
-
 const getLocalDateString = (): string => {
   const date = new Date();
   const year = date.getFullYear();
@@ -126,6 +74,7 @@ const Visitas: React.FC = () => {
   const [search, setSearch] = useState<string>('');
   const [visitas, setVisitas] = useState<IVisita[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const objOperador = useAppSelector(store => store.operator.objOperator);
 
   // Se obtienen las fechas locales
   const currentDate = getLocalDateString(); // Ej: "2025-03-27"
@@ -144,6 +93,12 @@ const Visitas: React.FC = () => {
       .catch(() => setLoading(false));
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      loadVisitas();
+    }, []),
+  );
+
   const bringAlmacenes = async () => {
     const almacenes = await almacenesService.getAllAlmacenes();
     dispatch(setArrAlmacenes(almacenes));
@@ -156,11 +111,12 @@ const Visitas: React.FC = () => {
 
   const loadVisitas = async () => {
     try {
-      console.log('Entro a loadVisitas');
+      console.log(objOperador.cod_vendedor);
       const visitasData = await visitaService.getAllVisitas();
-      // Se asume que las visitas ya tienen appointmentDate en formato "YYYY-MM-DD"
-      setVisitas([...visitasData, ...add]);
-      dispatch(setArrVisita(visitasData));
+      const filteredVisitas = visitasData.filter(
+        visita => visita.vendedor === objOperador.cod_vendedor,
+      );
+      setVisitas(filteredVisitas);
     } catch (error) {
       console.log(error);
     }

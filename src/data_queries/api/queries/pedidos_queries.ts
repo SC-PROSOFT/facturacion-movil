@@ -7,7 +7,7 @@ import {ApiSaveOrderError} from '../../../common/errors';
 /* utils */
 import {getErrorMessage} from '../../../utils';
 /* local database services */
-import {articulosService} from '../../local_database/services';
+import {articulosService, pedidosService} from '../../local_database/services';
 
 class PedidosApiService {
   private axiosInstance;
@@ -72,8 +72,17 @@ class PedidosApiService {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/COMER105.dll`,
         innerFormatPedido(pedido),
       );
-
-      if (
+      console.log(response.data.data);
+      if (response.data.data.STATUS === '00') {
+        await pedidosService.updatePedido(
+          pedido.operador.nro_pedido.toString(),
+          {
+            ...pedido,
+            sincronizado: 'S',
+            guardadoEnServer: 'S',
+          },
+        );
+      } else if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'
       ) {
