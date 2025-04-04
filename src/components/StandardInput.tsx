@@ -41,7 +41,7 @@ export const StandardInput = ({
         mode={mode}
         keyboardType={keyboardType}
         style={styles.input}
-        contentStyle={{ fontSize: scaleFontSize(13) }}
+        contentStyle={{ fontSize: scaleFontSize(11) }}
       />
     </View>
   );
@@ -56,5 +56,6 @@ const styles = StyleSheet.create({
     padding: 0,
     fontSize: scaleFontSize(15),
     marginBottom: 5,
+    height: 30,
   },
 });

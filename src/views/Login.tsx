@@ -8,6 +8,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   SafeAreaView,
+  ImageBackground,
   Dimensions,
 } from 'react-native';
 import {Text} from 'react-native-paper';
@@ -313,8 +314,21 @@ const Login = () => {
 
   const loginStyles = StyleSheet.create({
     container: {
-      backgroundColor: '#E9ECF5',
+      backgroundColor: '#FFFF',
       flex: 1,
+      padding: 20, // Añade padding para simular la miniVentana
+      borderRadius: 15, // Bordes redondeados para la miniVentana
+      elevation: 5, // Sombra para la miniVentana (Android)
+      shadowColor: '#000', // Sombra para iOS
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+    },
+    backgroundImage: {
+      flex: 1,
+      resizeMode: 'cover', // Asegura que la imagen cubra toda la pantalla
+      paddingHorizontal: 30,
+      paddingVertical: 40,
     },
     pensadorContainer: {
       display: 'flex',
@@ -339,15 +353,14 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'flex-end',
-      height: showLogo ? '15%' : '30%',
-      paddingBottom: 3,
+      height: showLogo ? '5%' : '30%',
+      paddingBottom: 0,
     },
     pensadorBorder: {
-      backgroundColor: '#FDFDFD',
+      backgroundColor: '#FFFFF',
       width: 150,
       height: 200,
       borderRadius: 10,
-      elevation: 5,
     },
     pensador: {
       width: '100%',
@@ -368,43 +381,46 @@ const Login = () => {
   });
 
   return (
-    <KeyboardAvoidingView behavior={'height'} style={{flex: 1}}>
-      <SafeAreaView style={loginStyles.container}>
-        {showLogo && (
-          <View style={loginStyles.pensadorContainer}>
-            <View style={loginStyles.pensadorBorder}>
-              <Image
-                source={require('../../assets/pensador.png')}
-                style={loginStyles.pensador}
-              />
+    <ImageBackground
+      source={require('../../assets/coverBackground.png')} // Ruta de la imagen de fondo
+      style={loginStyles.backgroundImage}>
+      <KeyboardAvoidingView behavior={'height'} style={{flex: 1}}>
+        <SafeAreaView style={loginStyles.container}>
+          {showLogo && (
+            <View style={loginStyles.pensadorContainer}>
+              <View style={loginStyles.pensadorBorder}>
+                <Image
+                  source={require('../../assets/pensador.png')}
+                  style={loginStyles.pensador}
+                />
+              </View>
             </View>
+          )}
+
+          <View style={loginStyles.titleContainer}>
+            <Text allowFontScaling={false} style={loginStyles.title1}>
+              Ingresa a
+            </Text>
+            <Text allowFontScaling={false} style={loginStyles.title2}>
+              Pedidos
+            </Text>
           </View>
-        )}
 
-        <View style={loginStyles.titleContainer}>
-          <Text allowFontScaling={false} style={loginStyles.title1}>
-            Ingresa a
-          </Text>
-          <Text allowFontScaling={false} style={loginStyles.title2}>
-            Pedidos
-          </Text>
-        </View>
-
-        <View style={loginStyles.formContainer}>
-          <Form
-            inputs={inputs}
-            checkboxes={checkboxes}
-            handleInputChange={handleInputChange}
-            pressNormalCheckbox={pressNormalCheckbox}
-            pressLoginButton={pressLoginButton}
-          />
-        </View>
-
-        <View style={loginStyles.footerContainer}>
-          <Footer appVersion={appVersion}></Footer>
-        </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+          <View style={loginStyles.formContainer}>
+            <Form
+              inputs={inputs}
+              checkboxes={checkboxes}
+              handleInputChange={handleInputChange}
+              pressNormalCheckbox={pressNormalCheckbox}
+              pressLoginButton={pressLoginButton}
+            />
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+      <View style={loginStyles.footerContainer}>
+        <Footer appVersion={appVersion}></Footer>
+      </View>
+    </ImageBackground>
   );
 };
 
