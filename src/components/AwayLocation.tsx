@@ -106,10 +106,7 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
   }, [visible]);
 
   const handleAccept = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{name: 'TabNavTercero'}],
-    });
+    navigation.navigate('TabNavTercero'); // Navegar sin resetear el historial
     onClose();
   };
 
@@ -125,9 +122,11 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
     onClose();
   };
 
+
+  
   const handleContentSizeChange = (event: any) => {
     const contentHeight = event.nativeEvent.contentSize.height;
-    const baseHeight = Dimensions.get('window').height * 0.3;
+    const baseHeight = Dimensions.get('window').height * 0.5;
     const maxHeight = Dimensions.get('window').height * 0.5; // Altura máxima del modal
     const newHeight = Math.min(baseHeight + contentHeight, maxHeight);
     setDynamicHeight(newHeight);

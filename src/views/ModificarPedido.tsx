@@ -877,13 +877,7 @@ const ModificarPedido: React.FC = () => {
       dispatch(setIntCartera(carteraSumada));
       //🟦
     } catch (error: any) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error.message,
-        }),
-      );
+      console.log(error);
     }
   };
   const loadOperator = () => {
@@ -1248,7 +1242,7 @@ const ModificarPedido: React.FC = () => {
         </View>
       </ScrollView>
 
-      <TercerosFinder toggleTercero={toggleTercero} />
+      <TercerosFinder searchTable="terceros" toggleTercero={toggleTercero} />
       <ProductFinder toggleProduct={toggleArticulo} />
       <CarteraPopup />
       <ProductSheet />

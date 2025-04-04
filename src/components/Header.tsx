@@ -29,12 +29,12 @@ const Header: React.FC<HeaderProps> = ({children}) => {
 
   const handleBackPress = () => {
     dispatch(setArrProductAdded([]));
-    // if (navigation.canGoBack()) {
-    //   navigation.goBack();
-    // } else if (navigation.canGoBack('TabNavPrincipal')) {
-    //   navigation.navigate('TabNavPrincipal');
-    // }
-     navigation.navigate('TabNavPrincipal');
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else if (navigation.canGoBack('TabNavPrincipal')) {
+      navigation.navigate('TabNavPrincipal');
+    }
+     
   };
 
   return (

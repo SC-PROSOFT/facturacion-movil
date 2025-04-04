@@ -308,7 +308,7 @@ const Sync = () => {
       setDialogContent('Trayendo operadores - 1/9');
       const resGetOperadores = await syncQueries._getOperadores();
 
-      setDialogContent('Trayendo articulos - 2/9');
+      setDialogContent('Trayendo artículos - 2/9');
       const resGetArticulos = await syncQueries._getArticulos();
 
       setDialogContent('Trayendo almacenes - 3/9');
@@ -316,46 +316,59 @@ const Sync = () => {
 
       setDialogContent('Trayendo cartera - 4/9');
       const resGetCartera = await syncQueries._getCartera();
+
       setDialogContent('Trayendo encuesta - 5/9');
       const resGetEncuesta = await syncQueries._getEncuesta();
-      setDialogContent('Treyendo terceros - 6/9');
+
+      setDialogContent('Trayendo terceros - 6/9');
       const resGetTerceros = await syncQueries._getTerceros();
+
       setDialogContent('Generando visitas - 7/9');
       const resVisitas = await generateVisits(resGetTerceros);
-      setDialogContent('Trayendo zonas - 7/9');
+
+      setDialogContent('Trayendo zonas - 8/9');
       const resGetZonas = await syncQueries._getZonas();
-      setDialogContent('Trayendo rutas - 8/9');
+
+      setDialogContent('Trayendo rutas - 9/9');
       const resGetRutas = await syncQueries._getRutas();
-      setDialogContent('Trayendo frecuencias - 9/9');
+
+      setDialogContent('Trayendo frecuencias - 10/10');
       const resGetFrecuencias = await syncQueries._getFrecuencias();
 
       setDisabledCancel(true);
 
-      // await pedidosService.deleteTablaPedidos();
       await facturasService.deleteTablaFacturas();
       await zonaService.deleteZonas();
       await visitaService.deleteVisitas();
-      // await visitaService.deleteTableVisitas();
 
-      setDialogContent('Descargando operadores - 1/5');
+      setDialogContent('Descargando operadores - 1/7');
       await operadoresService.fillOperadores(resGetOperadores);
-      setDialogContent('Descargando articulos - 2/5');
+
+      setDialogContent('Descargando artículos - 2/7');
       await articulosService.fillArticulos(resGetArticulos);
-      setDialogContent('Descargando almacenes - 3/5');
+
+      setDialogContent('Descargando almacenes - 3/7');
       await almacenesService.fillAlmacenes(resGetAlmacenes);
-      setDialogContent('Descargando casrtera - 4/5');
+
+      setDialogContent('Descargando cartera - 4/7');
       await carteraService.fillCartera(resGetCartera);
-      setDialogContent('Descargando encuesta - 5/5');
+
+      setDialogContent('Descargando encuesta - 5/7');
       await encuestaService.fillEncuesta(resGetEncuesta);
-      setDialogContent('Descargando terceros - 5/5');
+
+      setDialogContent('Descargando terceros - 6/7');
       await tercerosService.fillTerceros(resGetTerceros);
-      setDialogContent('Descargando visitas - 5/5');
+
+      setDialogContent('Descargando visitas - 7/7');
       await visitaService.fillVisitas(resVisitas);
-      setDialogContent('Descargando zonas - 5/5');
+
+      setDialogContent('Descargando zonas - 8/8');
       await zonaService.fillZona(resGetZonas);
-      setDialogContent('Descargando rutas - 5/5');
+
+      setDialogContent('Descargando rutas - 9/9');
       await rutaService.fillRuta(resGetRutas);
-      setDialogContent('Descargando frecuencias - 5/5');
+
+      setDialogContent('Descargando frecuencias - 10/10');
       await frecuenciaService.fillFrecuencia(resGetFrecuencias);
 
       setDisabledCancel(false);

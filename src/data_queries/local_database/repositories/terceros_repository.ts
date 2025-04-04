@@ -934,7 +934,7 @@ class TercerosRepository implements IRepository<ITerceros> {
             resolve(response.rows.raw());
           },
           (error: ResultSet) => {
-            reject(new Error('Fallo obtener terceros creados'));
+            console.log(error);
           },
         );
       });
@@ -955,6 +955,7 @@ class TercerosRepository implements IRepository<ITerceros> {
             resolve(response.rows.raw());
           },
           (error: ResultSet) => {
+            console.log(error);
             reject(new Error('Fallo obtener terceros editados'));
           },
         );

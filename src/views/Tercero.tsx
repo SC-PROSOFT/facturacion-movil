@@ -14,7 +14,7 @@ import {useNavigation} from '@react-navigation/native';
 /* utils */
 import {formatToMoney, getPermissions, getUbication} from '../utils';
 /* types */
-import {IOperation, IEncuesta, IFiles} from '../common/types';
+import {IOperation, IEncuesta, IFiles, IVisita} from '../common/types';
 /* components */
 import {Movimiento, Header, SearchLocation} from '../components';
 /* redux */
@@ -22,6 +22,7 @@ import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {
   filesService,
   tercerosService,
+  visitaService,
 } from '../data_queries/local_database/services';
 import {
   setObjOperator,
@@ -29,6 +30,7 @@ import {
   setObjOperation,
   setObjInfoAlert,
   setObjEncuesta,
+  setObjVisita,
   setFile,
   setObjTercero,
 } from '../redux/slices';
@@ -41,6 +43,7 @@ const Tercero = () => {
   const arrFactura = useAppSelector(store => store.tercerosFinder.arrFactura);
   const arrPedido = useAppSelector(store => store.tercerosFinder.arrPedido);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
+  const objVisita = useAppSelector(store => store.visitas.objVisita);
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [isNotLocation, setIsNotLocation] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -48,16 +51,31 @@ const Tercero = () => {
     try {
       console.log(objTercero);
       const files = await filesService.getFilesByCode(objTercero.codigo);
-      if (Array.isArray(files.files) && files.files.length >= 1) {
+
+      // Verificar si files.files es una cadena y convertirla en un array
+      let parsedFiles = files.files;
+      if (typeof files.files === 'string') {
+        try {
+          parsedFiles = JSON.parse(files.files);
+        } catch (error) {
+          console.error('Error al analizar files.files como JSON:', error);
+          setShowAlert(true);
+          return;
+        }
+      }
+
+      // Verificar si parsedFiles es un array y tiene elementos
+      if (Array.isArray(parsedFiles) && parsedFiles.length > 0) {
         console.log('Hay archivos');
-        console.log(files);
-        dispatch(setFile(files));
-        isShowAlert(files);
+        console.log(parsedFiles);
+        dispatch(setFile({...files, files: parsedFiles}));
+        isShowAlert(parsedFiles);
       } else {
         console.log('No hay archivos');
         setShowAlert(true);
       }
     } catch (error: any) {
+      console.error('Error al obtener los archivos:', error);
       setShowAlert(true);
     }
   };
@@ -74,9 +92,7 @@ const Tercero = () => {
     const parsedFiles =
       typeof files.files === 'string' ? JSON.parse(files.files) : files.files;
 
-    console.log((parsedFiles?.length ?? 0) < 3);
-
-    if ((parsedFiles?.length ?? 0) === 0 || (parsedFiles?.length ?? 0) < 3) {
+    if ((parsedFiles?.length ?? 0) === 0) {
       setShowAlert(true);
       return;
     }
@@ -137,6 +153,26 @@ const Tercero = () => {
     setIsModalVisible(false); // Cierra el modal
   };
 
+  const saveLocationInVisitaObj = async (location: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    // Convertir cada propiedad del objeto location a string
+    const locationString = {
+      latitude: location.latitude.toString(),
+      longitude: location.longitude.toString(),
+    };
+
+    const modifiedVisita: IVisita = {
+      ...objVisita,
+      location: locationString, // Guardar la ubicación como un objeto con strings
+    };
+
+    await visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
+
+    console.log('Ubicación convertida a strings:', locationString);
+  };
+
   const handleSaveLocation = async (location: {
     latitude: number;
     longitude: number;
@@ -156,6 +192,7 @@ const Tercero = () => {
       if (response) {
         dispatch(setObjTercero(terceroModificado));
       }
+      await saveLocationInVisitaObj(location);
     } catch (error) {
       console.log(error);
     }
@@ -264,9 +301,11 @@ const Tercero = () => {
             ListEmptyComponent={
               <View style={{alignItems: 'center', marginTop: 100}}>
                 <Text
-                  style={{color: '#504D54', fontSize: 16, fontWeight: 'bold'}}>
-                  SIN MOVIMIENTOS ESTE MES
-                </Text>
+                  style={{
+                    color: '#504D54',
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                  }}></Text>
               </View>
             }
             style={{

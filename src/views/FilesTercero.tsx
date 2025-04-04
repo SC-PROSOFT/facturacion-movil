@@ -37,7 +37,7 @@ const FilesTercero = () => {
   const [file, setFileState] = useState<IFiles | null>(null);
   const [copyFile, setCopyFile] = useState<IFiles | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
   const [camaraComercioFile, setCamaraComercioFile] =
@@ -47,7 +47,7 @@ const FilesTercero = () => {
   );
 
   const getFiles = async () => {
-    setIsLoading(true);
+   
     // let files = null;
     // try {
     //   files = await filesService.getFilesByCode(objTercero.codigo);
@@ -55,6 +55,8 @@ const FilesTercero = () => {
     //   setIsLoading(false);
     // }
     // console.log(files);
+    const files = await filesService.getFilesByCode(objTercero.codigo);
+
     if (files) {
       try {
         const parsedFiles = JSON.parse(files.files);
@@ -178,7 +180,7 @@ const FilesTercero = () => {
     addFileToArray(rutFile, 'RUT');
     addFileToArray(camaraComercioFile, 'CAMCOMERCIO');
     addFileToArray(cedulaFile, 'DI');
-   
+
     try {
       console.log('files', arrayFiles);
       let response;
@@ -198,8 +200,8 @@ const FilesTercero = () => {
 
       if (response) {
         // Actualizar los paths en el tercero
-        
-        console.log(response)
+
+        console.log(response);
         const terceroModificado = {...objTercero};
         terceroModificado.tipo =
           /^\d{9,10}$/.test(objTercero.codigo) &&
@@ -239,7 +241,6 @@ const FilesTercero = () => {
       const archivos = await filesService.getFilesByCode(objTercero.codigo);
       dispatch(setFile(archivos));
       setIsLoading(false);
-      navigation.navigate('TabNavTercero');
     }
   };
 

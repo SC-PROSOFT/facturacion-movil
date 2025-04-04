@@ -13,7 +13,7 @@ class TercerosApiServices {
   }
 
   _constructTercero = (tercero: ITerceros, novedad: string) => {
-    let datos = `00000086005264920250220112018|COMER24|${novedad}|CONTROL|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_path}|${tercero.camaracomercio_path}`;
+    let datos = `00000086005264920250220112018|COMER24|CONTROL|${novedad}|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_path}|${tercero.camaracomercio_path}`;
     return datos;
   };
 
@@ -43,9 +43,15 @@ class TercerosApiServices {
       console.log('body =>', datosh);
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
-        {body},
+        body,
       );
-      return true;
+      if (response.data.data.STATUS == '00') {
+        return true;
+      } else if (response.data.data.STATUS == '35') {
+        throw new Error('La configuracion no es correcta');
+      }
+
+      return false;
     } catch (error) {
       throw error;
     }
@@ -90,7 +96,7 @@ class TercerosApiServices {
       };
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
-        {body},
+        body,
       );
       console.log('response update tercero =>', response.data.data);
       if (response.data.data.STATUS == '00') {

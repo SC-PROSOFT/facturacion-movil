@@ -12,7 +12,7 @@ import {
 import {Button, Dialog, Text, Portal} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
-import {ITerceros} from '../common/types';
+import {ITerceros, IVisita} from '../common/types';
 import {_Input} from './_Input';
 import {visitaService} from '../data_queries/local_database/services';
 
@@ -62,17 +62,32 @@ export const TercerosModal: React.FC<IModalProps> = ({
     adjustScreenSize();
   }, []);
 
-  const handleSubmit = () => {
-    const modifiedVisita = {
-      ...objVisita,
-      status:  "1" as "1",
-      observation: observacion,
-    };
-    visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
-    console.log('modifiedVisita', modifiedVisita);
-    onSubmit({observacion, status: true});
-    onClose();
+const handleSubmit = async () => {
+  const today = new Date().toISOString().split('T')[0]; // Obtener la fecha de hoy en formato YYYY-MM-DD
+
+  // Verificar si la visita coincide con la fecha de hoy
+  if (objVisita.appointmentDate !== today) {
+    return;
+  }
+
+  // Crear el objeto modificado para la visita de hoy
+  const modifiedVisita: IVisita = {
+    ...objVisita,
+    status: '1', // Cambiar el estado a "visitado"
+    observation: observacion, // Agregar la observación
   };
+
+  try {
+    // Actualizar la visita
+    await visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
+
+    console.log('Visita actualizada correctamente:', modifiedVisita);
+    onSubmit({ observacion, status: true });
+    onClose();
+  } catch (error) {
+    console.error('Error al actualizar la visita:', error);
+  }
+};
 
   const modalHeight = isKeyboardVisible
     ? Dimensions.get('window').height * 0.35 // Altura cuando el teclado está visible

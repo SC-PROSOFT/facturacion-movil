@@ -59,6 +59,7 @@ import {
   ITerceros,
   IOperation,
   IProductAdded,
+  IVisita,
 } from '../common/types';
 /* context */
 import {decisionAlertContext} from '../context';
@@ -1002,15 +1003,26 @@ const ElaborarPedido: React.FC = () => {
   };
 
   const visitaRealizada = async () => {
+    const today = new Date().toISOString().split('T')[0]; // Obtener la fecha de hoy en formato YYYY-MM-DD
+
+    // Verificar si la visita coincide con la fecha de hoy
+    if (objVisita.appointmentDate !== today) {
+      console.error('No se encontró una visita para la fecha de hoy.');
+      return;
+    }
+
+    // Crear el objeto modificado para la visita de hoy
+    const modifiedVisita: IVisita = {
+      ...objVisita,
+      status: '1', // Cambiar el estado a "visitado"
+      observation: state.observaciones, // Agregar la observación
+    };
+
     try {
-      const visita = {
-        ...objVisita,
-        status: '1' as '1',
-        observation: state.observaciones,
-      };
-      await visitaService.updateVisita(visita, visita.id_tercero);
+      // Actualizar la visita
+      await visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
     } catch (error) {
-      console.log('Error al actualizar la visita', error);
+      console.error('Error al actualizar la visita:', error);
     }
   };
 

@@ -73,13 +73,13 @@ const TabNavPrincipal = () => {
         component={Visitas}
         options={optionsTabScreen({icon: 'transit-connection-variant'})}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Sinc. facturas"
         component={ActualizarPedidos}
         options={optionsTabScreen({icon: 'receipt'})}
-      />
+      /> */}
       <Tab.Screen
-        name="Sinc. pedidos"
+        name="Sincronización"
         component={SyncDispositivo}
         options={optionsTabScreen({icon: 'cloud-sync'})}
       />

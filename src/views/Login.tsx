@@ -246,6 +246,23 @@ const Login = () => {
         }),
       );
 
+      if (
+        operador.cod_vendedor == null ||
+        operador.cod_vendedor == '' ||
+        operador.cod_vendedor == undefined ||
+        operador.cod_vendedor == '00000'
+      ) {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: 'Usuario no tiene vendedor asignado',
+          }),
+        );
+        dispatch(setIsSignedIn(false));
+        return;
+      }
+
       dispatch(setIsSignedIn(true));
     } else {
       dispatch(showAlert('00'));

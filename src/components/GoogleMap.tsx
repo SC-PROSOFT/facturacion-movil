@@ -4,14 +4,21 @@ import MapView, {Marker} from 'react-native-maps';
 import {Modal, Portal, IconButton} from 'react-native-paper';
 
 interface GoogleMapProps {
-  latitude: number;
-  longitude: number;
+  latitude?: number; // Hacer opcionales las coordenadas
+  longitude?: number;
 }
 
 const GoogleMap: React.FC<GoogleMapProps> = ({latitude, longitude}) => {
   const [visible, setVisible] = React.useState(false);
 
-  const showModal = () => setVisible(true);
+  const showModal = () => {
+    if (latitude && longitude) {
+      setVisible(true); // Solo abrir si las coordenadas están definidas
+    } else {
+      console.warn('Ubicación no disponible');
+    }
+  };
+
   const hideModal = () => setVisible(false);
 
   return (
@@ -25,8 +32,8 @@ const GoogleMap: React.FC<GoogleMapProps> = ({latitude, longitude}) => {
             <MapView
               style={styles.map}
               initialRegion={{
-                latitude: latitude,
-                longitude: longitude,
+                latitude: latitude || 0, // Valor por defecto si no hay coordenadas
+                longitude: longitude || 0,
                 latitudeDelta: 0.0922,
                 longitudeDelta: 0.0421,
               }}
@@ -34,11 +41,13 @@ const GoogleMap: React.FC<GoogleMapProps> = ({latitude, longitude}) => {
               onRegionChangeComplete={region =>
                 console.log('Región del mapa:', region)
               }>
-              <Marker
-                coordinate={{latitude: latitude, longitude: longitude}}
-                title="Ubicación"
-                description="Esta es la ubicación seleccionada"
-              />
+              {latitude && longitude && (
+                <Marker
+                  coordinate={{latitude, longitude}}
+                  title="Ubicación"
+                  description="Esta es la ubicación seleccionada"
+                />
+              )}
             </MapView>
           </View>
           <IconButton

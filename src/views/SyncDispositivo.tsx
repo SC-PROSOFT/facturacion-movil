@@ -133,6 +133,9 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
     facturasActualizados,
     facturasPendientesDeActualizacion,
     facturasElaborados,
+    pedidosElaborados,
+    pedidosPendientesDeActualizacion,
+    pedidosActualizados,
   } = records;
 
   const styles = StyleSheet.create({
@@ -169,7 +172,7 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={toggleTerceros} style={styles.itemContainer}>
+      <TouchableOpacity  style={styles.itemContainer}>
         <View style={styles.itemLeft}>
           <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
             Terceros
@@ -182,23 +185,21 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
           </Text>
         </View>
 
-        <View style={styles.itemRight}>
-          <Icon name="chevron-right" color="grey" size={28} />
-        </View>
+        
       </TouchableOpacity>
       <Divider style={styles.divider} />
 
       <TouchableOpacity style={styles.itemContainer}>
         <View style={styles.itemLeft}>
           <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
-            Facturas
+            Pedidos
           </Text>
           <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {facturasElaborados} Facturas
+            {pedidosElaborados} Pedidos
           </Text>
           <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {facturasPendientesDeActualizacion} pendientes,{' '}
-            {facturasActualizados} actualizadas
+            {pedidosPendientesDeActualizacion} pendientes, {pedidosActualizados}{' '}
+            actualizados
           </Text>
         </View>
       </TouchableOpacity>
@@ -207,6 +208,10 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
 };
 
 const SyncDispositivo = () => {
+  useEffect(() => {
+    loadPedidosValues();
+  }, []);
+
   const dispatch = useAppDispatch();
   const objConfig = useAppSelector(store => store.config.objConfig);
   const tercerosCreados = useAppSelector(
@@ -431,6 +436,8 @@ const SyncDispositivo = () => {
       objConfig.puerto,
     );
 
+    const tercerosRepository = new TercerosRepository();
+
     try {
       setDialogContent('Subiendo terceros');
 
@@ -490,15 +497,18 @@ const SyncDispositivo = () => {
         );
       }
 
-      // if (failedCreated > 0 || failedEdited > 0) {
-      //   dispatch(
-      //     setObjInfoAlert({
-      //       visible: true,
-      //       type: 'error',
-      //       description: `${failedCreated} terceros creados y ${failedEdited} terceros editados fallaron al subir`,
-      //     }),
-      //   );
-      // }
+      if (failedCreated === 0 && failedEdited === 0) {
+        // Si no hay fallos, eliminar las tablas de creados y editados
+        await tercerosRepository.dropAllTablesCreates();
+        await tercerosRepository.dropAllTablesEdits();
+        console.log(
+          'Tablas terceros_creados y terceros_editados eliminadas correctamente',
+        );
+      } else {
+        console.warn(
+          `${failedCreated} terceros creados y ${failedEdited} terceros editados fallaron al subir`,
+        );
+      }
 
       setLoading(false);
     } catch (error: any) {
@@ -585,7 +595,7 @@ const SyncDispositivo = () => {
   };
 
   const updateFiles = async () => {
-    setLoading(true); 
+    setLoading(true);
     const filesApiService = new FilesApiServices(
       objConfig.direccionIp,
       objConfig.puerto,
@@ -593,7 +603,7 @@ const SyncDispositivo = () => {
 
     try {
       setDialogContent('Subiendo archivos');
-      const files = await filesService.getAllFiles(); 
+      const files = await filesService.getAllFiles();
 
       if (files.length === 0) {
         dispatch(
@@ -703,8 +713,7 @@ const SyncDispositivo = () => {
 
   const toggleUploadData = async () => {
     setShowProgressWindow(true);
-    console.log('Uploading data');
-    const {direccionIp, puerto} = objConfig;
+
     // const syncQueries = new SyncQueries(direccionIp, puerto);
     // setSyncQueriesScope(syncQueries);
     // console.log("syncQueries", syncQueries);
@@ -716,8 +725,8 @@ const SyncDispositivo = () => {
       // await updateFacturas();
       setDialogContent('Subiendo pedidos');
       await updatePedidos();
-      setDialogContent('Subiendo archivos');
-      await updateFiles();
+      // setDialogContent('Subiendo archivos');
+      // await updateFiles();
       setDialogContent('Subiendo respuestas de encuestas');
       await updateEncuestas();
       setDisabledCancel(false);
@@ -758,11 +767,8 @@ const SyncDispositivo = () => {
 
   const loadRecord = async () => {
     try {
-      console.log('loading records from database');
       const createdTerceros = await tercerosService.getCreated();
-      console.log('createdTerceros', createdTerceros);
       const editedTerceros = await tercerosService.getModified();
-      console.log('editedTerceros', editedTerceros);
       const quantityTerceros = (
         createdTerceros.length + editedTerceros.length
       ).toString();

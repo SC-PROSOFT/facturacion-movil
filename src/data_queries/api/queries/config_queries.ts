@@ -1,5 +1,4 @@
 /* common types */
-import Toast from 'react-native-toast-message';
 import {IConfig} from '../../../common/types';
 
 import {createAxiosInstance} from '../axiosInstance';
@@ -73,11 +72,7 @@ class ConfigQueriesService {
         directorio: config.directorioContabilidad,
         ip_datos: config.datosIp,
       };
-      Toast.show({
-        type: 'info',
-        text1: 'Guardando configuracion',
-        text2: this.direccionIp,
-      });
+
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/index-config.dll`,
         requestBody,
@@ -95,14 +90,6 @@ class ConfigQueriesService {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/sc-usunet.dll`,
         {},
       );
-
-      const responseTxT = JSON.stringify(response.data);
-      Toast.show({
-        type: 'success',
-        text1: 'Configuración obtenida',
-        text2: responseTxT,
-      });
-      console.log(responseTxT);
 
       const responseClear = {
         direccionIp: this.direccionIp,
@@ -128,7 +115,6 @@ class ConfigQueriesService {
 
       return responseClear;
     } catch (error) {
-      console.log(error);
       throw new Error('Fallo obtener configuracion de servidor');
     }
   };

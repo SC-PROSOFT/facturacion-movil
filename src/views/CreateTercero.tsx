@@ -720,7 +720,7 @@ const CreateTercero = () => {
           </View>
 
           <View style={{flexDirection: 'row', gap: 8}}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={{
                 backgroundColor: '#485E8A',
                 padding: 3,
@@ -729,7 +729,7 @@ const CreateTercero = () => {
               onPress={() => openFileModal()}
               disabled={isDisabled}>
               <Icon name="attachment" size={36} color={'#FFF'} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity
               style={{
@@ -745,13 +745,13 @@ const CreateTercero = () => {
             </TouchableOpacity>
           </View>
 
-          <View>
+          {/* <View>
             {tercero.codigo.length < 10 && (
               <Text style={{color: 'red'}}>
                 Para adjuntar archivos debe ingresar la cedula del cliente
               </Text>
             )}
-          </View>
+          </View> */}
         </View>
 
         <View style={{marginVertical: 20}}>
