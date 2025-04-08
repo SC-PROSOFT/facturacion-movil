@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { TextInput } from 'react-native-paper';
+import {View, StyleSheet, Dimensions} from 'react-native';
+import {TextInput} from 'react-native-paper';
 
 type Mode = 'outlined' | 'flat';
 type KeyboardType = 'default' | 'number-pad';
@@ -16,7 +16,7 @@ interface StandardInputProps {
 }
 
 // Obtener las dimensiones de la pantalla
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 // Función para calcular el tamaño de la fuente basado en el ancho del dispositivo
 const scaleFontSize = (size: number) => (width / 375) * size;
@@ -41,7 +41,7 @@ export const StandardInput = ({
         mode={mode}
         keyboardType={keyboardType}
         style={styles.input}
-        contentStyle={{ fontSize: scaleFontSize(11) }}
+        contentStyle={{fontSize: scaleFontSize(11)}}
       />
     </View>
   );
@@ -56,6 +56,5 @@ const styles = StyleSheet.create({
     padding: 0,
     fontSize: scaleFontSize(15),
     marginBottom: 5,
-    height: 30,
   },
 });

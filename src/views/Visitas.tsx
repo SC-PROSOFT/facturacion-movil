@@ -251,17 +251,31 @@ const Visitas: React.FC = () => {
 
     const sections = [];
     if (visitasHoy.length > 0) {
-      sections.push({title: 'Hoy', data: visitasHoy, disabled: false});
+      sections.push({
+        title: `Hoy (${currentDate})`,
+        data: visitasHoy,
+        disabled: false,
+      });
     }
     if (visitasManana.length > 0) {
-      sections.push({title: 'Mañana', data: visitasManana, disabled: true});
+      sections.push({
+        title: `Mañana (${tomorrow})`,
+        data: visitasManana,
+        disabled: true,
+      });
     }
     return sections;
   };
 
-  const renderSectionHeader = ({section}: {section: {title: string}}) => (
-    <Text style={styles.sectionTitle}>{section.title}</Text>
-  );
+  const renderSectionHeader = ({section}) => {
+    const [mainTitle, date] = section.title.split('('); // Divide "Hoy (2023-03-27)"
+    return (
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{mainTitle.trim()}</Text>
+        <Text style={styles.sectionDate}>({date.trim()}</Text>
+      </View>
+    );
+  };
 
   const renderItem = ({item, section}: {item: IVisita; section: any}) => (
     <Visita
@@ -284,6 +298,8 @@ const Visitas: React.FC = () => {
           renderItem={renderItem}
           ListFooterComponent={<View style={{height: 100}} />}
           contentContainerStyle={{paddingHorizontal: 15, paddingVertical: 5}}
+          initialNumToRender={10} // Renderiza solo 10 elementos inicialmente
+          windowSize={5}
         />
       </SafeAreaView>
       <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
@@ -297,11 +313,23 @@ const Visitas: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  sectionHeader: {
+    flexDirection: 'row', // Coloca los textos en línea
+    alignItems: 'baseline', // Alinea correctamente los textos
+    flexWrap: 'wrap', // Permite que el texto se ajuste si es necesario
+    paddingHorizontal: 10, // Añade un margen lateral para evitar que el texto toque los bordes
+  },
   sectionTitle: {
     color: '#0B2863',
     fontSize: 24,
     marginBottom: 5,
     marginTop: 15,
+  },
+  sectionDate: {
+    fontSize: 14, // Tamaño más pequeño para la fecha
+    color: '#666',
+    marginLeft: 5, // Espaciado entre el título y la fecha
+    flexShrink: 1, // Evita que el texto de la fecha se desborde
   },
   loaderOverlay: {
     position: 'absolute',

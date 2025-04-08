@@ -12,6 +12,7 @@ import {
   ActualizarFacturas,
   ActualizarPedidos,
   SyncDispositivo,
+  Estadisticas,
 } from '../views';
 /* redux */
 import {useAppSelector} from '../redux/hooks';
@@ -78,6 +79,12 @@ const TabNavPrincipal = () => {
         component={ActualizarPedidos}
         options={optionsTabScreen({icon: 'receipt'})}
       /> */}
+      <Tab.Screen
+        name="Estadisticas"
+        component={Estadisticas}
+        options={optionsTabScreen({icon: 'chart-bar'})}
+      />
+
       <Tab.Screen
         name="Sincronización"
         component={SyncDispositivo}

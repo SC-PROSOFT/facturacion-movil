@@ -1032,6 +1032,40 @@ class TercerosRepository implements IRepository<ITerceros> {
       });
     });
   }
+
+  async deleteAllTercerosCreated(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `DELETE FROM terceros_creados`,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo borrar tabla terceros creados'));
+          },
+        );
+      });
+    });
+  }
+
+  async deleteAllTercerosEdited(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `DELETE FROM terceros_editados`,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo borrar tabla terceros editados'));
+          },
+        );
+      });
+    });
+  }
 }
 
 export {TercerosRepository};

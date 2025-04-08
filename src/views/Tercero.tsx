@@ -65,17 +65,17 @@ const Tercero = () => {
       }
 
       // Verificar si parsedFiles es un array y tiene elementos
-      if (Array.isArray(parsedFiles) && parsedFiles.length > 0) {
-        console.log('Hay archivos');
-        console.log(parsedFiles);
+      if (
+        Array.isArray(parsedFiles) &&
+        parsedFiles.length > 0 &&
+        parsedFiles?.length === 3
+      ) {
         dispatch(setFile({...files, files: parsedFiles}));
-        isShowAlert(parsedFiles);
+        setShowAlert(false);
       } else {
-        console.log('No hay archivos');
         setShowAlert(true);
       }
     } catch (error: any) {
-      console.error('Error al obtener los archivos:', error);
       setShowAlert(true);
     }
   };
@@ -86,18 +86,6 @@ const Tercero = () => {
       setIsNotLocation(true);
       return;
     }
-  };
-
-  const isShowAlert = async (files: IFiles) => {
-    const parsedFiles =
-      typeof files.files === 'string' ? JSON.parse(files.files) : files.files;
-
-    if ((parsedFiles?.length ?? 0) === 0) {
-      setShowAlert(true);
-      return;
-    }
-
-    setShowAlert(false);
   };
 
   const pulseAnim = useRef(new Animated.Value(1)).current;

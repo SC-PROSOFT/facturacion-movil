@@ -11,6 +11,7 @@ import {
   _Checkbox,
   CoolButton,
   IconButton,
+  PrincipalHeader,
 } from '../components';
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {
@@ -25,6 +26,9 @@ const Estadisticas = () => {
 
   return (
     <ScrollView>
+      <View>
+        <PrincipalHeader />
+      </View>
       <View style={{padding: 10}}>
         <Text style={{fontSize: 20, fontWeight: 'bold'}}>Estadisticas</Text>
         <View style={{marginTop: 20}}>
@@ -35,3 +39,5 @@ const Estadisticas = () => {
     </ScrollView>
   );
 };
+
+export {Estadisticas};

@@ -84,7 +84,7 @@ const Form = ({
     },
     rememberAccountText: {
       color: '#000',
-    },
+    }
   });
 
   return (
@@ -115,6 +115,7 @@ const Form = ({
       <NormalButton
         value="Iniciar sesion"
         pressNormalButton={pressLoginButton}
+        backgroundColor="#0B2863"
       />
     </View>
   );
@@ -145,6 +146,10 @@ const Login = () => {
   const dispatch = useAppDispatch();
 
   const objOperador = useAppSelector(store => store.operator.objOperator);
+  const {width, height} = Dimensions.get('window');
+
+  // Función para calcular el tamaño de la fuente basado en el ancho del dispositivo
+  const scaleFontSize = (size: number) => (width / 375) * size;
 
   const [inputs, setInputs] = useState({
     user: '',
@@ -316,17 +321,36 @@ const Login = () => {
     container: {
       backgroundColor: '#FFFF',
       flex: 1,
-      padding: 20, // Añade padding para simular la miniVentana
-      borderRadius: 15, // Bordes redondeados para la miniVentana
+      padding: 20,
+      marginBottom: showLogo ? 0 : -60,
+      borderRadius: 15,
       elevation: 5, // Sombra para la miniVentana (Android)
       shadowColor: '#000', // Sombra para iOS
       shadowOffset: {width: 0, height: 2},
       shadowOpacity: 0.25,
       shadowRadius: 3.84,
     },
+    topIncline: {
+      position: 'absolute',
+      top: -80, // Ajusta para subir/bajar la inclinación
+      left: -width * 0.3, // Amplía el ancho para que cubra toda la pantalla al rotar
+      width: width * 1.6, // Ancho dinámico basado en el ancho de la pantalla
+      height: height * 0.5, // Alto dinámico: 50% de la altura de la pantalla
+      backgroundColor: '#0B2863',
+      transform: [{rotate: '-20deg'}], // ángulo de inclinación
+      borderWidth: 5,
+      borderColor: '#FFFFFF',
+
+      // sombra solo en iOS (Android no usaremos elevation aquí)
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
+    },
     backgroundImage: {
       flex: 1,
-      resizeMode: 'cover', // Asegura que la imagen cubra toda la pantalla
+      resizeMode: 'cover',
+      overflow: 'hidden', // Asegura que la imagen cubra toda la pantalla
       paddingHorizontal: 30,
       paddingVertical: 40,
     },
@@ -374,7 +398,7 @@ const Login = () => {
     },
     title2: {
       fontWeight: 'bold',
-      color: '#365AC3',
+      color: '#0B2863',
       fontSize: scaleFontSize(21),
       marginLeft: 7,
     },
@@ -384,6 +408,7 @@ const Login = () => {
     <ImageBackground
       source={require('../../assets/coverBackground.png')} // Ruta de la imagen de fondo
       style={loginStyles.backgroundImage}>
+      <View style={loginStyles.topIncline} />
       <KeyboardAvoidingView behavior={'height'} style={{flex: 1}}>
         <SafeAreaView style={loginStyles.container}>
           {showLogo && (
@@ -417,6 +442,7 @@ const Login = () => {
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
+
       <View style={loginStyles.footerContainer}>
         <Footer appVersion={appVersion}></Footer>
       </View>

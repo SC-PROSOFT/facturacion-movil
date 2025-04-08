@@ -172,7 +172,7 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity  style={styles.itemContainer}>
+      <TouchableOpacity style={styles.itemContainer}>
         <View style={styles.itemLeft}>
           <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
             Terceros
@@ -184,8 +184,6 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
             {createdTerceros} creados, {editedTerceros} editados
           </Text>
         </View>
-
-        
       </TouchableOpacity>
       <Divider style={styles.divider} />
 
@@ -499,8 +497,8 @@ const SyncDispositivo = () => {
 
       if (failedCreated === 0 && failedEdited === 0) {
         // Si no hay fallos, eliminar las tablas de creados y editados
-        await tercerosRepository.dropAllTablesCreates();
-        await tercerosRepository.dropAllTablesEdits();
+        await tercerosRepository.deleteAllTercerosCreated();
+        await tercerosRepository.deleteAllTercerosEdited();
         console.log(
           'Tablas terceros_creados y terceros_editados eliminadas correctamente',
         );
@@ -658,11 +656,7 @@ const SyncDispositivo = () => {
             result => result.status === 'fulfilled' && result.value === true,
           ).length;
 
-          if (successfulUploads !== safeParsedFiles.length) {
-            throw new Error(
-              `Algunos archivos del código ${file.codigo} no se pudieron subir`,
-            );
-          }
+          
 
           return true; // Indicar que todos los archivos de este grupo se subieron correctamente
         }),
@@ -725,8 +719,8 @@ const SyncDispositivo = () => {
       // await updateFacturas();
       setDialogContent('Subiendo pedidos');
       await updatePedidos();
-      // setDialogContent('Subiendo archivos');
-      // await updateFiles();
+      setDialogContent('Subiendo archivos');
+      await updateFiles();
       setDialogContent('Subiendo respuestas de encuestas');
       await updateEncuestas();
       setDisabledCancel(false);

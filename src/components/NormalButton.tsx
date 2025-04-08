@@ -25,7 +25,7 @@ export const NormalButton = ({
 }: NormalButtonProps) => {
   const styles = StyleSheet.create({
     container: {
-      width: '100%',
+      width: '100%',  
     },
     button: {
       fontSize: scaleFontSize(13)
@@ -36,6 +36,7 @@ export const NormalButton = ({
       height: scaleFontSize(50),
       color: textColor,
       backgroundColor: backgroundColor,
+      
     },
   });
 

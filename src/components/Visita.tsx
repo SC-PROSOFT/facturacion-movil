@@ -111,9 +111,9 @@ const Visita: React.FC<VisitaProps> = ({visita, disabled, toggleVisita}) => {
         </View>
 
         <View style={styles.rightContainer}>
-          {/* <Text style={styles.saleValueText}>
+          <Text style={styles.saleValueText}>
             {formatToMoney(visita.saleValue)}
-          </Text> */}
+          </Text>
 
           <GoogleMap
             latitude={parseFloat(visita.location?.latitude)}
