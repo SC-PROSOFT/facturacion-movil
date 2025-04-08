@@ -47,7 +47,6 @@ const FilesTercero = () => {
   );
 
   const getFiles = async () => {
-   
     // let files = null;
     // try {
     //   files = await filesService.getFilesByCode(objTercero.codigo);
@@ -92,16 +91,12 @@ const FilesTercero = () => {
     getFiles();
   }, [objTercero.codigo]);
 
-  const filesApiServices = new FilesApiServices(
-    objConfig.direccionIp,
-    objConfig.puerto,
-  );
-
   const handleFileSelection = async (type: string) => {
     setIsDisabled(false);
     try {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.pdf, DocumentPicker.types.images],
+        copyTo: 'cachesDirectory',
         allowMultiSelection: false,
       });
       if (res && res[0]) {
@@ -242,6 +237,14 @@ const FilesTercero = () => {
       dispatch(setFile(archivos));
       setIsLoading(false);
     }
+  };
+  const filesApiServices = new FilesApiServices(
+    objConfig.direccionIp,
+    objConfig.puerto,
+  );
+  const tryUploadFiles = async () => {
+    console.log(objConfig);
+    filesApiServices._uploadFiles(rutFile, objTercero);
   };
 
   const removeFile = (type: string) => {

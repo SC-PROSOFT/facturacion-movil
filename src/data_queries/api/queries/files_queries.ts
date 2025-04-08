@@ -18,6 +18,7 @@ class FilesApiServices {
     tercero: ITerceros,
   ): Promise<boolean> => {
     try {
+      console.log(file);
       const terceroModificado = {...tercero};
       terceroModificado.tipo =
         /^\d{9,10}$/.test(tercero.codigo) &&
@@ -31,7 +32,7 @@ class FilesApiServices {
 
       const formData = new FormData();
       formData.append('archivo', {
-        uri: file.uri,
+        uri: file.fileCopyUri || file.uri, // Usar fileCopyUri si está disponible
         type: file.type,
         name: file.name,
       });
@@ -45,7 +46,7 @@ class FilesApiServices {
         formData, // FormData debe ir como cuerpo directamente
         {
           headers: {
-            'Content-Type': 'multipart/form-data', 
+            'Content-Type': 'multipart/form-data',
           },
         },
       );
