@@ -918,11 +918,13 @@ const ModificarPedido: React.FC = () => {
       await pedidosApiService._savePedido(pedido, 'put');
       await pedidosService.updatePedido(objOperador.nro_pedido.toString(), {
         ...pedido,
-        sincronizado: 'S',
+        sincronizado: 'N',
+        guardadoEnServer: 'N',
       });
+
       const redefinedOrders = redefineOrders(arrPedidos, pedido);
       dispatch(setArrPedido(redefinedOrders));
-      await generarPDF(pedido, objConfig, 'pedido');
+      // await generarPDF(pedido, objConfig, 'pedido');
       Toast.show({
         type: 'success',
         text1: 'Pedido modificado en el servidor correctamente',

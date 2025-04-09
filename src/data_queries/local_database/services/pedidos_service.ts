@@ -32,6 +32,14 @@ class PedidosService {
   ): Promise<IOperation[]> {
     return this.pedidosRepository.getByAttribute(attributeName, attributeValue);
   }
+
+  async getPedidosDeHoy(): Promise<IOperation[]> {
+    return this.pedidosRepository.getPedidosDeHoy();
+  }
+
+  async getPedidosDeEsteMes(): Promise<IOperation[]> {
+    return this.pedidosRepository.getPedidosDeEsteMes();
+  }
 }
 
 const pedidosService = new PedidosService();

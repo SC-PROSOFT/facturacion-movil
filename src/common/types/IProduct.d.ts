@@ -32,6 +32,7 @@ export interface IProductAdded {
   saldo: number; // cantidad de unidades disponibles del producto
   descuento: number;
   cantidad: number;
+  peso: number; // peso del producto
   valorUnidad: number;
   valorDescuento: number;
   valorBase: number;

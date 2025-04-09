@@ -47,6 +47,7 @@ const initialState: ProductState = {
     saldo: 0,
     descuento: 0,
     cantidad: 0,
+    peso: 0,
     valorUnidad: 0,
     valorDescuento: 0,
     valorBase: 0,

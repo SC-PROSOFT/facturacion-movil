@@ -33,12 +33,12 @@ const Movimiento: React.FC<MovimientoProps> = ({
   };
   const getColorOfStatus = (
     status: '1' | '2' | '3',
-  ): '#51B654' | '#F29D38' | '#D0392C' => {
+  ): '#51B654' | '#51B654' | '#D0392C' => {
     switch (status) {
       case '1':
         return '#51B654';
       case '2':
-        return '#F29D38';
+        return '#51B654';
       case '3':
         return '#D0392C';
     }
@@ -55,18 +55,6 @@ const Movimiento: React.FC<MovimientoProps> = ({
       return '***** ***** ***** *****';
     } else {
       return client;
-    }
-  };
-  const getStatusDescription = (status: '1' | '2' | '3') => {
-    switch (status) {
-      case '1':
-        return 'Visita realizada';
-      case '2':
-        return 'Visita pendiente';
-      case '3':
-        return 'Visita cancelada';
-      default:
-        return '***** *****';
     }
   };
   const getObservationClient = (observation: string) => {
@@ -89,16 +77,17 @@ const Movimiento: React.FC<MovimientoProps> = ({
 
   const styles = StyleSheet.create({
     container: {
+      width: '100%',
       flexDirection: 'row',
-      justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: '#fff',
       borderRadius: 7,
       paddingVertical: 5,
       maxHeight: 90,
-      opacity: disabled ? 0.7 : 1, // Hace que el View sea translúcido al 50%
+      opacity: disabled ? 0.5 : 1,
     },
     shadow: {
+      width: '100%',
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
@@ -109,29 +98,36 @@ const Movimiento: React.FC<MovimientoProps> = ({
       justifyContent: 'center',
       alignItems: 'center',
     },
-    infoText: {
-      color: '#504D54',
-    },
     infoContainer: {
       width: '52%',
-      paddingRight: 20,
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'nowrap',
+    },
+    infoText: {
+      color: '#504D54',
+      fontSize: 14,
+      lineHeight: 16,
+      flexShrink: 1,
+    },
+    infoTextClient: {
+      color: '#3D3D3D',
+      fontSize: 16,
     },
     actionsContainer: {
       justifyContent: 'space-evenly',
       width: '28%',
       height: '100%',
+      alignItems: 'center',
     },
     saleValue: {
       fontSize: 18,
       color: '#0B2863',
-    },
-    ubicationButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#ddd',
-      padding: 5,
-      borderRadius: 5,
-      alignSelf: 'flex-start', // Hace que el botón se ajuste al contenido
     },
     facturado: {
       color: document.tipo_operacion == 'factura' ? '#51B654' : '#0B2863',
@@ -162,18 +158,25 @@ const Movimiento: React.FC<MovimientoProps> = ({
         </View>
 
         <View style={styles.infoContainer}>
-          <Text
-            style={[styles.infoText, {fontWeight: 'bold', color: '#0B2863'}]}>
-            N°{' '}
-            {document.tipo_operacion == 'factura'
-              ? document.operador.nro_factura
-              : document.operador.nro_pedido}
-          </Text>
+          <View style={[styles.row, {justifyContent: 'space-between'}]}>
+            <Text
+              style={[styles.infoTextClient, {fontWeight: 'bold', flex: 1}]}
+              numberOfLines={1}>
+              {getNameClient(document.tercero.nombre)}
+            </Text>
+            <Text
+              style={[
+                styles.infoTextClient,
+                {fontWeight: 'bold', marginLeft: 10},
+              ]}>
+              N°{' '}
+              {document.tipo_operacion == 'factura'
+                ? document.operador.nro_factura
+                : document.operador.nro_pedido}
+            </Text>
+          </View>
           <Text style={styles.infoText}>
-            {getNameClient(document.tercero.nombre)}
-          </Text>
-          <Text style={styles.infoText}>
-            {getAddressClient(document.tercero.direcc)}
+            {getAddressClient(document.fecha)}
           </Text>
           <Text style={styles.infoText}>
             {getObservationClient(document.observaciones)}

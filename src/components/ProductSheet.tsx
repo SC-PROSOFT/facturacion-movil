@@ -63,6 +63,7 @@ const ProductSheet: React.FC<ProductSheetProps> = ({}) => {
     saldo: 0,
     descuento: 0,
     cantidad: 1,
+    peso: 0,
     valorUnidad: 0,
     valorDescuento: 0,
     valorBase: 0,
@@ -157,6 +158,7 @@ const ProductSheet: React.FC<ProductSheetProps> = ({}) => {
       saldo: Number(objProduct.saldo),
       descuento: 0,
       cantidad: 1,
+      peso: Number(objProduct.peso),
       valorUnidad: Number(valorBase),
       valorDescuento: 0,
       valorBase: Number(valorBase),
@@ -166,6 +168,7 @@ const ProductSheet: React.FC<ProductSheetProps> = ({}) => {
       detalles: '',
       index_lista: numeroLista,
     }));
+    console.log(objProduct.peso);
   };
   const calculateSubtotal = () => {
     let descuento;
@@ -252,6 +255,7 @@ const ProductSheet: React.FC<ProductSheetProps> = ({}) => {
       saldo: 0,
       descuento: 0,
       cantidad: 0,
+      peso: 0,
       valorUnidad: 0,
       valorDescuento: 0,
       valorBase: 0,

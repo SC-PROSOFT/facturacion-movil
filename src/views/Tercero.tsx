@@ -202,8 +202,7 @@ const Tercero = () => {
     latitude: number;
     longitude: number;
   }) => {
-    console.log('Ubicación guardada:', location);
-    // Aquí puedes actualizar el estado o realizar otras acciones
+   
 
     try {
       const {latitude, longitude} = location;
@@ -217,6 +216,7 @@ const Tercero = () => {
       if (response) {
         dispatch(setObjTercero(terceroModificado));
       }
+      setIsNotLocation(false)
       await saveLocationInVisitaObj(location);
     } catch (error) {
       console.log(error);
@@ -301,7 +301,7 @@ const Tercero = () => {
         <Text style={styles.totalCount}>
           {formatToMoney(sumarTotalFacturaPedidos())}
         </Text>
-        <Text style={styles.saldo}>Saldo: {cartera}</Text>
+        <Text style={styles.saldo}>Saldo: {cartera || "$0"}</Text>
       </View>
 
       <View style={styles.movientosContainer}>

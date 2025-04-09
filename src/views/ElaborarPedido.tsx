@@ -970,7 +970,7 @@ const ElaborarPedido: React.FC = () => {
       dispatch(setArrProductAdded([]));
       dispatch(setArrPedido([...arrPedidos, pedido]));
       resetState();
-      await generarPDF(pedido, objConfig, 'pedido');
+      // await generarPDF(pedido, objConfig, 'pedido');
       Toast.show({
         type: 'success',
         text1: 'Pedido guardado en el servidor correctamente',

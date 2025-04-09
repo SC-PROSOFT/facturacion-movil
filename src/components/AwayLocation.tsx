@@ -106,8 +106,17 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
   }, [visible]);
 
   const handleAccept = () => {
-    navigation.navigate('TabNavTercero'); // Navegar sin resetear el historial
-    onClose();
+    try {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+        onClose();
+      } else if (navigation.canGoBack('TabNavPrincipal')) {
+        navigation.navigate('TabNavPrincipal');
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error al navegar:', error);
+    }
   };
 
   const handleSubmit = () => {
@@ -122,8 +131,6 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
     onClose();
   };
 
-
-  
   const handleContentSizeChange = (event: any) => {
     const contentHeight = event.nativeEvent.contentSize.height;
     const baseHeight = Dimensions.get('window').height * 0.5;
@@ -178,7 +185,6 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
             <TextInput
               style={styles.input}
               placeholder="Ingrese observación"
-         
               onChangeText={text => setObservacion(text)}
               multiline={true}
               maxLength={100}
@@ -194,6 +200,10 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
   };
 
   const renderActions = () => {
+    if (!showText) {
+      return null; // No mostrar botones hasta que el texto esté visible
+    }
+
     if (locationStatus === 3) {
       return (
         <Dialog.Actions>
@@ -303,7 +313,9 @@ const styles = StyleSheet.create({
     padding: 8,
     marginTop: 10,
     width: '90%',
-    maxHeight: 80, 
+    maxHeight: 80,
+    color: '#092254',
+    
   },
   iconContainer: {
     justifyContent: 'center',

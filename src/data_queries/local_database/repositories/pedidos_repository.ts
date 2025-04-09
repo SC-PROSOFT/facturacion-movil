@@ -438,6 +438,123 @@ class PedidosRepository implements IRepository<IOperation | IOperationDb> {
       });
     });
   }
+  async getPedidosDeHoy(): Promise<IOperation[]> {
+    const hoy = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    const sqlQuery = `
+      SELECT * FROM pedidos
+      WHERE fecha = ?
+      ORDER BY fechaTimestampUnix DESC
+    `;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlQuery,
+          [hoy],
+          (_: ResultSet, result: ResultSet) => {
+            const pedidos = result.rows
+              .raw()
+              .map((pedido: IOperationDb) => this.mapPedido(pedido));
+            resolve(pedidos);
+          },
+          (error: Error) => {
+            reject(new Error('Fallo al obtener pedidos de hoy'));
+          },
+        );
+      });
+    });
+  }
+
+  async getPedidosDeEsteMes(): Promise<IOperation[]> {
+    const fechaActual = new Date();
+    const mes = (fechaActual.getMonth() + 1).toString().padStart(2, '0'); // Mes en formato MM
+    const anio = fechaActual.getFullYear(); // Año en formato YYYY
+    const sqlQuery = `
+      SELECT * FROM pedidos
+      WHERE strftime('%Y-%m', fecha) = ?
+      ORDER BY fechaTimestampUnix DESC
+    `;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlQuery,
+          [`${anio}-${mes}`],
+          (_: ResultSet, result: ResultSet) => {
+            const pedidos = result.rows
+              .raw()
+              .map((pedido: IOperationDb) => this.mapPedido(pedido));
+            resolve(pedidos);
+          },
+          (error: Error) => {
+            reject(new Error('Fallo al obtener pedidos de este mes'));
+          },
+        );
+      });
+    });
+  }
+
+  // Método auxiliar para mapear un pedido desde la base de datos al formato IOperation
+  private mapPedido(pedido: IOperationDb): IOperation {
+    return {
+      tipo_operacion: pedido.tipo_operacion,
+      fecha: pedido.fecha,
+      hora: pedido.hora,
+      fechaTimestampUnix: pedido.fechaTimestampUnix,
+      almacen: pedido.almacen,
+      ubicacion: {
+        latitud: pedido.ubicacion_latitud,
+        longitud: pedido.ubicacion_longitud,
+      },
+      operador: {
+        codigo: pedido.operador_codigo,
+        descripcion: pedido.operador_descripcion,
+        id: pedido.operador_id,
+        cod_vendedor: pedido.operador_cod_vendedor,
+        sucursal: pedido.operador_sucursal,
+        nro_pedido: pedido.operador_nro_pedido,
+        nro_factura: pedido.operador_nro_factura,
+        auto_dian: pedido.operador_auto_dian,
+        fecha_ini: pedido.operador_fecha_ini,
+        fecha_fin: pedido.operador_fecha_fin,
+        nro_ini: pedido.operador_nro_ini,
+        nro_fin: pedido.operador_nro_fin,
+        prefijo: pedido.operador_prefijo,
+        vigencia: pedido.operador_vigencia,
+      },
+      tercero: {
+        clasificacion: pedido.tercero_clasificacion,
+        codigo: pedido.tercero_codigo,
+        direcc: pedido.tercero_direcc,
+        ex_iva: pedido.tercero_ex_iva,
+        f_pago: pedido.tercero_f_pago,
+        nombre: pedido.tercero_nombre,
+        plazo: pedido.tercero_plazo,
+        tel: pedido.tercero_tel,
+        vendedor: pedido.tercero_vendedor,
+        departamento: pedido.tercero_departamento,
+        ciudad: pedido.tercero_ciudad,
+        barrio: pedido.tercero_barrio,
+        email: pedido.tercero_email,
+        reteica: pedido.tercero_reteica,
+        frecuencia: pedido.tercero_frecuencia,
+        zona: pedido.tercero_zona,
+        ruta: pedido.tercero_ruta,
+        latitude: pedido.tercero_latitude,
+        longitude: pedido.tercero_longitude,
+        rut_path: pedido.tercero_rut_path,
+        camaracomercio_path: pedido.tercero_camaracomercio_path,
+        dv: pedido.tercero_dv,
+      },
+      articulosAdded: JSON.parse(pedido.articulosAdded),
+      formaPago: pedido.formaPago,
+      fechaVencimiento: pedido.fechaVencimiento,
+      valorPedido: pedido.valorPedido,
+      observaciones: pedido.observaciones,
+      guardadoEnServer: pedido.guardadoEnServer,
+      sincronizado: pedido.sincronizado,
+    };
+  }
 }
 
 export {PedidosRepository};
