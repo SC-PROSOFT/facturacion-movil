@@ -366,7 +366,7 @@ const CreateTercero = () => {
           setObjInfoAlert({
             visible: true,
             type: 'success',
-            description: 'Archivos subidos correctamente.',
+            description: 'Tercero creado correctamente.',
           }),
         );
       }

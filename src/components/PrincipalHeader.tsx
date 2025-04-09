@@ -150,14 +150,14 @@ const Searcher = ({
           iconSize={30}
           onPress={() => dispatch(setIsShowTercerosFinder(true))}
         />
-        {/* <View style={{marginLeft: 10}}>
+        <View style={{marginLeft: 10}}>
           <IconButton
             iconName="map-marker-path"
             iconColor="#FFF"
             iconSize={30}
             onPress={() => navigation.navigate('CreateRuta')}
           />
-        </View> */}
+        </View>
         <View style={{marginLeft: 10}}>
           <IconButton
             iconName="account-plus"

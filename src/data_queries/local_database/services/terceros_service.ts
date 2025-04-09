@@ -121,6 +121,13 @@ class TercerosService {
   async dropTableEdits(): Promise<boolean> {
     return this.tercerosRepository.dropAllTablesEdits();
   }
+  async deleteAllTercerosCreated(): Promise<boolean> {
+    return this.tercerosRepository.deleteAllTercerosCreated();
+  }
+
+  async deleteAllTercerosEdited(): Promise<boolean> {
+    return this.tercerosRepository.deleteAllTercerosEdited();
+  }
 }
 
 const tercerosService = new TercerosService();
