@@ -52,7 +52,7 @@ export const ZonaFinder = React.memo(({toggleZona}: ZonaFinderProps) => {
   const debouncedFilterZonas = useCallback(
     debounce((text: string) => {
       filterZonas(text);
-    }, 2000),
+    }, 500),
     [],
   );
 
@@ -63,10 +63,13 @@ export const ZonaFinder = React.memo(({toggleZona}: ZonaFinderProps) => {
     }
 
     const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
+    console.log('Filtrando por:', attribute, 'con texto:', text); // Verifica el atributo y el texto
+
     try {
       const filtered = zonas.filter(zona =>
-        zona[attribute].toLowerCase().includes(text.toLowerCase()),
+        zona[attribute]?.toLowerCase().includes(text.toLowerCase()),
       );
+      console.log('Resultados filtrados:', filtered); // Verifica los resultados
       setFilteredZonas(filtered);
     } catch (error) {
       console.error('Error al filtrar zonas:', error);

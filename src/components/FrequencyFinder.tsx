@@ -101,12 +101,11 @@ export const FrecuenciaFinder = React.memo(
         setFrecuencias(frecuencias);
         setTempFrecuencias(frecuencias);
         setFilteredFrecuencias(frecuencias);
-       
       } catch (error) {
         console.log('Error al cargar las frecuencias', error);
       } finally {
         setIsLoading(false);
-         setIsFirstLoad(false);
+        setIsFirstLoad(false);
       }
     };
 

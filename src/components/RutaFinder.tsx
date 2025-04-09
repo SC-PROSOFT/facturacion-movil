@@ -53,7 +53,7 @@ export const RutaFinder = React.memo(({toggleRuta}: RutaFinderProps) => {
   const debouncedFilterRutas = useCallback(
     debounce((text: string) => {
       filterRutas(text);
-    }, 2000),
+    }, 500),
     [],
   );
 
@@ -62,11 +62,15 @@ export const RutaFinder = React.memo(({toggleRuta}: RutaFinderProps) => {
       setFilteredRutas(tempRutas);
       return;
     }
-    const attribute = /[^0-9]/.test(text) ? 'zona' : 'nombre';
+    const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
+    console.log('Filtrando por:', attribute, 'con texto:', text); // Verifica el atributo y el texto
+
     try {
       const filtered = tempRutas.filter(ruta => {
-        return ruta[attribute].toLowerCase().includes(text.toLowerCase());
+        return ruta[attribute]?.toLowerCase().includes(text.toLowerCase());
       });
+      console.log('Resultados filtrados:', filtered); // Verifica los resultados
+
       setFilteredRutas(filtered);
     } catch (error) {
       console.log('error', error);
@@ -83,11 +87,12 @@ export const RutaFinder = React.memo(({toggleRuta}: RutaFinderProps) => {
     setIsLoading(true);
     try {
       const allRutas = await rutaService.getAllRutas();
+      console.log('Rutas cargadas:', allRutas); // Verifica los datos cargados
       setTempRutas(allRutas);
       setRutas(allRutas);
       setFilteredRutas(allRutas);
     } catch (error) {
-      console.log('error', error);
+      console.log('Error al cargar rutas:', error);
     } finally {
       setIsLoading(false);
       setIsFirstLoad(false);
