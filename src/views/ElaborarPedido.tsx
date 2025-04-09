@@ -977,7 +977,6 @@ const ElaborarPedido: React.FC = () => {
       });
 
       setIsLoadingSave(false);
-      visitaRealizada();
     } catch (error: any) {
       if (error instanceof ValidationsBeforeSavingError) {
         Toast.show({
@@ -987,7 +986,6 @@ const ElaborarPedido: React.FC = () => {
         setIsLoadingSave(false);
       } else if (error instanceof ApiSaveOrderError) {
         saveOrderInLocalDatabaseOnly();
-        visitaRealizada();
       } else {
         console.log('Save err' + error);
         dispatch(
@@ -999,23 +997,31 @@ const ElaborarPedido: React.FC = () => {
         );
         setIsLoadingSave(false);
       }
+    } finally {
+      visitaRealizada();
     }
   };
 
   const visitaRealizada = async () => {
     const today = new Date().toISOString().split('T')[0]; // Obtener la fecha de hoy en formato YYYY-MM-DD
-
+    const saleValue = state.articulosAdded.reduce(
+      (acumulator, articulo) => acumulator + articulo.valorTotal,
+      0,
+    );
     // Verificar si la visita coincide con la fecha de hoy
     if (objVisita.appointmentDate !== today) {
       console.error('No se encontró una visita para la fecha de hoy.');
       return;
     }
 
+    console.log(saleValue);
+
     // Crear el objeto modificado para la visita de hoy
     const modifiedVisita: IVisita = {
       ...objVisita,
       status: '1', // Cambiar el estado a "visitado"
       observation: state.observaciones, // Agregar la observación
+      saleValue: saleValue,
     };
 
     try {
@@ -1222,6 +1228,7 @@ const ElaborarPedido: React.FC = () => {
       observaciones: '',
       articulosAdded: [],
     }));
+    setIsModalVisible(false);
   };
   const styles = StyleSheet.create({
     container: {

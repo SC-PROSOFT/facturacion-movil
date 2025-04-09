@@ -6,14 +6,24 @@ import {useAppSelector} from '../../../redux/hooks';
 class TercerosApiServices {
   private axiosInstance;
   private direccionIp;
+  private static objConfig: any;
 
   constructor(direccionIp: string, puerto: string) {
     this.axiosInstance = createAxiosInstance(direccionIp, puerto);
     this.direccionIp = direccionIp;
   }
 
+  static setObjConfig(config: any) {
+    TercerosApiServices.objConfig = config;
+  }
+
   _constructTercero = (tercero: ITerceros, novedad: string) => {
-    let datos = `00000086005264920250220112018|COMER24|CONTROL|${novedad}|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_path}|${tercero.camaracomercio_path}`;
+    console.log(TercerosApiServices.objConfig);
+
+    let directorio = TercerosApiServices.objConfig
+      ? TercerosApiServices.objConfig.directorioContabilidad
+      : 'COMER25';
+    let datos = `00000086005264920250220112018|${directorio}|CONTROL|${novedad}|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_path}|${tercero.camaracomercio_path}`;
     return datos;
   };
 

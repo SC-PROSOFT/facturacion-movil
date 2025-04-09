@@ -59,6 +59,16 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
       }
     }, [isShowUploadArchives]);
 
+    useEffect(() => {
+  if (isShowUploadArchives) {
+    // Resetear los estados cuando se abre el modal
+    setRutFile(null);
+    setCamaraComercioFile(null);
+    setCedulaFile(null);
+    setIsLoading(false);
+  }
+}, [isShowUploadArchives]);
+
     const closeUploadArchives = () => {
       dispatch(setIsShowUploadArchives(false));
     };

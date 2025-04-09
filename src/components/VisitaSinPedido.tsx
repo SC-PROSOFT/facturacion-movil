@@ -73,7 +73,7 @@ const handleSubmit = async () => {
   // Crear el objeto modificado para la visita de hoy
   const modifiedVisita: IVisita = {
     ...objVisita,
-    status: '1', // Cambiar el estado a "visitado"
+    status: '3', // Cambiar el estado a "visitado"
     observation: observacion, // Agregar la observación
   };
 

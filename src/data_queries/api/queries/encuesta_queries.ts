@@ -5,15 +5,23 @@ import {useAppDispatch, useAppSelector} from '../../../redux/hooks';
 class EncuestaApiServices {
   private axiosInstance;
   private direccionIp;
+  private static objConfig: any;
 
   constructor(direccionIp: string, puerto: string) {
     this.axiosInstance = createAxiosInstance(direccionIp, puerto);
     this.direccionIp = direccionIp;
   }
 
+  static setObjConfig(config: any) {
+    EncuestaApiServices.objConfig = config;
+  }
+
   _constructRespEncuesta = (respuesta: IRespEncuesta) => {
+    let directorio = EncuestaApiServices.objConfig
+      ? EncuestaApiServices.objConfig.directorioContabilidad
+      : 'COMER25';
     let datos: {[key: string]: string} = {
-      datosh: `00000086005264920250220112018|COMER24|CONTROL`,
+      datosh: `00000086005264920250220112018|${directorio}|CONTROL`,
       cod_resp_encu: respuesta.codigo,
       cod_terce_resp_encu: respuesta.codigo_tercero,
       cod_ven_resp_encu: respuesta.codigo_vende,

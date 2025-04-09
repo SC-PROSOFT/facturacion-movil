@@ -433,6 +433,7 @@ const SyncDispositivo = () => {
       objConfig.direccionIp,
       objConfig.puerto,
     );
+    TercerosApiServices.setObjConfig(objConfig);
 
     const tercerosRepository = new TercerosRepository();
 
@@ -531,6 +532,8 @@ const SyncDispositivo = () => {
       objConfig.puerto,
     );
 
+    EncuestaApiServices.setObjConfig(objConfig);
+
     console.log('updating encuestas');
 
     try {
@@ -598,7 +601,7 @@ const SyncDispositivo = () => {
       objConfig.direccionIp,
       objConfig.puerto,
     );
-
+    FilesApiServices.set;
     try {
       setDialogContent('Subiendo archivos');
       const files = await filesService.getAllFiles();
@@ -655,8 +658,6 @@ const SyncDispositivo = () => {
           const successfulUploads = uploadResults.filter(
             result => result.status === 'fulfilled' && result.value === true,
           ).length;
-
-          
 
           return true; // Indicar que todos los archivos de este grupo se subieron correctamente
         }),
