@@ -25,6 +25,7 @@ const _InputSelect = <T,>({
       width: '100%',
       height: 50,
       fontSize: 15,
+      color: '#000',
     },
   });
   return (

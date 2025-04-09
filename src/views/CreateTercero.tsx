@@ -25,6 +25,7 @@ import {
   UploadArchives,
   RutaFinder,
   ZonaFinder,
+  SearchLocation,
 } from '../components';
 /* types */
 import {ITerceros} from '../common/types';
@@ -99,6 +100,8 @@ const CreateTercero = () => {
   });
 
   const [isCodigoValid, setIsCodigoValid] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
   const [isAlreadyValidate, setIsAlreadyValidate] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -181,6 +184,22 @@ const CreateTercero = () => {
       setIsCodigoValid(true);
       setIsDisabled(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false); // Cierra el modal
+  };
+
+  const handleSaveLocation = (location: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    setTercero(prevState => ({
+      ...prevState,
+      latitude: location.latitude.toString(),
+      longitude: location.longitude.toString(),
+    }));
+    setIsModalVisible(false); // Cierra el modal
   };
 
   const calculateDV = (nit: string) => {
@@ -271,23 +290,7 @@ const CreateTercero = () => {
   };
 
   const toggleGetGeolocation = async () => {
-    try {
-      const migeo = await getUbication();
-
-      setTercero(prevState => ({
-        ...prevState,
-        latitude: migeo.latitude,
-        longitude: migeo.longitude,
-      }));
-    } catch (error: any) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'info',
-          description: `${error.message}`,
-        }),
-      );
-    }
+    setIsModalVisible(true);
   };
 
   const handleOpenFrequencyFinder = (
@@ -766,6 +769,11 @@ const CreateTercero = () => {
           />
         </View>
       </ScrollView>
+      <SearchLocation
+        visible={isModalVisible}
+        onClose={handleCloseModal}
+        onSave={handleSaveLocation}
+      />
       <FrecuenciaFinder
         toggleFrecuencia={frecuencia => handleSelectFrecuencia(frecuencia.zona)}
       />
