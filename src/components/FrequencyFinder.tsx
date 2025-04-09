@@ -70,22 +70,27 @@ export const FrecuenciaFinder = React.memo(
     const debouncedFilterFrecuencias = useCallback(
       debounce((text: string) => {
         filterFrecuencias(text);
-      }, 2000),
+      }, 500),
       [],
     );
 
     const filterFrecuencias = async (text: string) => {
       if (text.length === 0) {
-        setFilteredFrecuencias(tempFrecuencias);
+        setFilteredFrecuencias(tempFrecuencias); // Cargar todas las frecuencias si el input está vacío
         return;
       }
-
-      const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
-
+    
+      // Determinar el atributo de búsqueda: 'zona' si es un número, 'nombre' si es texto
+      const attribute = /^\d+$/.test(text) ? 'zona' : 'nombre';
+      console.log('Filtrando por:', attribute, 'con texto:', text);
+    
       try {
-        const filtered = frecuencias.filter(frecuencia =>
-          frecuencia[attribute].toLowerCase().includes(text.toLowerCase()),
-        );
+        const filtered = tempFrecuencias.filter(frecuencia => {
+          const value = frecuencia[attribute]?.toLowerCase() || ''; // Asegúrate de que el valor no sea undefined
+          return value.includes(text.toLowerCase());
+        });
+        console.log('Resultados filtrados:', filtered);
+    
         setFilteredFrecuencias(filtered);
       } catch (error) {
         console.error('Error al filtrar frecuencias:', error);
@@ -97,12 +102,12 @@ export const FrecuenciaFinder = React.memo(
       setIsFirstLoad(true);
       try {
         const frecuencias = await frecuenciaService.getAllFrecuencias();
-        console.log('Frecuencias:', frecuencias);
+        console.log('Frecuencias:', frecuencias); // Verifica los datos cargados
         setFrecuencias(frecuencias);
         setTempFrecuencias(frecuencias);
         setFilteredFrecuencias(frecuencias);
       } catch (error) {
-        console.log('Error al cargar las frecuencias', error);
+        console.error('Error al cargar las frecuencias:', error);
       } finally {
         setIsLoading(false);
         setIsFirstLoad(false);

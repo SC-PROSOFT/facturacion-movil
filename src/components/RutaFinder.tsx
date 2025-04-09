@@ -59,21 +59,23 @@ export const RutaFinder = React.memo(({toggleRuta}: RutaFinderProps) => {
 
   const filterRutas = async (text: string) => {
     if (text.length === 0) {
-      setFilteredRutas(tempRutas);
+      setFilteredRutas(tempRutas); // Cargar todas las rutas si el input está vacío
       return;
     }
+
     const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
-    console.log('Filtrando por:', attribute, 'con texto:', text); // Verifica el atributo y el texto
+    console.log('Filtrando por:', attribute, 'con texto:', text);
 
     try {
       const filtered = tempRutas.filter(ruta => {
-        return ruta[attribute]?.toLowerCase().includes(text.toLowerCase());
+        const value = ruta[attribute]?.toLowerCase() || ''; // Asegúrate de que el valor no sea undefined
+        return value.includes(text.toLowerCase());
       });
-      console.log('Resultados filtrados:', filtered); // Verifica los resultados
+      console.log('Resultados filtrados:', filtered);
 
       setFilteredRutas(filtered);
     } catch (error) {
-      console.log('error', error);
+      console.log('Error al filtrar rutas:', error);
     }
   };
 
