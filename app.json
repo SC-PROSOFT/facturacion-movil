@@ -1,4 +1,5 @@
 {
   "name": "Facturacion",
-  "displayName": "Facturacion"
+  "displayName": "Facturacion",
+  "icon": "./assets/pensador.png"
 }
