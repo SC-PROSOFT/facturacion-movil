@@ -12,7 +12,12 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation} from '@react-navigation/native';
 
 /* utils */
-import {formatToMoney, getPermissions, getUbication} from '../utils';
+import {
+  formatToMoney,
+  getPermissions,
+  getUbication,
+  sumarCartera,
+} from '../utils';
 /* types */
 import {IOperation, IEncuesta, IFiles, IVisita} from '../common/types';
 /* components */
@@ -23,6 +28,7 @@ import {
   filesService,
   tercerosService,
   visitaService,
+  carteraService,
 } from '../data_queries/local_database/services';
 import {
   setObjOperator,
@@ -33,6 +39,7 @@ import {
   setObjVisita,
   setFile,
   setObjTercero,
+  setIntCartera,
 } from '../redux/slices';
 import {showAlert} from '../utils/showAlert';
 import {useFocusEffect} from '@react-navigation/native';
@@ -44,6 +51,7 @@ const Tercero = () => {
   const arrPedido = useAppSelector(store => store.tercerosFinder.arrPedido);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const objVisita = useAppSelector(store => store.visitas.objVisita);
+  const [cartera, setCartera] = useState<any>(null);
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [isNotLocation, setIsNotLocation] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -93,6 +101,7 @@ const Tercero = () => {
     React.useCallback(() => {
       toggleLocation();
       toggleFilesObj();
+      loadCartera();
     }, []),
   );
   useEffect(() => {
@@ -119,7 +128,35 @@ const Tercero = () => {
       .flatMap(doc => doc.articulosAdded)
       .reduce((total, articulo) => total + articulo.valorTotal, 0);
   };
-
+  const loadCartera = async () => {
+    try {
+      const cartera = await carteraService.getCarteraByAttribute(
+        'nit',
+        objTercero.codigo,
+      );
+      console.log("Cartera,", cartera)
+      const carteraSumada = sumarCartera(cartera);
+      dispatch(setIntCartera(carteraSumada));
+      const carteraSeteada = formatToMoney(carteraSumada);
+      setCartera(carteraSeteada || 0);
+      //🟦
+    } catch (error: any) {
+      console.log('Error al cargar la cartera', error);
+      if (error === 'no hay cartera pendiente') {
+        const carteraSeteada = formatToMoney(0);
+        setCartera(carteraSeteada);
+        return;
+      } else {
+        dispatch(
+          setObjInfoAlert({
+            visible: true,
+            type: 'error',
+            description: error,
+          }),
+        );
+      }
+    }
+  };
   const toggleMovimiento = (operation: IOperation) => {
     dispatch(setArrProductAdded(operation.articulosAdded));
     dispatch(setObjOperator(operation.operador));
@@ -264,7 +301,7 @@ const Tercero = () => {
         <Text style={styles.totalCount}>
           {formatToMoney(sumarTotalFacturaPedidos())}
         </Text>
-        <Text style={styles.saldo}>-----------------------</Text>
+        <Text style={styles.saldo}>Saldo: {cartera}</Text>
       </View>
 
       <View style={styles.movientosContainer}>
@@ -361,7 +398,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   saldo: {
-    fontSize: 17,
+    fontSize: 16,
     color: '#FFF',
     marginTop: 10,
   },
