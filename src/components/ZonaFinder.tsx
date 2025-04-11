@@ -58,21 +58,22 @@ export const ZonaFinder = React.memo(({toggleZona}: ZonaFinderProps) => {
 
   const filterZonas = async (text: string) => {
     if (text.length === 0) {
-      setFilteredZonas(tempZonas); // Cargar todas las zonas si el input está vacío
+      console.log('Texto vacío, cargando todas las zonas.');
+      setFilteredZonas(zonas); // Cargar todas las zonas si el input está vacío
       return;
     }
-
+  
     const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
     console.log('Filtrando por:', attribute, 'con texto:', text);
-
+  
     try {
       const filtered = zonas.filter(zona => {
-        const value = zona[attribute]?.toLowerCase() || ''; // Asegúrate de que el valor no sea undefined
+        // Asegúrate de que la clave existe y no es undefined
+        const value = zona[attribute] ? zona[attribute].toString().toLowerCase() : '';
         return value.includes(text.toLowerCase());
       });
       console.log('Resultados filtrados:', filtered);
-
-      setFilteredZonas(filtered);
+      setFilteredZonas(filtered); // Actualizar las zonas filtradas
     } catch (error) {
       console.error('Error al filtrar zonas:', error);
     }
