@@ -9,7 +9,8 @@ class FilesRepository implements IRepository<IFiles> {
         codigo TEXT PRIMARY KEY,
         nombre TEXT NOT NULL,
         tipo TEXT NOT NULL,
-        files TEXT
+        files TEXT,
+        sincronizado TEXT DEFAULT 'N'
       );`;
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
@@ -74,7 +75,7 @@ class FilesRepository implements IRepository<IFiles> {
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
         tx.executeSql(
-          `INSERT INTO files (codigo, nombre, tipo, files) VALUES (?, ?, ?, ?);`,
+          `INSERT INTO files (codigo, nombre, tipo, files, sincronizado) VALUES (?, ?, ?, ?, ?);`,
           [file.codigo, file.nombre, file.tipo, JSON.stringify(file.files)],
           (_: ResultSet, response: ResultSet) => {
             resolve(true);
@@ -91,7 +92,7 @@ class FilesRepository implements IRepository<IFiles> {
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
         tx.executeSql(
-          `UPDATE files SET nombre = ?, tipo = ?, files = ? WHERE codigo = ?;`,
+          `UPDATE files SET nombre = ?, tipo = ?, files = ?, sincronizado ? WHERE codigo = ?;`,
           [item.nombre, item.tipo, JSON.stringify(item.files), id],
           (_: ResultSet, response: ResultSet) => {
             resolve(true);
@@ -108,40 +109,67 @@ class FilesRepository implements IRepository<IFiles> {
     codigo: string,
     updatedFiles: DocumentPickerResponse[],
   ): Promise<boolean> {
+    console.log('codigo:', codigo);
+    console.log('updatedFiles:', updatedFiles);
+
     try {
       const existingFiles: IFiles = await this.getById(codigo);
-      if (existingFiles) {
-        const filesArray: DocumentPickerResponse[] =
-          typeof existingFiles.files === 'string'
-            ? JSON.parse(existingFiles.files)
-            : [];
-        const filesMap = new Map(filesArray.map(file => [file.uri, file]));
-        updatedFiles.forEach(updatedFile => {
-          filesMap.set(updatedFile.uri, updatedFile);
-        });
-        const updatedFilesArray = Array.from(filesMap.values());
 
-        return new Promise((resolve, reject) => {
-          db.transaction((tx: any) => {
-            tx.executeSql(
-              `UPDATE files SET files = ? WHERE codigo = ?;`,
-              [JSON.stringify(updatedFilesArray), codigo],
-              (_: ResultSet, response: ResultSet) => {
-                resolve(true);
-              },
-              (error: ResultSet) => {
-                console.error('Error al actualizar archivo:', error);
-                reject(new Error('Fallo actualizar archivo'));
-              },
-            );
-          });
-        });
-      } else {
+      if (!existingFiles) {
         throw new Error('Archivo no encontrado');
       }
+
+      // Parsear los archivos existentes
+      let filesArray: DocumentPickerResponse[] = [];
+      if (typeof existingFiles.files === 'string') {
+        try {
+          filesArray = JSON.parse(existingFiles.files);
+        } catch (error) {
+          console.error('Error al parsear archivos existentes:', error);
+          throw new Error('Archivos existentes corruptos');
+        }
+      }
+
+      // Crear un objeto utilizando el nombre del archivo como clave
+      const filesMap: {[key: string]: DocumentPickerResponse} = {};
+      filesArray.forEach(file => {
+        if (file.name) {
+          filesMap[file.name] = file; // Solo agregar si file.name es válido
+        }
+      });
+
+      // Reemplazar o agregar archivos nuevos
+      updatedFiles.forEach(updatedFile => {
+        if (updatedFile.name) {
+          filesMap[updatedFile.name] = updatedFile; // Solo agregar si updatedFile.name es válido
+        }
+      });
+
+      // Convertir el objeto de vuelta a un array
+      const updatedFilesArray = Object.values(filesMap);
+
+      // Convertir a JSON una vez
+      const updatedFilesJson = JSON.stringify(updatedFilesArray);
+
+      // Actualizar la base de datos con los archivos combinados
+      return new Promise((resolve, reject) => {
+        db.transaction((tx: any) => {
+          tx.executeSql(
+            `UPDATE files SET files = ?, sincronizado = 'N' WHERE codigo = ?;`,
+            [updatedFilesJson, codigo],
+            (_: ResultSet, response: ResultSet) => {
+              resolve(true);
+            },
+            (error: ResultSet) => {
+              console.error('Error al actualizar archivo:', error);
+              reject(new Error('Fallo actualizar archivo'));
+            },
+          );
+        });
+      });
     } catch (error) {
-      console.error('Error al obtener archivo:', error);
-      throw new Error('Fallo obtener archivo');
+      console.error('Error en updateFiles:', error);
+      throw error;
     }
   }
 
@@ -203,6 +231,24 @@ class FilesRepository implements IRepository<IFiles> {
           (error: ResultSet) => {
             console.error('Error al eliminar tabla files:', error);
             reject(new Error('Fallo eliminar tabla files'));
+          },
+        );
+      });
+    });
+  }
+
+  async updateSincronizado(codigo: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `UPDATE files SET sincronizado = 'S' WHERE codigo = ?;`,
+          [codigo],
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            console.error('Error al actualizar sincronizado:', error);
+            reject(new Error('Fallo actualizar sincronizado'));
           },
         );
       });

@@ -41,6 +41,9 @@ class FilesService {
   async deleteTableFiles(): Promise<boolean> {
     return this.filesRepository.deleteTable();
   }
+  async updateSincronizado(codigo: string): Promise<boolean> {
+    return this.filesRepository.updateSincronizado(codigo);
+  }
 }
 
 const filesService = new FilesService();

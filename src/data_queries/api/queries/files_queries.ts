@@ -1,7 +1,7 @@
 import {createAxiosInstance} from '../axiosInstance';
 import {useAppSelector} from '../../../redux/hooks';
 import {ISurvey, ITerceros} from '../../../common/types';
-import {calcularDigitoVerificacion} from '../../../utils';
+import {calcularDigitoVerificacion, padLeftCodigo} from '../../../utils';
 import {DocumentPickerResponse} from 'react-native-document-picker';
 
 class FilesApiServices {
@@ -38,9 +38,12 @@ class FilesApiServices {
       });
 
       // Aseguramos que la ruta esté bien construida
-      const ruta = `D:\\WEB\\ANEXOS\\${terceroModificado.tipo}-${terceroModificado.codigo}`;
+      const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${
+        terceroModificado.tipo
+      }-${padLeftCodigo(terceroModificado.codigo)}`;
       console.log('ruta =>>>>', ruta);
-
+      console.log('formData =>>>>', formData);
+      console.log('Intenta subir el archivo...');
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/guardar-archivo?ruta=${ruta}`, // Encode para evitar problemas con los backslashes
         formData, // FormData debe ir como cuerpo directamente
@@ -50,11 +53,14 @@ class FilesApiServices {
           },
         },
       );
-
-      console.log('Respuesta del servidor:', response.data);
-      return true;
+      console.log(response);  
+      if (response.data.success) {
+        return true;
+      } else {
+        console.log('error =>>>>', response.data);
+        return false;
+      }
     } catch (error) {
-      console.error('Error al subir el archivo:', error);
       return false;
     }
   };
