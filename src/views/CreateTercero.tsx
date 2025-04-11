@@ -30,7 +30,11 @@ import {
 /* types */
 import {ITerceros} from '../common/types';
 /* utils */
-import {getUbication, calcularDigitoVerificacion} from '../utils';
+import {
+  getUbication,
+  calcularDigitoVerificacion,
+  padLeftCodigo,
+} from '../utils';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {generateVisits} from '../utils';
@@ -240,18 +244,18 @@ const CreateTercero = () => {
           : 'CC';
 
       // Construir la ruta base
-      const basePath = `D:\\WEB\\ANEXOS\\${type}-${tercero.codigo}`;
+      const basePath = `D:\\psc\\prog\\DATOS\\ANEXOS\\${type}-${padLeftCodigo(
+        tercero.codigo,
+      )}`;
 
       // Asignar las rutas de los archivos al tercero
       console.log(objOperador.cod_vendedor);
       const updatedTercero = {
         ...tercero,
         vendedor: objOperador.cod_vendedor,
-        rut_path: rutFile ? `${basePath}\\${rutFile.name}` : '',
-        camaracomercio_path: camaraComercioFile
-          ? `${basePath}\\${camaraComercioFile.name}`
-          : '',
-        cc_path: cedulaFile ? `${basePath}\\${cedulaFile.name}` : '',
+        rut_path: rutFile ? `S` : 'N',
+        camaracomercio_path: camaraComercioFile ? `S` : 'N',
+        cc_path: cedulaFile ? `S` : 'N',
       };
       const response = await tercerosService.createTercero(updatedTercero);
       if (response) {
@@ -340,7 +344,8 @@ const CreateTercero = () => {
       suffix: string,
     ) => {
       if (file) {
-        file.name = `${type}-${tercero.codigo}${suffix}.${file?.name
+        let codigoPad = padLeftCodigo(tercero.codigo);
+        file.name = `${type}-${codigoPad}${suffix}.${file?.name
           ?.split('.')
           .pop()}`;
         arrayFiles.push(file);
@@ -348,7 +353,7 @@ const CreateTercero = () => {
     };
 
     addFileToArray(rutFile, 'RUT');
-    addFileToArray(camaraComercioFile, 'CAMCOMERCIO');
+    addFileToArray(camaraComercioFile, 'CAMCOM');
     addFileToArray(cedulaFile, 'DI');
 
     try {

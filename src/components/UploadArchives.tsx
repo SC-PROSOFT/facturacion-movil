@@ -15,7 +15,7 @@ import {CoolButton} from '../components';
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
 import {setIsShowUploadArchives} from '../redux/slices/uploadArchivesSlice';
 import {setObjInfoAlert} from '../redux/slices/infoAlertSlice';
-import {calcularDigitoVerificacion} from '../utils';
+import {calcularDigitoVerificacion, padLeftCodigo} from '../utils';
 import {ITerceros} from '../common/types';
 
 interface UploadArchivesProps {
@@ -108,7 +108,7 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
               ? 'NIT'
               : 'CC';
           selectedFile.name = `${fileType}-${
-            tercero.codigo
+            padLeftCodigo(tercero.codigo)
           }${type}.${selectedFile.name?.split('.').pop()}`;
           setFile(selectedFile);
         }
@@ -231,7 +231,7 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
                 <TouchableOpacity
                   style={styles.btnSelect}
                   onPress={() =>
-                    selectFile(setCamaraComercioFile, 'CAMCOMERCIO')
+                    selectFile(setCamaraComercioFile, 'CAMCOM')
                   }>
                   <Text style={styles.textSelect}>Cámara de Comercio</Text>
                 </TouchableOpacity>

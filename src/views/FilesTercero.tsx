@@ -11,7 +11,7 @@ import DocumentPicker, {
   DocumentPickerResponse,
 } from 'react-native-document-picker';
 import {InfoAlert} from '../components';
-import {calcularDigitoVerificacion} from '../utils';
+import {calcularDigitoVerificacion, padLeftCodigo} from '../utils';
 import {ITerceros} from '../common/types';
 /* components */
 import {CoolButton} from '../components';
@@ -55,14 +55,14 @@ const FilesTercero = () => {
     // }
     // console.log(files);
     const files = await filesService.getFilesByCode(objTercero.codigo);
-
+    setCopyFile(files);
     if (files) {
       try {
         const parsedFiles = JSON.parse(files.files);
         parsedFiles.forEach((file: DocumentPickerResponse) => {
           if (file.name?.includes('RUT')) {
             setRutFile(file);
-          } else if (file.name?.includes('CAMCOMERCIO')) {
+          } else if (file.name?.includes('CAMCOM')) {
             setCamaraComercioFile(file);
           } else if (file.name?.includes('DI')) {
             setCedulaFile(file);
@@ -70,7 +70,6 @@ const FilesTercero = () => {
         });
         if (JSON.stringify(files) !== JSON.stringify(file)) {
           setFileState(files);
-          setCopyFile(files);
         }
       } catch (error) {
         setIsLoading(false);
@@ -87,7 +86,6 @@ const FilesTercero = () => {
   };
 
   useEffect(() => {
-    console.log(objTercero);
     getFiles();
   }, [objTercero.codigo]);
 
@@ -112,6 +110,7 @@ const FilesTercero = () => {
           );
           return;
         }
+
         assignFile(type, selectedFile);
       }
     } catch (err) {
@@ -164,24 +163,28 @@ const FilesTercero = () => {
       file: DocumentPickerResponse | null,
       suffix: string,
     ) => {
+      console.log('file añadida', file);
+
       if (file) {
-        file.name = `${type}-${objTercero.codigo}${suffix}.${file?.name
-          ?.split('.')
-          .pop()}`;
+        file.name = `${type}-${padLeftCodigo(
+          objTercero.codigo,
+        )}${suffix}.${file?.name?.split('.').pop()}`;
         arrayFiles.push(file);
       }
     };
 
     addFileToArray(rutFile, 'RUT');
-    addFileToArray(camaraComercioFile, 'CAMCOMERCIO');
+    addFileToArray(camaraComercioFile, 'CAMCOM');
     addFileToArray(cedulaFile, 'DI');
 
     try {
-      console.log('files', arrayFiles);
+      console.log(files.files);
       let response;
-      if (files.files?.length ?? 0 > 0) {
+
+      if (copyFile?.files?.length ?? 0 > 0) {
         console.log('update');
-        response = await filesService.updateFile(files.codigo, arrayFiles);
+        response = await filesService.updateFile(copyFile?.codigo, arrayFiles);
+        console.log(response);
       } else {
         const iFile: IFiles = {
           codigo: objTercero.codigo,
@@ -194,9 +197,6 @@ const FilesTercero = () => {
       }
 
       if (response) {
-        // Actualizar los paths en el tercero
-
-        console.log(response);
         const terceroModificado = {...objTercero};
         terceroModificado.tipo =
           /^\d{9,10}$/.test(objTercero.codigo) &&
@@ -206,10 +206,12 @@ const FilesTercero = () => {
             ).toString()
             ? 'NIT'
             : 'CC';
-        const ruta = `D:\\WEB\\ANEXOS\\${terceroModificado.tipo}-${terceroModificado.codigo}`;
-        terceroModificado.rut_path = `${ruta}\\${rutFile?.name}`;
-        terceroModificado.camaracomercio_path = `${ruta}\\${camaraComercioFile?.name}`;
-        terceroModificado.cc_path = `${ruta}\\${cedulaFile?.name}`;
+        const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${
+          terceroModificado.tipo
+        }-${padLeftCodigo(terceroModificado.codigo)}`;
+        terceroModificado.rut_path = rutFile ? 'S' : 'N';
+        terceroModificado.camaracomercio_path = camaraComercioFile ? 'S' : 'N';
+        terceroModificado.cc_path = cedulaFile ? 'S' : 'N';
         await tercerosService.updateTercero(terceroModificado);
         dispatch(
           setObjInfoAlert({
