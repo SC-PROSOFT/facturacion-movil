@@ -36,12 +36,12 @@ export function api_saveConfig(
         directorio: configData.directorio,
         ip_datos: configData.ip_datos,
       };
-
+      console.log('requestBody =>>>>', requestBody);
       const response: any = await axiosInstance.post(
         `/v1/contabilidad/dll?ip=${direccionIp}&directorio=comercial/inc/app/index-config.dll`,
         requestBody,
       );
-
+      console.log('response =>>>>', response);
       resolve(response.data);
     } catch (error: any) {
       reject(new Error('Fallo guardado config en api'));
@@ -72,7 +72,7 @@ class ConfigQueriesService {
         directorio: config.directorioContabilidad,
         ip_datos: config.datosIp,
       };
-
+      console.log('requestBody =>>>>', requestBody);
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/index-config.dll`,
         requestBody,

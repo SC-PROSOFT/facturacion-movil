@@ -419,6 +419,13 @@ const Config: React.FC = () => {
       }),
     );
   };
+
+  const cleanDirectorioContabilidad = (directorio: string): string => {
+    if (directorio.endsWith(' ')) {
+      return directorio.trimEnd();
+    }
+    return directorio;
+  };
   const toggleSaveConfig = async () => {
     setIsLoadingSave(true);
     try {
@@ -467,7 +474,9 @@ const Config: React.FC = () => {
 
         descargasIp: objConfig.descargasIp,
         datosIp: objConfig.datosIp,
-        directorioContabilidad: objConfig.directorioContabilidad,
+        directorioContabilidad: cleanDirectorioContabilidad(
+          objConfig.directorioContabilidad,
+        ),
 
         empresa: objConfig.empresa,
         nit: objConfig.nit,

@@ -601,12 +601,16 @@ const SyncDispositivo = () => {
       objConfig.direccionIp,
       objConfig.puerto,
     );
-    FilesApiServices.set;
     try {
       setDialogContent('Subiendo archivos');
       const files = await filesService.getAllFiles();
 
-      if (files.length === 0) {
+      // Filtrar solo los archivos con sincronizado = 'N'
+      const filesToSync = files.filter(
+        file => file.sincronizado === 'N' || !file.sincronizado,
+      );
+
+      if (filesToSync.length === 0) {
         dispatch(
           setObjInfoAlert({
             visible: true,
@@ -617,8 +621,9 @@ const SyncDispositivo = () => {
         setLoading(false);
         return;
       }
+
       const results = await Promise.allSettled(
-        files.map(async file => {
+        filesToSync.map(async file => {
           const parsedFiles =
             typeof file.files === 'string'
               ? JSON.parse(file.files)
@@ -650,14 +655,20 @@ const SyncDispositivo = () => {
                 singleFile,
                 tercero,
               );
+
               return response;
             }),
           );
-
+          console.log('Entro aqui');
+          await filesService.updateSincronizado(tercero.codigo);
           // Verificar si todos los archivos individuales se subieron correctamente
           const successfulUploads = uploadResults.filter(
             result => result.status === 'fulfilled' && result.value === true,
           ).length;
+
+          if (successfulUploads === safeParsedFiles.length) {
+            // Cambiar sincronizado a 1 si todos los archivos se subieron correctamente
+          }
 
           return true; // Indicar que todos los archivos de este grupo se subieron correctamente
         }),

@@ -7,7 +7,7 @@ import {
   IEncuesta,
 } from '../../../common/types';
 import {createAxiosInstance} from '../axiosInstance';
-import {calcularDigitoVerificacion} from '../../../utils';
+import {calcularDigitoVerificacion, padLeftCodigo} from '../../../utils';
 import {DocumentPickerResponse} from 'react-native-document-picker';
 class SyncQueries {
   private axiosInstance;
@@ -270,8 +270,6 @@ class SyncQueries {
           ? 'NIT'
           : 'CC';
 
-      console.log('file =>>>>', file);
-      console.log('tercero =>>>>', terceroModificado.tipo);
 
       const formData = new FormData();
       formData.append('archivo', {
@@ -281,7 +279,7 @@ class SyncQueries {
       });
 
       // Aseguramos que la ruta esté bien construida
-      const ruta = `D:\\WEB\\ANEXOS\\${terceroModificado.tipo}-${terceroModificado.codigo}`;
+      const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${terceroModificado.tipo}-${padLeftCodigo(terceroModificado.codigo)}`;
       console.log('ruta =>>>>', ruta);
 
       const response = await this.axiosInstance.post(

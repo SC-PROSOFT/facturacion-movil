@@ -58,8 +58,7 @@ export const ZonaFinder = React.memo(({toggleZona}: ZonaFinderProps) => {
 
   const filterZonas = async (text: string) => {
     if (text.length === 0) {
-      console.log('Texto vacío, cargando todas las zonas.');
-      setFilteredZonas(zonas); // Cargar todas las zonas si el input está vacío
+      setFilteredZonas(tempZonas); // Cargar todas las zonas si el input está vacío
       return;
     }
   
