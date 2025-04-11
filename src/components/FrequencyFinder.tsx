@@ -86,9 +86,8 @@ export const FrecuenciaFinder = React.memo(
 
       try {
         const filtered = tempFrecuencias.filter(frecuencia => {
-          // Asegúrate de que la clave existe y no es undefined
           const value =
-            frecuencia[attribute]?.toString().trim().toLowerCase() || ''; // Eliminar espacios y convertir a minúsculas
+            frecuencia[attribute]?.toString().trim().toLowerCase() || ''; 
           const searchText = text.trim().toLowerCase(); // Eliminar espacios y convertir a minúsculas
           return value.includes(searchText); // Comparar en minúsculas
         });

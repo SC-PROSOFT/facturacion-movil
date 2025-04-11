@@ -66,7 +66,7 @@ export const TercerosFinder = React.memo(
     const debouncedFilterTerceros = useCallback(
       debounce((text: string) => {
         filterTerceros(text);
-      }, 2000),
+      }, 500),
       [],
     );
 
@@ -116,13 +116,12 @@ export const TercerosFinder = React.memo(
           1, // Reset page to 1
           pageSize,
         );
-        
 
         if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
           const filteredTerceros = allTerceros.filter(
             tercero => tercero.vendedor === cod_vendedor,
           );
-          console.log('Filtered Terceros:', filteredTerceros);  
+          console.log('Filtered Terceros:', filteredTerceros);
           setTempTerceros(filteredTerceros);
           setTerceros(filteredTerceros);
           setFilteredTerceros(filteredTerceros);
