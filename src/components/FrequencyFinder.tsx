@@ -76,21 +76,24 @@ export const FrecuenciaFinder = React.memo(
 
     const filterFrecuencias = async (text: string) => {
       if (text.length === 0) {
+        console.log('Texto vacío, cargando todas las frecuencias.');
         setFilteredFrecuencias(tempFrecuencias); // Cargar todas las frecuencias si el input está vacío
         return;
       }
-    
-      // Determinar el atributo de búsqueda: 'zona' si es un número, 'nombre' si es texto
-      const attribute = /^\d+$/.test(text) ? 'zona' : 'nombre';
+
+      const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
       console.log('Filtrando por:', attribute, 'con texto:', text);
-    
+
       try {
         const filtered = tempFrecuencias.filter(frecuencia => {
-          const value = frecuencia[attribute]?.toLowerCase() || ''; // Asegúrate de que el valor no sea undefined
-          return value.includes(text.toLowerCase());
+          // Asegúrate de que la clave existe y no es undefined
+          const value =
+            frecuencia[attribute]?.toString().trim().toLowerCase() || ''; // Eliminar espacios y convertir a minúsculas
+          const searchText = text.trim().toLowerCase(); // Eliminar espacios y convertir a minúsculas
+          return value.includes(searchText); // Comparar en minúsculas
         });
         console.log('Resultados filtrados:', filtered);
-    
+
         setFilteredFrecuencias(filtered);
       } catch (error) {
         console.error('Error al filtrar frecuencias:', error);
