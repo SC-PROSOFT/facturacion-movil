@@ -6,6 +6,7 @@ class VisitasRepository implements IRepository<IVisita> {
   async createTable(): Promise<boolean> {
     const sqlCreateStatement = `
       CREATE TABLE IF NOT EXISTS visitas (
+        id_visita INTEGER PRIMARY KEY AUTOINCREMENT,
         id TEXT ,
         client TEXT,
         adress TEXT,
@@ -106,6 +107,7 @@ class VisitasRepository implements IRepository<IVisita> {
             for (let i = 0; i < response.rows.length; i++) {
               const item = response.rows.item(i);
               visitas.push({
+                id_visita: item.id_visita,
                 id_tercero: item.id,
                 client: item.client,
                 adress: item.adress,
@@ -147,6 +149,7 @@ class VisitasRepository implements IRepository<IVisita> {
           (_: ResultSet, response: ResultSet) => {
             const item = response.rows.item(0);
             const visita: IVisita = {
+              id_visita: item.id_visita,
               id_tercero: item.id,
               client: item.client,
               adress: item.adress,
@@ -178,20 +181,33 @@ class VisitasRepository implements IRepository<IVisita> {
 
   async update(id: string, data: IVisita): Promise<boolean> {
     const sqlUpdateStatement = `
-      UPDATE visitas 
-      SET client = ?, adress = ?, status = ?, observation = ?, saleValue = ?, appointmentDate = ?,
-          latitude = ?, longitude = ?, zona = ?, frecuencia = ?, ruta = ?, frecuencia_2 = ?, frecuencia_3 = ?, vendedor = ?
-      WHERE id = ?;
+    UPDATE visitas
+    SET 
+      status = ?, 
+      observation = ?, 
+      client = ?, 
+      adress = ?, 
+      saleValue = ?, 
+      appointmentDate = ?, 
+      latitude = ?, 
+      longitude = ?, 
+      zona = ?, 
+      frecuencia = ?, 
+      ruta = ?, 
+      frecuencia_2 = ?, 
+      frecuencia_3 = ?, 
+      vendedor = ?
+    WHERE id_visita = ?;
     `;
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
         tx.executeSql(
           sqlUpdateStatement,
           [
-            data.client,
-            data.adress,
             data.status,
             data.observation,
+            data.client,
+            data.adress,
             data.saleValue,
             data.appointmentDate,
             data.location.latitude,
@@ -215,8 +231,6 @@ class VisitasRepository implements IRepository<IVisita> {
       });
     });
   }
-
-
 
   async deleteTable(): Promise<boolean> {
     const sqlDeleteStatement = `DROP TABLE IF EXISTS visitas;`;

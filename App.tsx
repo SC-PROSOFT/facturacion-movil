@@ -1,9 +1,9 @@
-import React, {useRef} from 'react';
+import React, {useRef, useEffect} from 'react';
 import {Provider as StoreProvider} from 'react-redux';
 import {StatusBar, View} from 'react-native';
-import {MD3LightTheme as DefaultTheme, PaperProvider,} from 'react-native-paper';
+import {MD3LightTheme as DefaultTheme, PaperProvider} from 'react-native-paper';
 import Toast, {BaseToast, ErrorToast} from 'react-native-toast-message';
-
+import {visitaService} from './src/data_queries/local_database/services';
 /* store */
 import {store} from './src/redux/store';
 /* components */
@@ -14,6 +14,7 @@ import Navigation from './src/navigation/Navigation';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 /* context provider */
 import GlobalProvider from './src/context/global_provider';
+import {recalculateVisitsIfNeeded} from './src/utils';
 
 /* toast config */
 const toastConfig = {
@@ -125,7 +126,22 @@ const theme = {
   },
 };
 
+const recalculateVisitas = async () => {
+  try {
+    const result = await recalculateVisitsIfNeeded();
+    if (result) {
+      await visitaService.fillVisitas(result);
+    }
+  } catch (error) {
+    console.error('Error al recálcular visitas:', error);
+  }
+};
+
 const App = () => {
+  useEffect(() => {
+    recalculateVisitas();
+  }, []);
+
   return (
     <StoreProvider store={store}>
       <PaperProvider theme={theme}>

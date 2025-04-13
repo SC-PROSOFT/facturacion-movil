@@ -31,8 +31,8 @@ class VisitasService {
     return this.visitaRepository.get();
   }
 
-  async updateVisita(visita: IVisita, id: string): Promise<boolean> {
-    return this.visitaRepository.update(id, visita);
+  async updateVisita(visita: IVisita, id: number): Promise<boolean> {
+    return this.visitaRepository.update(id.toString(), visita);
   }
 
   async deleteTableVisitas(): Promise<boolean> {

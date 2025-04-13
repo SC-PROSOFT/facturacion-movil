@@ -62,32 +62,23 @@ export const TercerosModal: React.FC<IModalProps> = ({
     adjustScreenSize();
   }, []);
 
-const handleSubmit = async () => {
-  const today = new Date().toISOString().split('T')[0]; // Obtener la fecha de hoy en formato YYYY-MM-DD
-
-  // Verificar si la visita coincide con la fecha de hoy
-  if (objVisita.appointmentDate !== today) {
-    return;
-  }
-
-  // Crear el objeto modificado para la visita de hoy
-  const modifiedVisita: IVisita = {
-    ...objVisita,
-    status: '3', // Cambiar el estado a "visitado"
-    observation: observacion, // Agregar la observación
+  const handleSubmit = async () => {
+    const modifiedVisita: IVisita = {
+   
+      ...objVisita,
+      status: '1', // Cambiar el estado a "visitado"
+      observation: observacion, // Agregar la observación
+    };
+    try {
+     console.log('objVisita', objVisita);
+      // Actualizar la visita
+      await visitaService.updateVisita(modifiedVisita, objVisita.id_visita);
+      onSubmit({observacion, status: true});
+      onClose();
+    } catch (error) {
+      console.error('Error al actualizar la visita:', error);
+    }
   };
-
-  try {
-    // Actualizar la visita
-    await visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
-
-    console.log('Visita actualizada correctamente:', modifiedVisita);
-    onSubmit({ observacion, status: true });
-    onClose();
-  } catch (error) {
-    console.error('Error al actualizar la visita:', error);
-  }
-};
 
   const modalHeight = isKeyboardVisible
     ? Dimensions.get('window').height * 0.35 // Altura cuando el teclado está visible

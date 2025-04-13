@@ -125,8 +125,7 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
       status: '1' as '1',
       observation: observacion,
     };
-    visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
-    console.log('modifiedVisita', modifiedVisita);
+    visitaService.updateVisita(modifiedVisita, objVisita.id_visita);
     onSubmit({observacion, status: true});
     onClose();
   };

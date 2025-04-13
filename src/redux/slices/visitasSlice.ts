@@ -9,6 +9,7 @@ interface VisitasState {
 const initialState: VisitasState = {
   arrVisita: [],
   objVisita: {
+    id_visita: 0,
     client: '',
     adress: '',
     status: '2',

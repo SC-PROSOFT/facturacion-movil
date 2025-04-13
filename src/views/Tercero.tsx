@@ -193,7 +193,7 @@ const Tercero = () => {
       location: locationString, // Guardar la ubicación como un objeto con strings
     };
 
-    await visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
+    await visitaService.updateVisita(modifiedVisita, objVisita.id_visita);
 
     console.log('Ubicación convertida a strings:', locationString);
   };

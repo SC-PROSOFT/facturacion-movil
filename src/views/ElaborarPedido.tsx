@@ -1008,15 +1008,6 @@ const ElaborarPedido: React.FC = () => {
       (acumulator, articulo) => acumulator + articulo.valorTotal,
       0,
     );
-    // Verificar si la visita coincide con la fecha de hoy
-    if (objVisita.appointmentDate !== today) {
-      console.error('No se encontró una visita para la fecha de hoy.');
-      return;
-    }
-
-    console.log(saleValue);
-
-    // Crear el objeto modificado para la visita de hoy
     const modifiedVisita: IVisita = {
       ...objVisita,
       status: '1', // Cambiar el estado a "visitado"
@@ -1026,7 +1017,7 @@ const ElaborarPedido: React.FC = () => {
 
     try {
       // Actualizar la visita
-      await visitaService.updateVisita(modifiedVisita, objVisita.id_tercero);
+      await visitaService.updateVisita(modifiedVisita, objVisita.id_visita);
     } catch (error) {
       console.error('Error al actualizar la visita:', error);
     }

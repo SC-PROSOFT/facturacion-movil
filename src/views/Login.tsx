@@ -26,6 +26,7 @@ import {createTables} from '../data_queries/local_database/local_database_config
 import {
   operadoresService,
   rememberAccountService,
+  visitaService,
 } from '../data_queries/local_database/services';
 /* hooks redux */
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
@@ -42,6 +43,7 @@ import {showAlert} from '../utils/showAlert';
 import {getPermissions} from '../utils/getPermissions';
 /* common types */
 import {IOperadores} from '../common/types';
+import { recalculateVisitsIfNeeded } from '../utils';
 /* local types */
 interface userInfo {
   user: string;
@@ -66,6 +68,16 @@ const {width} = Dimensions.get('window');
 
 // Función para calcular el tamaño de la fuente basado en el ancho del dispositivo
 const scaleFontSize = (size: number) => (width / 375) * size;
+const recalculateVisitas = async () => {
+  try {
+    const result = await recalculateVisitsIfNeeded();
+    if (result) {
+      await visitaService.fillVisitas(result);
+    }
+  } catch (error) {
+    console.error('Error al recálcular visitas:', error);
+  }
+};
 
 const Form = ({
   inputs,
