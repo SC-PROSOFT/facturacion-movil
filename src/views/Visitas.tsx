@@ -1,5 +1,6 @@
-import React, {useState, useEffect, memo} from 'react';
+import React, {useState, useEffect, memo, useMemo} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
+import {FlashList} from '@shopify/flash-list';
 import {
   View,
   StyleSheet,
@@ -9,9 +10,16 @@ import {
 } from 'react-native';
 import {Text} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
-
+import {recalculateVisitsIfNeeded} from '../utils';
+import Geolocation from '@react-native-community/geolocation';
 /* components */
-import {Visita, PrincipalHeader, Searcher, TercerosFinder} from '../components';
+import {
+  Visita,
+  PrincipalHeader,
+  Searcher,
+  TercerosFinder,
+  Loader,
+} from '../components';
 /* types */
 import {ITerceros, IVisita} from '../common/types';
 /* redux */
@@ -74,23 +82,33 @@ const Visitas: React.FC = () => {
   const [search, setSearch] = useState<string>('');
   const [visitas, setVisitas] = useState<IVisita[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [dataReady, setDataReady] = useState<boolean>(false);
   const objOperador = useAppSelector(store => store.operator.objOperator);
+  const [loadRecalcVisitas, setLoadRecalcVisitas] = useState<string>('');
 
-  // Se obtienen las fechas locales
-  const currentDate = getLocalDateString(); // Ej: "2025-03-27"
-  const tomorrow = addOneDay(currentDate); // Ej: "2025-03-28"
+  const currentDate = getLocalDateString();
+  const tomorrow = addOneDay(currentDate);
 
   useEffect(() => {
-    // Cargamos todos los datos y luego quitamos el loader.
-    Promise.all([
-      bringAlmacenes(),
-      bringCartera(),
-      loadSettings(),
-      loadEncuesta(),
-      loadVisitas(),
-    ])
-      .then(() => setLoading(false))
-      .catch(() => setLoading(false));
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        await recalculateVisitas();
+        await Promise.all([
+          bringAlmacenes(),
+          bringCartera(),
+          loadSettings(),
+          loadEncuesta(),
+          loadVisitas(),
+        ]);
+        setLoading(false);
+        setDataReady(true);
+      } catch (error) {
+        console.error('Error al cargar los datos:', error);
+      }
+    };
+
+    loadData();
   }, []);
 
   useFocusEffect(
@@ -98,6 +116,31 @@ const Visitas: React.FC = () => {
       loadVisitas();
     }, []),
   );
+  const getUserLocation = async () => {
+    try {
+      const location = await GetLocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 60000,
+      });
+      return location;
+    } catch (error) {
+      console.warn(error);
+      return null;
+    }
+  };
+  const recalculateVisitas = async () => {
+    try {
+      setLoadRecalcVisitas('Cargando visitas...');
+      const result = await recalculateVisitsIfNeeded();
+      if (result) {
+        await visitaService.fillVisitas(result);
+      }
+      setLoadRecalcVisitas('');
+    } catch (error) {
+      setLoadRecalcVisitas('');
+      console.error('Error al recálcular visitas:', error);
+    }
+  };
 
   const bringAlmacenes = async () => {
     const almacenes = await almacenesService.getAllAlmacenes();
@@ -146,9 +189,7 @@ const Visitas: React.FC = () => {
           tarifaIva3: config.tarifaIva3,
         }),
       );
-    } catch (error) {
-      // Manejo de error si es necesario
-    }
+    } catch (error) {}
   };
 
   const loadEncuesta = async () => {
@@ -233,7 +274,6 @@ const Visitas: React.FC = () => {
     });
   };
 
-  // Función que agrupa y ordena las visitas en secciones
   const getSections = () => {
     const trimmedSearch = search.trim().toLowerCase();
     const filteredVisitas = visitas.filter(
@@ -267,58 +307,71 @@ const Visitas: React.FC = () => {
     return sections;
   };
 
-  const renderSectionHeader = ({section}) => {
-    const [mainTitle, date] = section.title.split('('); // Divide "Hoy (2023-03-27)"
+  const sections = useMemo(() => getSections(), [visitas, search]);
+
+  type FlashListItem =
+    | {type: 'header'; title: string; disabled: boolean}
+    | (IVisita & {type: 'item'; disabled: boolean});
+
+  const transformedData: FlashListItem[] = sections.flatMap(section => [
+    {type: 'header', title: section.title, disabled: section.disabled},
+    ...section.data.map(item => ({
+      ...item,
+      type: 'item',
+      disabled: section.disabled,
+    })),
+  ]);
+
+  const renderItem = ({item}: {item: FlashListItem}) => {
+    if (item.type === 'header') {
+      const [mainTitle, date] = item.title.split('(');
+      return (
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{mainTitle.trim()}</Text>
+          <Text style={styles.sectionDate}>({date.trim()}</Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{mainTitle.trim()}</Text>
-        <Text style={styles.sectionDate}>({date.trim()}</Text>
-      </View>
+      <Visita
+        visita={item}
+        disabled={item.disabled}
+        toggleVisita={() => toggleVisita(item)}
+      />
     );
   };
-
-  const renderItem = ({item, section}: {item: IVisita; section: any}) => (
-    <Visita
-      visita={item}
-      disabled={section.disabled}
-      toggleVisita={() => toggleVisita(item)}
-    />
-  );
-
   return (
     <View style={{flex: 1}}>
       <PrincipalHeader>
         <Searcher search={search} setSearch={setSearch} />
       </PrincipalHeader>
       <SafeAreaView style={{flex: 1}}>
-        <SectionList
-          sections={getSections()}
-          keyExtractor={(item, index) => item.id_tercero + index.toString()}
-          renderSectionHeader={renderSectionHeader}
+        <FlashList
+          data={transformedData}
           renderItem={renderItem}
+          keyExtractor={(item, index) =>
+            item.type === 'header'
+              ? `header-${index}`
+              : `${item.id_visita}-${index}`
+          }
+          estimatedItemSize={100}
           ListFooterComponent={<View style={{height: 100}} />}
           contentContainerStyle={{paddingHorizontal: 15, paddingVertical: 5}}
-          initialNumToRender={20} // Renderiza solo 10 elementos inicialmente
-          windowSize={10}
-          maxToRenderPerBatch={10}
         />
       </SafeAreaView>
       <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
-      {loading && (
-        <View style={styles.loaderOverlay}>
-          <ActivityIndicator size="large" color="#092254" />
-        </View>
-      )}
+      <Loader visible={loading} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   sectionHeader: {
-    flexDirection: 'row', // Coloca los textos en línea
-    alignItems: 'baseline', // Alinea correctamente los textos
-    flexWrap: 'wrap', // Permite que el texto se ajuste si es necesario
-    paddingHorizontal: 10, // Añade un margen lateral para evitar que el texto toque los bordes
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexWrap: 'wrap',
+    paddingHorizontal: 10,
   },
   sectionTitle: {
     color: '#0B2863',
@@ -327,10 +380,10 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   sectionDate: {
-    fontSize: 14, // Tamaño más pequeño para la fecha
+    fontSize: 14,
     color: '#666',
-    marginLeft: 5, // Espaciado entre el título y la fecha
-    flexShrink: 1, // Evita que el texto de la fecha se desborde
+    marginLeft: 5,
+    flexShrink: 1,
   },
   loaderOverlay: {
     position: 'absolute',

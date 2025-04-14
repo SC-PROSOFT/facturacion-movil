@@ -283,7 +283,8 @@ class TercerosRepository implements IRepository<ITerceros> {
           valuesTercero,
           async (_: ResultSet, result: ResultSet) => {
             // store.dispatch(addTerceroEditado(tercero));
-            this.saveEditedTerceroToDB(tercero);
+            await this.saveOrUpdateEditedTercero(id, tercero);
+            // this.saveEditedTerceroToDB(tercero);
             resolve(true);
           },
           (error: any) => {
@@ -295,6 +296,93 @@ class TercerosRepository implements IRepository<ITerceros> {
     });
   }
 
+  async updateEditedTercero(tercero: ITerceros): Promise<boolean> {
+    const sqlUpdateTerceroStatement = `
+    UPDATE terceros_editados SET
+        nombre = ?,
+        direcc = ?,
+        tel = ?,
+        vendedor = ?,
+        plazo = ?,
+        f_pago = ?,
+        ex_iva = ?,
+        clasificacion = ?,
+        tipo = ?,
+        departamento = ?,
+        ciudad = ?,
+        barrio = ?,
+        email = ?,
+        reteica = ?,
+        frecuencia = ?,
+        frecuencia2 = ?,
+        frecuencia3 = ?,
+        zona = ?,
+        ruta = ?,
+        latitude = ?,
+        longitude = ?,
+        rut_path = ?,
+        camaracomercio_path = ?
+    WHERE codigo = ?
+    `;
+    const valuesTercero = [
+      tercero.nombre,
+      tercero.direcc,
+      tercero.tel,
+      tercero.vendedor,
+      tercero.plazo,
+      tercero.f_pago,
+      tercero.ex_iva,
+      tercero.clasificacion,
+      tercero.tipo,
+      tercero.departamento,
+      tercero.ciudad,
+      tercero.barrio,
+      tercero.email,
+      tercero.reteica,
+      tercero.frecuencia,
+      tercero.frecuencia2,
+      tercero.frecuencia3,
+      tercero.zona,
+      tercero.ruta,
+      tercero.latitude,
+      tercero.longitude,
+      tercero.rut_path,
+      tercero.camaracomercio_path,
+      tercero.codigo,
+    ];
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlUpdateTerceroStatement,
+          valuesTercero,
+          (_: ResultSet, result: ResultSet) => {
+            resolve(true);
+          },
+          (error: any) => {
+            console.log('error', error);
+            reject(new Error(`[Error al actualizar tercero]: ${error}`));
+          },
+        );
+      });
+    });
+  }
+  async saveOrUpdateEditedTercero(
+    id: string,
+    tercero: ITerceros,
+  ): Promise<boolean> {
+    try {
+      const editedTerceros = await this.getEditedTerceros();
+      const existingTercero = editedTerceros.find(t => t.codigo === id);
+
+      if (existingTercero) {
+        return await this.updateEditedTercero({...existingTercero, ...tercero});
+      } else {
+        return await this.saveEditedTerceroToDB({codigo: id, ...tercero});
+      }
+    } catch (error) {
+      throw new Error(`[Error en saveOrUpdateEditedTercero]: ${error}`);
+    }
+  }
   async getModified(): Promise<ITerceros[]> {
     const sqlSelectStatement = `
         SELECT * FROM terceros WHERE estado IN ('1', '2')

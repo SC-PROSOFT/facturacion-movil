@@ -77,6 +77,34 @@ class RutaRepository implements IRepository<IRuta> {
     });
   }
 
+  async getByAttribute(attributeName: string, attributeValue: string): Promise<IRuta[]> {
+    const sqlSelectStatement = `
+      SELECT * FROM ruta
+      WHERE LOWER(${attributeName}) LIKE LOWER(?)
+    `;
+  
+    const searchValue = `%${attributeValue.trim()}%`; // Agregar comodines para búsqueda parcial
+  
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [searchValue],
+          (_: ResultSet, response: ResultSet) => {
+            const rutas: IRuta[] = [];
+            for (let i = 0; i < response.rows.length; i++) {
+              rutas.push(response.rows.item(i));
+            }
+            resolve(rutas);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo obtener rutas por atributo'));
+          },
+        );
+      });
+    });
+  }
+
   deleteTable(): Promise<boolean> {
     const sqlDeleteStatement = `DROP TABLE IF EXISTS ruta`;
 

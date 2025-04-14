@@ -66,6 +66,16 @@ class FrecuenciaService {
   async getAllFrecuencias(): Promise<IFrecuencia[]> {
     return this.frecuenciaRepository.get();
   }
+
+  async getByAttribute(
+    attributeName: string,
+    attributeValue: any,
+  ): Promise<IFrecuencia[]> {
+    return this.frecuenciaRepository.getByAttribute(
+      attributeName,
+      attributeValue,
+    );
+  }
 }
 
 class ZonaService {
@@ -94,6 +104,13 @@ class ZonaService {
   async deleteZonas(): Promise<boolean> {
     return this.zonaRepository.deleteZonas();
   }
+
+  async getByAttribute(
+    attributeName: string,
+    attributeValue: any,
+  ): Promise<IZona[]> {
+    return this.zonaRepository.getByAttribute(attributeName, attributeValue);
+  }
 }
 
 class RutaService {
@@ -113,6 +130,13 @@ class RutaService {
 
   async getAllRutas(): Promise<IRuta[]> {
     return this.rutaRepository.get();
+  }
+
+  async getByAttribute(
+    attributeName: string,
+    attributeValue: string,
+  ): Promise<IRuta[]> {
+    return this.rutaRepository.getByAttribute(attributeName, attributeValue);
   }
 }
 

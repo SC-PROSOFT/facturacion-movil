@@ -270,7 +270,6 @@ class SyncQueries {
           ? 'NIT'
           : 'CC';
 
-
       const formData = new FormData();
       formData.append('archivo', {
         uri: file.uri,
@@ -279,8 +278,9 @@ class SyncQueries {
       });
 
       // Aseguramos que la ruta esté bien construida
-      const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${terceroModificado.tipo}-${padLeftCodigo(terceroModificado.codigo)}`;
-      console.log('ruta =>>>>', ruta);
+      const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${
+        terceroModificado.tipo
+      }-${padLeftCodigo(terceroModificado.codigo)}`;
 
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/guardar-archivo?ruta=${ruta}`, // Encode para evitar problemas con los backslashes

@@ -36,14 +36,14 @@ export const FrecuenciaFinder = React.memo(
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const [tempFrecuencias, setTempFrecuencias] = useState<IFrecuencia[]>([]);
     const [frecuencias, setFrecuencias] = useState<IFrecuencia[]>([]);
+
+    const [allFrecuencias, setAllFrecuencias] = useState<IFrecuencia[]>([]);
     const [filteredFrecuencias, setFilteredFrecuencias] = useState<
       IFrecuencia[]
     >([]);
 
     useEffect(() => {
-      if (isShowFrecuenciaFinder) {
-        loadAllFrecuencias();
-      }
+      loadAllFrecuencias();
     }, [isShowFrecuenciaFinder]);
 
     useEffect(() => {
@@ -52,6 +52,9 @@ export const FrecuenciaFinder = React.memo(
       };
     }, []);
     const closeFrecuenciaFinder = () => {
+      setFilteredFrecuencias([]);
+      setTempFrecuencias([]);
+      setFrecuencias([]);
       dispatch(setIsShowFrecuenciaFinder(false));
     };
 
@@ -75,43 +78,39 @@ export const FrecuenciaFinder = React.memo(
     );
 
     const filterFrecuencias = async (text: string) => {
-  if (text.length === 0) {
-    setFilteredFrecuencias(tempFrecuencias);
-    return;
-  }
+      const data = await frecuenciaService.getAllFrecuencias();
+      if (text.length === 0) {
+        setFilteredFrecuencias(data);
+        return;
+      }
 
-  const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
-  console.log('Filtrando por:', attribute, 'con texto:', text);
+      const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
+      console.log('Filtrando por:', attribute, 'con texto:', text);
 
-  try {
-    const filtered = tempFrecuencias.filter(frecuencia => {
-      const value =
-        frecuencia[attribute]?.toString().trim().toLowerCase() || '';
-      const searchText = text.trim().toLowerCase();
-      console.log('Comparando:', value, 'con', searchText);
-      return value.includes(searchText);
-    });
-    console.log('Resultados filtrados:', filtered);
-
-    setFilteredFrecuencias(filtered);
-  } catch (error) {
-    console.error('Error al filtrar frecuencias:', error);
-  }
-};
+      try {
+        const filtered = await frecuenciaService.getByAttribute(
+          attribute,
+          text,
+        );
+        console.log('Resultados filtrados:', filtered);
+        setFilteredFrecuencias(filtered);
+      } catch (error) {
+        console.error('Error al filtrar frecuencias:', error);
+      }
+    };
 
     const loadAllFrecuencias = async () => {
-  setIsLoading(true);
-  try {
-    const frecuencias = await frecuenciaService.getAllFrecuencias();
-    console.log('Frecuencias cargadas:', frecuencias); // Verifica los datos cargados
-    setTempFrecuencias(frecuencias);
-    setFilteredFrecuencias(frecuencias);
-  } catch (error) {
-    console.error('Error al cargar frecuencias:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      setIsLoading(true);
+      try {
+        const data = await frecuenciaService.getAllFrecuencias();
+        setAllFrecuencias(data);
+        setFilteredFrecuencias(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     const styles = StyleSheet.create({
       container: {

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
-
+import {formatToMoney} from '../utils';
 import {
   View,
   StyleSheet,
@@ -181,7 +181,7 @@ export const Estadisticas = () => {
             Total acumulado (peso): {totalAcumulado.toFixed(2)} KG
           </Text>
           <Text style={styles.totalText}>
-            Total acumulado (precio): ${totalValorAcumulado.toFixed(2)}
+            Total acumulado (precio): {formatToMoney(totalValorAcumulado)}
           </Text>
           <Text style={styles.totalText}>Total de Pedidos: {totalPedidos}</Text>
         </View>

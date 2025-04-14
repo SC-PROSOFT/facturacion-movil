@@ -142,7 +142,7 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
     isKeyboardVisible
       ? dynamicHeight // Usa la altura dinámica incluso con el teclado activado
       : dynamicHeight, // Usa la altura dinámica cuando el teclado está desactivado
-    Dimensions.get('window').height * 0.5, // Limita la altura máxima al 50% de la pantalla
+    Dimensions.get('window').height * 0.33, // Limita la altura máxima al 50% de la pantalla
   );
   const renderContent = () => {
     if (!showText) {
@@ -218,9 +218,16 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
     ) {
       return (
         <Dialog.Actions>
-          <Button onPress={handleAccept}>
-            <Text style={styles.textButton}>Aceptar</Text>
-          </Button>
+          <View
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+            }}>
+            <Button onPress={handleAccept}>
+              <Text style={styles.textButton}>Aceptar</Text>
+            </Button>
+          </View>
         </Dialog.Actions>
       );
     }
@@ -241,6 +248,7 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
         <Dialog.Content style={styles.dialogContent}>
           {renderContent()}
         </Dialog.Content>
+
         {renderActions()}
       </Dialog>
     </Portal>
@@ -252,7 +260,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     backgroundColor: '#092254',
     padding: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 40,
     borderRadius: 5,
   },
   headContainer: {
@@ -314,7 +322,6 @@ const styles = StyleSheet.create({
     width: '90%',
     maxHeight: 80,
     color: '#092254',
-    
   },
   iconContainer: {
     justifyContent: 'center',

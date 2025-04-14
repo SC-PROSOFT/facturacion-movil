@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useFocusEffect} from '@react-navigation/native';
-import {TercerosModal,Loader} from '../components';
+import {TercerosModal, Loader} from '../components';
 /* Views */
 import {Tercero, Survey, ElaborarPedido, ElaborarFactura} from '../views';
 /* utils */
@@ -63,7 +63,6 @@ const TabNavTercero = () => {
     setIsModalVisible(false);
   };
   const handleSubmit = (data: {observacion: string; status: boolean}) => {
-    
     console.log('Datos enviados desde el modal:', data);
     handleCloseModal();
   };
@@ -107,7 +106,7 @@ const TabNavTercero = () => {
 
   return (
     <>
-    <Loader visible={isLoading} message="Trayendo datos del cliente..." />
+      <Loader visible={isLoading} />
       <Tab.Navigator>
         <Tab.Screen
           name="Historial"

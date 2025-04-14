@@ -1,6 +1,6 @@
 import {getUbication} from './getUbication';
 // Función para calcular la distancia entre dos coordenadas
-const haversineDistance = (
+export const haversineDistance = (
   lat1: number,
   lon1: number,
   lat2: number,

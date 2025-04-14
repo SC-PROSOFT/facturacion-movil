@@ -1016,7 +1016,7 @@ const ElaborarPedido: React.FC = () => {
       observation: state.observaciones, // Agregar la observación
       saleValue: saleValue,
     };
-
+    console.log(modifiedVisita, objVisita.id_visita);
     try {
       // Actualizar la visita
       await visitaService.updateVisita(modifiedVisita, objVisita.id_visita);

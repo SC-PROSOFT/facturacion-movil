@@ -77,6 +77,33 @@ class FrecuenciaRepository implements IRepository<IFrecuencia> {
       });
     });
   }
+  getByAttribute(attribute: string, value: string): Promise<IFrecuencia[]> {
+    const sqlQuery = `
+      SELECT * FROM frecuencia
+      WHERE LOWER(${attribute}) LIKE LOWER(?) 
+    `;
+
+    const searchValue = `%${value.trim()}%`; // Agregar comodines para búsqueda parcial
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlQuery,
+          [searchValue],
+          (_: ResultSet, {rows}: ResultSet) => {
+            const results: IFrecuencia[] = [];
+            for (let i = 0; i < rows.length; i++) {
+              results.push(rows.item(i));
+            }
+            resolve(results);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Error al buscar frecuencias'));
+          },
+        );
+      });
+    });
+  }
 
   deleteTable(): Promise<boolean> {
     const sqlDropStatement = `DROP TABLE IF EXISTS frecuencia`;

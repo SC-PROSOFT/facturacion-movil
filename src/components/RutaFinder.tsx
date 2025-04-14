@@ -57,30 +57,23 @@ export const RutaFinder = React.memo(({toggleRuta}: RutaFinderProps) => {
     [],
   );
 
-const filterRutas = async (text: string) => {
-  if (text.length === 0) {
-    console.log('Texto vacío, cargando todas las rutas.');
-    setFilteredRutas(tempRutas); // Cargar todas las rutas si el input está vacío
-    return;
-  }
+  const filterRutas = async (text: string) => {
+    const allRutas = await rutaService.getAllRutas();
+    if (text.length === 0) {
+      console.log('Texto vacío, cargando todas las rutas.');
+      setFilteredRutas(allRutas); // Cargar todas las rutas si el input está vacío
+      return;
+    }
+    const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
+    console.log('Filtrando por:', attribute, 'con texto:', text);
+    try {
+      const filtered = await rutaService.getByAttribute(attribute, text);
 
-  const attribute = /^[0-9]/.test(text) ? 'zona' : 'nombre';
-  console.log('Filtrando por:', attribute, 'con texto:', text);
-
-  try {
-    const filtered = tempRutas.filter(ruta => {
-      // Asegúrate de que la clave existe y no es undefined
-      const value = ruta[attribute]?.toString().toLowerCase() || '';
-      const searchText = text.toLowerCase();
-      return value.includes(searchText); // Comparar en minúsculas
-    });
-    console.log('Resultados filtrados:', filtered);
-
-    setFilteredRutas(filtered);
-  } catch (error) {
-    console.error('Error al filtrar rutas:', error);
-  }
-};
+      setFilteredRutas(filtered);
+    } catch (error) {
+      console.error('Error al filtrar rutas:', error);
+    }
+  };
   const closeRutaFinder = () => {
     setRutas([]);
     setFilteredRutas([]);

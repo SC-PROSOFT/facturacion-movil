@@ -75,6 +75,34 @@ class ZonaRepository implements IRepository<IZona> {
     });
   }
 
+  async getByAttribute(
+    attributeName: string,
+    attributeValue: any,
+  ): Promise<IZona[]> {
+    const sqlSelectStatement = `SELECT * FROM zona WHERE LOWER(${attributeName}) LIKE LOWER(?)`;
+
+    const searchValue = `%${attributeValue.trim()}%`; // Agregar comodines para búsqueda parcial
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [searchValue],
+          (_: ResultSet, response: ResultSet) => {
+            let zonas: IZona[] = [];
+            for (let i = 0; i < response.rows.length; i++) {
+              zonas.push(response.rows.item(i));
+            }
+            resolve(zonas);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo obtener zonas'));
+          },
+        );
+      });
+    });
+  }
+
   deleteTable(): Promise<boolean> {
     const sqlDeleteStatement = `DROP TABLE IF EXISTS zona`;
 
