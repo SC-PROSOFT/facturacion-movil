@@ -298,8 +298,9 @@ const Visitas: React.FC = () => {
           renderItem={renderItem}
           ListFooterComponent={<View style={{height: 100}} />}
           contentContainerStyle={{paddingHorizontal: 15, paddingVertical: 5}}
-          initialNumToRender={10} // Renderiza solo 10 elementos inicialmente
-          windowSize={5}
+          initialNumToRender={20} // Renderiza solo 10 elementos inicialmente
+          windowSize={10}
+          maxToRenderPerBatch={10}
         />
       </SafeAreaView>
       <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
