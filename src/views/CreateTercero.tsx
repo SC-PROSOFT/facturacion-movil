@@ -466,7 +466,7 @@ const CreateTercero = () => {
                 label="Identificacion"
                 name="codigo"
                 maxLength={10}
-                keyboardType="numeric"
+                keyboardType="number-pad"
                 onChangeText={(text: string) => {
                   numericOnly(text);
                   setTercero(prevState => ({...prevState, codigo: text}));
@@ -479,7 +479,7 @@ const CreateTercero = () => {
               <_Input
                 label="Dv"
                 name="dv"
-                keyboardType="numeric"
+                keyboardType="number-pad"
                 maxLength={1}
                 value={tercero.dv} // Asegúrate de que el valor esté vinculado al estado
                 onChangeText={(text: string) => {

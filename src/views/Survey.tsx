@@ -18,6 +18,7 @@ import {encuestaService} from '../data_queries/local_database/services';
 import {setObjInfoAlert} from '../redux/slices';
 import {setIsShowEncuesta} from '../redux/slices';
 import {useRoute} from '@react-navigation/native';
+import {Header} from '../components';
 
 const Survey = () => {
   const dispatch = useAppDispatch();
@@ -169,39 +170,41 @@ const Survey = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Encuesta general</Text>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleBackPress}>
-            <Icon
-              style={styles.logoutIcon}
-              name="arrow-u-left-top"
-              size={28}
-              color={'#FFF'}
+
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Encuesta general</Text>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleBackPress}>
+              <Icon
+                style={styles.logoutIcon}
+                name="arrow-u-left-top"
+                size={28}
+                color={'#FFF'}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.listContent}>
+            <VirtualizedList
+              data={survey.preguntas}
+              initialNumToRender={4}
+              renderItem={({item, index}) => renderQuestionItem({item, index})}
+              keyExtractor={(item, index) => index.toString()}
+              getItem={getItem}
+              getItemCount={getItemCount}
             />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.listContent}>
-          <VirtualizedList
-            data={survey.preguntas}
-            initialNumToRender={4}
-            renderItem={({item, index}) => renderQuestionItem({item, index})}
-            keyExtractor={(item, index) => index.toString()}
-            getItem={getItem}
-            getItemCount={getItemCount}
-          />
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            style={styles.submitButton}>
-            Guardar respuestas
-          </Button>
-        </View>
-      </SafeAreaView>
-    </View>
+            <Button
+              mode="contained"
+              onPress={handleSubmit}
+              style={styles.submitButton}>
+              Guardar respuestas
+            </Button>
+          </View>
+        </SafeAreaView>
+      </View>
+    
   );
 };
 
@@ -218,18 +221,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 10,
+    backgroundColor: '#092254',
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    color: 'white',
   },
   logoutIcon: {
-    color: '#0B2863',
+    color: 'white',
     marginRight: 5,
     marginTop: 5,
   },
   title: {
-    color: 'black',
+    color: 'white',
     fontSize: 22,
     flex: 1,
     fontWeight: 'bold',
@@ -237,7 +242,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 10,
-    paddingBottom: 20, // Espacio entre la lista y el botón
+    paddingVertical: 20, // Espacio entre la lista y el botón
   },
   questionItem: {
     paddingHorizontal: 10,

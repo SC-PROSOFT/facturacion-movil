@@ -69,11 +69,15 @@ const {width} = Dimensions.get('window');
 // Función para calcular el tamaño de la fuente basado en el ancho del dispositivo
 const scaleFontSize = (size: number) => (width / 375) * size;
 const recalculateVisitas = async () => {
+      console.log('Iniciando recálculo de visitas...');
+
   try {
+    console.log('Iniciando recálculo de visitas...');
     const result = await recalculateVisitsIfNeeded();
     if (result) {
       await visitaService.fillVisitas(result);
     }
+    console.log('Recálculo de visitas completado.');
   } catch (error) {
     console.error('Error al recálcular visitas:', error);
   }
@@ -181,6 +185,7 @@ const Login = () => {
     adjustScreenSize();
     initDb();
     getPermissions();
+    recalculateVisitas();
   }, []);
 
   const handleInputChange = (name: string, text: string) => {

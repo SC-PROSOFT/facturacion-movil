@@ -41,3 +41,5 @@ export * from './RutaFinder';
 export * from './VisitaSinPedido';
 export * from './AwayLocation';
 export * from './SearchLocation';
+export * from './Loader';
+export * from './CancelarVisita';

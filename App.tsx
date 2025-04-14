@@ -126,21 +126,10 @@ const theme = {
   },
 };
 
-const recalculateVisitas = async () => {
-  try {
-    const result = await recalculateVisitsIfNeeded();
-    if (result) {
-      await visitaService.fillVisitas(result);
-    }
-  } catch (error) {
-    console.error('Error al recálcular visitas:', error);
-  }
-};
+
 
 const App = () => {
-  useEffect(() => {
-    recalculateVisitas();
-  }, []);
+
 
   return (
     <StoreProvider store={store}>

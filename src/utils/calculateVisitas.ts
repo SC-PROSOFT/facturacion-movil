@@ -105,7 +105,8 @@ export async function generateVisits(
   const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
-
+  console.log('Hoy:', today);
+  console.log('Mañana:', tomorrow);
   const todayString = getLocalDateString(today);
   const tomorrowString = getLocalDateString(tomorrow);
 
@@ -162,8 +163,8 @@ export async function generateVisits(
               saleValue: 0,
               appointmentDate,
               location: {
-                latitude: tercero.latitude,
-                longitude: tercero.longitude,
+                latitude: tercero.latitude || '', // Asegúrate de que latitude esté definido
+                longitude: tercero.longitude || '', // Asegúrate de que longitude esté definido
               },
               id_tercero: tercero.codigo,
               zona: tercero.zona,
@@ -188,12 +189,14 @@ export async function recalculateVisitsIfNeeded(terceros?: ITerceros[]) {
   try {
     const shouldRecalculate = await shouldRecalculateVisits(); // Verifica si es un nuevo día
     if (shouldRecalculate) {
-      console.log('Recalculando visitas...');
-      await generateVisits(terceros); // Llama a generateVisits para recalcular
+      
+      const visits = await generateVisits();
+      return visits // Llama a generateVisits para recalcular
     } else {
-      console.log('No es necesario recalcular visitas.');
+      return []; // No es necesario recalcular, devuelve un array vacío
     }
   } catch (error) {
     console.error('Error al recalcular visitas:', error);
+    return [];
   }
 }

@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useFocusEffect} from '@react-navigation/native';
-import {TercerosModal} from '../components';
+import {TercerosModal,Loader} from '../components';
 /* Views */
 import {Tercero, Survey, ElaborarPedido, ElaborarFactura} from '../views';
 /* utils */
@@ -28,9 +28,11 @@ const TabNavTercero = () => {
   const [respuestasEncuestas, setRespuestasEncuestas] = useState<any[]>([]);
   const [isEncuestaDisabled, setIsEncuestaDisabled] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchRespuestasEncuestas = async () => {
     try {
+      setIsLoading(true);
       const encuesta = await encuestaService.getEncuesta(); // Reemplazar 'codigo_actual' con el código dinámico
       const respuestas = await encuestaService.getRespEncuestaByCodigo(
         tercero.codigo,
@@ -41,12 +43,10 @@ const TabNavTercero = () => {
       const encuestaRespondida = respuestas.some(
         respuesta => respuesta.codigo === encuesta?.codigo.toString(), // Reemplaza 'codigo_actual' con el código dinámico
       );
-      console.log('encuesta', encuesta);
-      console.log('respuestas:', respuestas);
-      console.log('encuestaRespondida:', encuestaRespondida);
       setIsEncuestaDisabled(encuestaRespondida);
+      setIsLoading(false);
     } catch (error: any) {
-      console.error('Error al obtener respuestas de encuestas:', error);
+      setIsLoading(false);
     }
   };
 
@@ -107,6 +107,7 @@ const TabNavTercero = () => {
 
   return (
     <>
+    <Loader visible={isLoading} message="Trayendo datos del cliente..." />
       <Tab.Navigator>
         <Tab.Screen
           name="Historial"

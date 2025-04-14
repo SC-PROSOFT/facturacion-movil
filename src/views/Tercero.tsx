@@ -7,6 +7,8 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Animated,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -21,7 +23,12 @@ import {
 /* types */
 import {IOperation, IEncuesta, IFiles, IVisita} from '../common/types';
 /* components */
-import {Movimiento, Header, SearchLocation} from '../components';
+import {
+  Movimiento,
+  Header,
+  SearchLocation,
+  CancelarVisita,
+} from '../components';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {
@@ -45,6 +52,11 @@ import {showAlert} from '../utils/showAlert';
 import {useFocusEffect} from '@react-navigation/native';
 
 const Tercero = () => {
+  const windowHeight = Dimensions.get('window').height;
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Estado de carga
+
+  const listHeight = windowHeight * 0.35;
+
   const navigation: any = useNavigation();
   const dispatch = useAppDispatch();
   const arrFactura = useAppSelector(store => store.tercerosFinder.arrFactura);
@@ -55,9 +67,11 @@ const Tercero = () => {
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [isNotLocation, setIsNotLocation] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isCancelarVisitaActive, setIsCancelarVisitaActive] =
+    useState<boolean>(false);
   const toggleFilesObj = async () => {
     try {
-      console.log(objTercero);
+      setIsLoading(true);
       const files = await filesService.getFilesByCode(objTercero.codigo);
 
       // Verificar si files.files es una cadena y convertirla en un array
@@ -69,6 +83,8 @@ const Tercero = () => {
           console.error('Error al analizar files.files como JSON:', error);
           setShowAlert(true);
           return;
+        } finally {
+          setIsLoading(false);
         }
       }
 
@@ -95,7 +111,19 @@ const Tercero = () => {
       return;
     }
   };
+  const getPedidosDelMesActual = (): any[] => {
+    const fechaActual = new Date();
+    const mesActual = fechaActual.getMonth(); // Mes actual (0-11)
+    const anioActual = fechaActual.getFullYear(); // Año actual
 
+    return arrPedido.filter(pedido => {
+      const fechaPedido = new Date(pedido.fecha); // Asegúrate de que `pedido.fecha` sea el campo correcto
+      return (
+        fechaPedido.getMonth() === mesActual &&
+        fechaPedido.getFullYear() === anioActual
+      );
+    });
+  };
   const pulseAnim = useRef(new Animated.Value(1)).current;
   useFocusEffect(
     React.useCallback(() => {
@@ -124,7 +152,7 @@ const Tercero = () => {
   }, [pulseAnim]);
 
   const sumarTotalFacturaPedidos = (): number => {
-    return [...arrFactura, ...arrPedido]
+    return [...arrFactura, ...getPedidosDelMesActual()] // Usar pedidos filtrados
       .flatMap(doc => doc.articulosAdded)
       .reduce((total, articulo) => total + articulo.valorTotal, 0);
   };
@@ -134,7 +162,7 @@ const Tercero = () => {
         'nit',
         objTercero.codigo,
       );
-      console.log("Cartera,", cartera)
+      console.log('Cartera,', cartera);
       const carteraSumada = sumarCartera(cartera);
       dispatch(setIntCartera(carteraSumada));
       const carteraSeteada = formatToMoney(carteraSumada);
@@ -177,11 +205,43 @@ const Tercero = () => {
   const handleCloseModal = () => {
     setIsModalVisible(false); // Cierra el modal
   };
+  const closeCancelarVisita = () => {
+    setIsCancelarVisitaActive(false);
+  };
+
+  const handleCancelarVisita = () => {
+    setIsCancelarVisitaActive(true);
+  };
+
+  const changeMovStatus = async (data: {
+    observacion: string;
+    status: boolean;
+  }) => {
+    const modifiedVisita: IVisita = {
+      ...objVisita,
+      status: '3', // Cambiar el estado a "cancelado"
+      observation: data.observacion, // Agregar la observación
+    };
+    try {
+      await visitaService.updateVisita(modifiedVisita, objVisita.id_visita);
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'success',
+          description: `Se ha cancelado la visita`,
+        }),
+      );
+    } catch (error) {
+      console.error('Error al cancelar la visita:', error);
+    }
+  }
+  
 
   const saveLocationInVisitaObj = async (location: {
     latitude: number;
     longitude: number;
   }) => {
+    console.log('Ubicación guardada:', location);
     // Convertir cada propiedad del objeto location a string
     const locationString = {
       latitude: location.latitude.toString(),
@@ -202,8 +262,6 @@ const Tercero = () => {
     latitude: number;
     longitude: number;
   }) => {
-   
-
     try {
       const {latitude, longitude} = location;
       console.log('Ubicación guardada:', location);
@@ -216,8 +274,8 @@ const Tercero = () => {
       if (response) {
         dispatch(setObjTercero(terceroModificado));
       }
-      setIsNotLocation(false)
       await saveLocationInVisitaObj(location);
+      setIsNotLocation(false);
     } catch (error) {
       console.log(error);
     }
@@ -225,7 +283,7 @@ const Tercero = () => {
       setObjInfoAlert({
         visible: true,
         type: 'success',
-        description: `Ubicación guardada: Latitud ${location.latitude}, Longitud ${location.longitude}`,
+        description: `Ubicación guardada correctamente`,
       }),
     );
     // Cierra el modal
@@ -294,6 +352,18 @@ const Tercero = () => {
           )}
           <Icon name="map-marker-radius" size={36} color={'#FFF'} />
         </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#485E8A',
+            padding: 3,
+            borderRadius: 5,
+          }}
+          onPress={() => {
+            handleCancelarVisita();
+          }}>
+          
+          <Icon name="table-cancel" size={36} color={'#FFF'} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.totalCountContainer}>
@@ -301,7 +371,7 @@ const Tercero = () => {
         <Text style={styles.totalCount}>
           {formatToMoney(sumarTotalFacturaPedidos())}
         </Text>
-        <Text style={styles.saldo}>Saldo: {cartera || "$0"}</Text>
+        <Text style={styles.saldo}>Saldo: {cartera || '$0'}</Text>
       </View>
 
       <View style={styles.movientosContainer}>
@@ -315,29 +385,22 @@ const Tercero = () => {
           Historial movimientos
         </Text>
 
-        <SafeAreaView>
-          <VirtualizedList
-            data={[...arrPedido, ...arrFactura]}
+        <SafeAreaView style={{height: listHeight}}>
+          <FlatList
+            data={[...getPedidosDelMesActual(), ...arrFactura].reverse()} // Invertir el orden
+            // Usar pedidos filtrados
             renderItem={renderItem}
-            getItemCount={data => data.length}
-            getItem={(data, index) => data[index]}
             keyExtractor={(item, index) => index.toString()}
-            ListFooterComponent={<View style={{height: 100}} />}
+            initialNumToRender={4} // Número inicial de elementos a renderizar
+            windowSize={3} // Tamaño de la ventana para renderizado
             ListEmptyComponent={
               <View style={{alignItems: 'center', marginTop: 100}}>
-                <Text
-                  style={{
-                    color: '#504D54',
-                    fontSize: 16,
-                    fontWeight: 'bold',
-                  }}></Text>
+                <Text style={styles.emptyText}>
+                  No hay movimientos este mes
+                </Text>
               </View>
             }
-            style={{
-              paddingHorizontal: 15,
-              paddingVertical: 5,
-              height: 520,
-            }}
+            contentContainerStyle={{paddingBottom: 20, paddingHorizontal: 15}}
           />
         </SafeAreaView>
       </View>
@@ -345,6 +408,13 @@ const Tercero = () => {
         visible={isModalVisible}
         onClose={handleCloseModal}
         onSave={handleSaveLocation}
+      />
+      <CancelarVisita
+        visible={isCancelarVisitaActive}
+        onClose={closeCancelarVisita}
+        onSubmit={data => {
+          changeMovStatus(data);
+        }}
       />
     </View>
   );
@@ -401,6 +471,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFF',
     marginTop: 10,
+  },
+  emptyText: {
+    color: '#504D54',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   movientosContainer: {
     marginTop: 120,

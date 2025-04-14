@@ -841,6 +841,7 @@ const ElaborarPedido: React.FC = () => {
     detalleProductoState[]
   >([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [noMoreAwayUbication, setNoMoreAwayUbication] = useState(false);
   useEffect(() => {
     const initialize = async () => {
       const ubi = await checkUbication();
@@ -975,6 +976,7 @@ const ElaborarPedido: React.FC = () => {
         type: 'success',
         text1: 'Pedido guardado en el servidor correctamente',
       });
+      setNoMoreAwayUbication(true); // Evitar que el modal vuelva a aparecer
 
       setIsLoadingSave(false);
     } catch (error: any) {
@@ -1288,8 +1290,9 @@ const ElaborarPedido: React.FC = () => {
       <CarteraPopup />
       <ProductSheet />
       <ProductSheetEdit />
+
       <AwayFromUbication
-        visible={isModalVisible}
+        visible={isModalVisible && !noMoreAwayUbication}
         onClose={() => setIsModalVisible(false)}
         tercero={objTercero}
         onSubmit={data => {

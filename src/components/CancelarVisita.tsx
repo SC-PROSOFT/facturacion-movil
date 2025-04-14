@@ -1,5 +1,4 @@
 import React, {useState, useEffect, useRef} from 'react';
-
 import {
   StyleSheet,
   View,
@@ -12,21 +11,18 @@ import {
 import {Button, Dialog, Text, Portal} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
-import {ITerceros, IVisita} from '../common/types';
-import {_Input} from './_Input';
+import {IVisita} from '../common/types';
 import {visitaService} from '../data_queries/local_database/services';
 
 interface IModalProps {
   visible: boolean;
   onClose: () => void;
-  tercero: ITerceros;
   onSubmit: (data: {observacion: string; status: boolean}) => void;
 }
 
-export const TercerosModal: React.FC<IModalProps> = ({
+export const CancelarVisita: React.FC<IModalProps> = ({
   visible,
   onClose,
-  tercero,
   onSubmit,
 }) => {
   const dispatch = useAppDispatch();
@@ -38,6 +34,7 @@ export const TercerosModal: React.FC<IModalProps> = ({
     Dimensions.get('window').height * 0.3,
   );
   const modalWidth = Dimensions.get('window').width < 400 ? '90%' : '80%';
+
   const handleContentSizeChange = (event: any) => {
     const contentHeight = event.nativeEvent.contentSize.height;
     const baseHeight = Dimensions.get('window').height * 0.5;
@@ -45,6 +42,7 @@ export const TercerosModal: React.FC<IModalProps> = ({
     const newHeight = Math.min(baseHeight + contentHeight, maxHeight);
     setDynamicHeight(newHeight);
   };
+
   const adjustScreenSize = () => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -73,17 +71,17 @@ export const TercerosModal: React.FC<IModalProps> = ({
   const handleSubmit = async () => {
     const modifiedVisita: IVisita = {
       ...objVisita,
-      status: '1', // Cambiar el estado a "visitado"
+      status: '3', // Cambiar el estado a "cancelado"
       observation: observacion, // Agregar la observación
     };
     try {
-      console.log('objVisita', objVisita);
+      console.log('Cancelando visita:', objVisita);
       // Actualizar la visita
       await visitaService.updateVisita(modifiedVisita, objVisita.id_visita);
       onSubmit({observacion, status: true});
       onClose();
     } catch (error) {
-      console.error('Error al actualizar la visita:', error);
+      console.error('Error al cancelar la visita:', error);
     }
   };
 
@@ -98,15 +96,14 @@ export const TercerosModal: React.FC<IModalProps> = ({
         onDismiss={onClose}
         style={[styles.dialog, {width: modalWidth, height: modalHeight}]}>
         <View style={styles.headContainer}>
-          <Text style={styles.title}>Realizar visita sin pedido</Text>
+          <Text style={styles.title}>Cancelar visita</Text>
           <TouchableOpacity onPress={onClose} style={styles.iconClose}>
             <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
         </View>
         <Dialog.Content style={styles.dialogContent}>
           <Text>
-            Especifique la razón por la que no se realizará pedido en la visita
-            de {tercero.nombre}
+            Especifique la razón por la que se cancela esta visita.
           </Text>
           <TextInput
             style={styles.input}

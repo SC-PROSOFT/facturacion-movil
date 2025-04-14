@@ -209,79 +209,7 @@ const CreateRuta = () => {
             </View>
           </View>
 
-          <_InputSelect<'CC' | 'NIT'>
-            value={tercero.tipo ?? 'CC'}
-            values={[
-              {label: 'Cedula de ciudadania', value: 'CC'},
-              {label: 'Número de identificación tributaria', value: 'NIT'},
-            ]}
-            setValue={value =>
-              setTercero(prevState => ({...prevState, tipo: value}))
-            }
-          />
-          <View style={{flexDirection: 'row', gap: 8}}>
-            <View style={{flex: 1}}>
-              <_Input
-                value={tercero.codigo}
-                label="Identificacion"
-                name="codigo"
-                onChangeText={(text: string) =>
-                  setTercero(prevState => ({...prevState, codigo: text}))
-                }
-                style={{}}
-              />
-            </View>
-
-            <View style={{flex: 1}}>
-              <_Input
-                value={tercero.tel}
-                label="Telefono"
-                name="tel"
-                onChangeText={(text: string) =>
-                  setTercero(prevState => ({...prevState, tel: text}))
-                }
-              />
-            </View>
-          </View>
-          <View style={{flexDirection: 'row', gap: 8}}>
-            <View style={{flex: 1}}>
-              <_Input
-                value={tercero.departamento}
-                label="Departamento"
-                name="departamento"
-                onChangeText={(text: string) =>
-                  setTercero(prevState => ({...prevState, departamento: text}))
-                }
-              />
-            </View>
-
-            <View style={{flex: 1}}>
-              <_Input
-                value={tercero.ciudad}
-                label="Ciudad"
-                name="ciudad"
-                onChangeText={(text: string) =>
-                  setTercero(prevState => ({...prevState, ciudad: text}))
-                }
-              />
-            </View>
-          </View>
-          <_Input
-            value={tercero.barrio}
-            label="Barrio"
-            name="barrio"
-            onChangeText={(text: string) =>
-              setTercero(prevState => ({...prevState, barrio: text}))
-            }
-          />
-          <_Input
-            value={tercero.direcc}
-            label="Direccion"
-            name="direcc"
-            onChangeText={(text: string) =>
-              setTercero(prevState => ({...prevState, direcc: text}))
-            }
-          />
+          
         </View>
 
         <Text
@@ -305,50 +233,7 @@ const CreateRuta = () => {
            
           }}>
           {/* Zona y Ruta */}
-          <View style={{flexDirection: 'row', gap: 8, marginBottom: 15}}>
-            <View
-              style={{flex: 1.5, flexDirection: 'row', alignItems: 'center'}}>
-              <View style={{flex: 4}}>
-                <_Input
-                  label="Zona"
-                  name="zona"
-                  value={tercero.zona}
-                  onChangeText={(text: string) =>
-                    setTercero(prevState => ({...prevState, zona: text}))
-                  }
-                />
-              </View>
-              <View style={{flex: 2, marginLeft: 6}}>
-                <IconButton
-                  iconName="map-marker-path"
-                  iconColor="#FFF"
-                  iconSize={36}
-                  onPress={() => dispatch(setIsShowZonaFinder(true))}
-                />
-              </View>
-            </View>
-            <View
-              style={{flex: 1.8, flexDirection: 'row', alignItems: 'center'}}>
-              <View style={{flex: 1}}>
-                <_Input
-                  label="Ruta"
-                  name="ruta"
-                  value={tercero.ruta}
-                  onChangeText={(text: string) =>
-                    setTercero(prevState => ({...prevState, ruta: text}))
-                  }
-                />
-              </View>
-              <View style={{flex: 0.4, marginLeft: 6}}>
-                <IconButton
-                  iconName="call-split"
-                  iconColor="#FFF"
-                  iconSize={36}
-                  onPress={() => dispatch(setIsShowRutaFinder(true))}
-                />
-              </View>
-            </View>
-          </View>
+         
 
           {/* Frecuencias */}
           <View style={{flexDirection: 'row', gap: 8, marginBottom: 15}}>

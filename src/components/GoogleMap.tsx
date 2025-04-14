@@ -12,7 +12,9 @@ const GoogleMap: React.FC<GoogleMapProps> = ({latitude, longitude}) => {
   const [visible, setVisible] = React.useState(false);
 
   const showModal = () => {
+    console.log('Ubicación disponible:', latitude, longitude);
     if (latitude && longitude) {
+      console.log('Ubicación disponible:', latitude, longitude);
       setVisible(true); // Solo abrir si las coordenadas están definidas
     } else {
       console.warn('Ubicación no disponible');
