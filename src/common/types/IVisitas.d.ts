@@ -2,7 +2,7 @@ export interface IVisita {
   id_visita: number;
   client: string;
   adress: string;
-  status: '1' | '2' | '3'; // 1 visitado, 2 sin visitar, 3 visitado y no estaba
+  status: '1' | '2' | '3'; 
   observation: string;
   saleValue: number;
   appointmentDate: string;
