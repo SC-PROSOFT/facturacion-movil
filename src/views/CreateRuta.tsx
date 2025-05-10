@@ -120,7 +120,7 @@ const CreateRuta = () => {
         setObjInfoAlert({
           visible: true,
           type: 'success',
-          description: 'Tercero creado correctamente.',
+          description: 'Ruta extra creada correctamente 🥳',
         }),
       );
     }

@@ -440,7 +440,7 @@ const CreateTercero = () => {
             gap: 8,
           }}>
           <_Input
-            label="Nombre"
+            label="Nombre *"
             name="nombre"
             onChangeText={(text: string) =>
               setTercero(prevState => ({...prevState, nombre: text}))
@@ -463,7 +463,7 @@ const CreateTercero = () => {
           <View style={{flexDirection: 'row', gap: 8}}>
             <View style={{flex: 1}}>
               <_Input
-                label="Identificacion"
+                label="Identificacion*  "
                 name="codigo"
                 maxLength={10}
                 keyboardType="number-pad"
@@ -477,7 +477,7 @@ const CreateTercero = () => {
             </View>
             <View style={{flex: 0.3}}>
               <_Input
-                label="Dv"
+                label="Dv*"
                 name="dv"
                 keyboardType="number-pad"
                 maxLength={1}
@@ -554,7 +554,7 @@ const CreateTercero = () => {
             disabled={isDisabled}
           />
           <_Input
-            label="Direccion"
+            label="Direccion*"
             name="direcc"
             onChangeText={(text: string) =>
               setTercero(prevState => ({...prevState, direcc: text}))
@@ -614,7 +614,7 @@ const CreateTercero = () => {
               style={{flex: 1.5, flexDirection: 'row', alignItems: 'center'}}>
               <View style={{flex: 4}}>
                 <_Input
-                  label="Zona"
+                  label="Zona*"
                   name="zona"
                   value={tercero.zona}
                   onChangeText={(text: string) =>
@@ -638,7 +638,7 @@ const CreateTercero = () => {
               style={{flex: 1.8, flexDirection: 'row', alignItems: 'center'}}>
               <View style={{flex: 1}}>
                 <_Input
-                  label="Ruta"
+                  label="Ruta*"
                   name="ruta"
                   value={tercero.ruta}
                   onChangeText={(text: string) =>
@@ -664,7 +664,7 @@ const CreateTercero = () => {
             <View style={styles.row}>
               <View style={styles.inputContainer}>
                 <_Input
-                  label="Frec 1"
+                  label="Frec 1*"
                   name="frecuencia"
                   value={tercero.frecuencia}
                   onChangeText={(text: string) =>

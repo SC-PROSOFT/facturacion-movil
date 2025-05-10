@@ -274,13 +274,9 @@ const Sync = () => {
   const [screenHeight, setScreenHeight] = useState(
     Dimensions.get('window').height,
   );
-
   const [syncQueriesScope, setSyncQueriesScope] = useState<any>();
-
   const [showProgressWindow, setShowProgressWindow] = useState<boolean>(false);
-
   const [dialogContent, setDialogContent] = useState('');
-
   const [disabledCancel, setDisabledCancel] = useState<boolean>(false);
 
   const [records, setRecords] = useState<Records>({

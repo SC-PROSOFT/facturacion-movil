@@ -81,7 +81,7 @@ const Visitas: React.FC = () => {
   const dispatch = useAppDispatch();
   const [search, setSearch] = useState<string>('');
   const [visitas, setVisitas] = useState<IVisita[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [dataReady, setDataReady] = useState<boolean>(false);
   const objOperador = useAppSelector(store => store.operator.objOperator);
   const [loadRecalcVisitas, setLoadRecalcVisitas] = useState<string>('');

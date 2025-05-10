@@ -8,7 +8,8 @@ export const haversineDistance = (
 ): number => {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const R = 6371000; // Radio de la Tierra en metros
-
+  console.log('Coord 1', lat1, lon1);
+  console.log('Coord 2', lat2, lon2);
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
 
