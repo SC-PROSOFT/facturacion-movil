@@ -37,6 +37,9 @@ class ZonaRepository implements IRepository<IZona> {
     const sqlInsertStatement = `INSERT INTO zona (tipo, zona, nombre) VALUES (?, ?, ?)`;
 
     return new Promise((resolve, reject) => {
+      if (!data || data.length === 0) {
+        return resolve(true);
+      }
       db.transaction((tx: any) => {
         data.forEach((zona: IZona) => {
           tx.executeSql(

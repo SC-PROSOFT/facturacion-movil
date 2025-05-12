@@ -224,7 +224,8 @@ class VisitasRepository implements IRepository<IVisita> {
             resolve(true);
           },
           (error: any) => {
-            console.error('Error al actualizar visita:', error);
+            console.log('Error al actualizar visita:', error);
+
             reject(new Error('Fallo actualizar visita'));
           },
         );

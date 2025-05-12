@@ -30,6 +30,7 @@ export const TercerosFinder = React.memo(
     const isShowTercerosFinder = useAppSelector(
       store => store.tercerosFinder.isShowTercerosFinder,
     );
+
     const objConfig = useAppSelector(store => store.config.objConfig);
     const objOperador = useAppSelector(store => store.operator.objOperator);
     const [inputs, setInputs] = useState({operador: ''});
@@ -72,7 +73,12 @@ export const TercerosFinder = React.memo(
 
     const filterTerceros = async (text: string) => {
       if (text.length === 0) {
-        setFilteredTerceros(tempTerceros);
+        const allTerceros = await tercerosService.getPaginatedByTable(
+          searchTable,
+          1,
+          pageSize,
+        );
+        setFilteredTerceros(allTerceros);
         return;
       }
 
@@ -98,7 +104,7 @@ export const TercerosFinder = React.memo(
     };
 
     const loadAllTerceros = async () => {
-      if (isLoadingTerceros) return; // Evitar múltiples ejecuciones
+      if (isLoadingTerceros) return;
       setIsLoadingTerceros(true);
       setIsLoading(true);
 

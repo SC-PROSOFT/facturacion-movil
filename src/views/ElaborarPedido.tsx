@@ -956,11 +956,11 @@ const ElaborarPedido: React.FC = () => {
       validateBeforeSaving();
       const {latitude, longitude} = await getUbication();
       const pedido = estructurarPedido({latitude, longitude});
-      // await pedidosApiService._savePedido(pedido, 'post');
+      await pedidosApiService._savePedido(pedido, 'post');
       await pedidosService.savePedido({
         ...pedido,
-        sincronizado: 'N',
-        guardadoEnServer: 'N',
+        sincronizado: 'S',
+        guardadoEnServer: 'S',
       });
       dispatch(
         setObjOperator({
@@ -1030,13 +1030,19 @@ const ElaborarPedido: React.FC = () => {
       const {latitude, longitude} = await getUbication();
       const order = estructurarPedido({latitude, longitude});
 
-      await pedidosService.savePedido({...order, sincronizado: 'N'});
+      await pedidosService.savePedido({
+        ...order,
+        sincronizado: 'N',
+        guardadoEnServer: 'N',
+      });
       dispatch(
         setObjOperator({
           ...order.operador,
           nro_pedido: Number(order.operador.nro_pedido) + 1,
         }),
       );
+      dispatch(setArrProductAdded([]));
+      dispatch(setArrPedido([...arrPedidos, order]));
       resetState();
       Toast.show({
         type: 'success',

@@ -918,8 +918,8 @@ const ModificarPedido: React.FC = () => {
       await pedidosApiService._savePedido(pedido, 'put');
       await pedidosService.updatePedido(objOperador.nro_pedido.toString(), {
         ...pedido,
-        sincronizado: 'N',
-        guardadoEnServer: 'N',
+        sincronizado: 'S',
+        guardadoEnServer: 'S',
       });
 
       const redefinedOrders = redefineOrders(arrPedidos, pedido);
@@ -957,8 +957,13 @@ const ModificarPedido: React.FC = () => {
       const {latitude, longitude} = await getUbication();
       const order = estructurarPedido({latitude, longitude});
 
-      await pedidosService.savePedido({...order, sincronizado: 'N'});
-
+      await pedidosService.savePedido({
+        ...order,
+        sincronizado: 'N',
+        guardadoEnServer: 'N',
+      });
+      const redefinedOrders = redefineOrders(arrPedidos, order);
+      dispatch(setArrPedido(redefinedOrders));
       resetState();
       Toast.show({
         type: 'success',

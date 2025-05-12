@@ -234,28 +234,24 @@ const Tercero = () => {
     } catch (error) {
       console.error('Error al cancelar la visita:', error);
     }
-  }
-  
+  };
 
   const saveLocationInVisitaObj = async (location: {
     latitude: number;
     longitude: number;
   }) => {
     console.log('Ubicación guardada:', location);
-    // Convertir cada propiedad del objeto location a string
-    const locationString = {
-      latitude: location.latitude.toString(),
-      longitude: location.longitude.toString(),
-    };
 
     const modifiedVisita: IVisita = {
       ...objVisita,
-      location: locationString, // Guardar la ubicación como un objeto con strings
+      location: {
+        latitude: location.latitude.toString(), // Guardar la ubicación como un objeto con strings
+        longitude: location.longitude.toString(),
+      }, // Guardar la ubicación como un objeto con strings
     };
 
     await visitaService.updateVisita(modifiedVisita, objVisita.id_visita);
-
-    console.log('Ubicación convertida a strings:', locationString);
+    console.log('Ubicación convertida a strings:', modifiedVisita);
   };
 
   const handleSaveLocation = async (location: {
@@ -361,7 +357,6 @@ const Tercero = () => {
           onPress={() => {
             handleCancelarVisita();
           }}>
-          
           <Icon name="table-cancel" size={36} color={'#FFF'} />
         </TouchableOpacity>
       </View>

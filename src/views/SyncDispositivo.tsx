@@ -6,6 +6,7 @@ import {
   Button,
   Text,
   ActivityIndicator,
+  Badge,
 } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useAppDispatch, useAppSelector} from '../redux/hooks';
@@ -177,28 +178,118 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
           <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
             Terceros
           </Text>
-          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {quantityTerceros} registros
-          </Text>
-          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {createdTerceros} creados, {editedTerceros} editados
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: '#0B2863',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4, // Espaciado entre el Badge y el texto
+              }}>
+              {quantityTerceros}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              Terceros totales
+            </Text>
+          </View>
+          <View
+            style={{flexDirection: 'row', alignItems: 'center', marginTop: 2}}>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: 'green',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4, // Espaciado entre el Badge y el texto
+              }}>
+              {createdTerceros}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              {createdTerceros == 1 ? 'Creado ' : 'Creados '},
+            </Text>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: 'green',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4,
+                marginLeft: 8, // Espaciado entre el Badge y el texto
+              }}>
+              {editedTerceros}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              {editedTerceros == 1 ? 'Editado' : 'Editados'}
+            </Text>
+          </View>
         </View>
       </TouchableOpacity>
       <Divider style={styles.divider} />
 
       <TouchableOpacity style={styles.itemContainer}>
-        <View style={styles.itemLeft}>
+        <View
+          style={[
+            styles.itemLeft,
+            {flexDirection: 'column', alignItems: 'flex-start'},
+          ]}>
           <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
             Pedidos
           </Text>
-          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {pedidosElaborados} Pedidos
-          </Text>
-          <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
-            {pedidosPendientesDeActualizacion} pendientes, {pedidosActualizados}{' '}
-            actualizados
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: '#0B2863',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4, // Espaciado entre el Badge y el texto
+              }}>
+              {pedidosElaborados}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              Pedidos totales
+            </Text>
+          </View>
+          <View
+            style={{flexDirection: 'row', alignItems: 'center', marginTop: 2}}>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: 'orange',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4, // Espaciado entre el Badge y el texto
+              }}>
+              {pedidosPendientesDeActualizacion}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              {pedidosPendientesDeActualizacion == 1
+                ? 'Pendiente '
+                : 'Pendientes '}
+              ,
+            </Text>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: 'green',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4,
+                marginLeft: 8, // Espaciado entre el Badge y el texto
+              }}>
+              {pedidosActualizados}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              {pedidosActualizados == 1 ? 'Actualizado' : 'Actualizados'}
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: 2,
+            }}></View>
         </View>
       </TouchableOpacity>
     </View>
@@ -206,10 +297,6 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
 };
 
 const SyncDispositivo = () => {
-  useEffect(() => {
-    loadPedidosValues();
-  }, []);
-
   const dispatch = useAppDispatch();
   const objConfig = useAppSelector(store => store.config.objConfig);
   const tercerosCreados = useAppSelector(
@@ -255,6 +342,7 @@ const SyncDispositivo = () => {
     useCallback(() => {
       loadRecord();
       loadFacturasValues();
+      loadPedidosValues();
     }, []),
   );
 
@@ -344,7 +432,7 @@ const SyncDispositivo = () => {
     }
   };
 
-  const loadPedidosValues: () => void = async () => {
+  const loadPedidosValues = async () => {
     try {
       const pedidos = await pedidosService.getAllPedidos();
 
@@ -362,7 +450,12 @@ const SyncDispositivo = () => {
         pedidosValues.pedidosElaborados++;
       }
 
+      console.log('pedidosValues', pedidosValues);
+
+      // Actualizar el estado de pedidos
       setPedidos(pedidosValues);
+
+      // Actualizar el estado de records
       setRecords(prevRecords => ({
         ...prevRecords,
         pedidosActualizados: pedidosValues.pedidosActualizados,
@@ -381,6 +474,11 @@ const SyncDispositivo = () => {
     }
   };
 
+  // Ejecutar la carga de pedidos al cargar la vista
+  useEffect(() => {
+    // Cargar los valores de pedidos al cargar la vista
+    loadPedidosValues();
+  }, []);
   const updatePedidos: () => void = async () => {
     setLoading(true);
     const pedidosApiService = new PedidosApiService(
@@ -390,8 +488,16 @@ const SyncDispositivo = () => {
 
     const pedidos = await pedidosService.getAllPedidos();
 
-    for (let index = 0; index < pedidos.length; index++) {
-      const pedido = pedidos[index];
+    const pedidosPendientesDeActualizacion = pedidos.filter(
+      pedido => pedido.sincronizado == 'N' || !pedido.sincronizado,
+    );
+
+    for (
+      let index = 0;
+      index < pedidosPendientesDeActualizacion.length;
+      index++
+    ) {
+      const pedido = pedidosPendientesDeActualizacion[index];
 
       try {
         console.log('pedido save', pedido.guardadoEnServer);
@@ -779,19 +885,22 @@ const SyncDispositivo = () => {
         createdTerceros.length + editedTerceros.length
       ).toString();
 
-      setRecords({
+      // Actualizar el estado de records sin sobrescribir los valores de pedidos
+      setRecords(prevRecords => ({
+        ...prevRecords,
         quantityTerceros,
         createdTerceros: createdTerceros.length,
         editedTerceros: editedTerceros.length,
-        facturasActualizados: factura.facturasActualizados,
-        facturasPendientesDeActualizacion:
-          factura.facturasPendientesDeActualizacion,
-        facturasElaborados: factura.facturasElaborados,
-        pedidosActualizados: pedido.pedidosActualizados,
+        // Mantener los valores actuales de pedidos y facturas
+        pedidosActualizados: prevRecords.pedidosActualizados,
         pedidosPendientesDeActualizacion:
-          pedido.pedidosPendientesDeActualizacion,
-        pedidosElaborados: pedido.pedidosElaborados,
-      });
+          prevRecords.pedidosPendientesDeActualizacion,
+        pedidosElaborados: prevRecords.pedidosElaborados,
+        facturasActualizados: prevRecords.facturasActualizados,
+        facturasPendientesDeActualizacion:
+          prevRecords.facturasPendientesDeActualizacion,
+        facturasElaborados: prevRecords.facturasElaborados,
+      }));
     } catch (error) {
       console.error('Error loading records from database', error);
     }
