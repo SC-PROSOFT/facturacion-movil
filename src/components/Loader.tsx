@@ -7,12 +7,10 @@ interface LoaderProps {
 }
 
 export const Loader: React.FC<LoaderProps> = ({visible, message}) => {
-
   const animValues = useRef(
     Array.from({length: 4}, () => new Animated.Value(0.5)),
   ).current;
 
- 
   const startPulse = (anim: Animated.Value, delay: number) => {
     anim.setValue(0.5);
     Animated.sequence([
@@ -41,8 +39,8 @@ export const Loader: React.FC<LoaderProps> = ({visible, message}) => {
       animValues.forEach((anim, i) => startPulse(anim, i * 150));
     } else {
       animValues.forEach(anim => {
-        anim.stopAnimation(); 
-        anim.setValue(0.5); 
+        anim.stopAnimation();
+        anim.setValue(0.5);
       });
     }
   }, [visible, animValues]);
@@ -59,7 +57,11 @@ export const Loader: React.FC<LoaderProps> = ({visible, message}) => {
           />
         ))}
       </View>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      {message ? (
+        <View style={styles.messageContainer}>
+          {message ? <Text style={styles.message}>{message}</Text> : null}
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -86,9 +88,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   message: {
-    marginTop: 12,
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'semibold',
+    lineHeight: 28,
     textAlign: 'center',
+  },
+  messageContainer: {
+    backgroundColor: '#092254',
+    padding: 8,
+    borderRadius: 4,
   },
 });

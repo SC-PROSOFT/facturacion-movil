@@ -41,9 +41,6 @@ class FilesApiServices {
       const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${
         terceroModificado.tipo
       }-${padLeftCodigo(terceroModificado.codigo)}`;
-      console.log('ruta =>>>>', ruta);
-      console.log('formData =>>>>', formData);
-      console.log('Intenta subir el archivo...');
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/guardar-archivo?ruta=${ruta}`, // Encode para evitar problemas con los backslashes
         formData, // FormData debe ir como cuerpo directamente
@@ -53,7 +50,7 @@ class FilesApiServices {
           },
         },
       );
-      console.log(response);  
+      console.log(response);
       if (response.data.success) {
         return true;
       } else {

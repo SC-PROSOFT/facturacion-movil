@@ -10,6 +10,7 @@ import {
 import {Text, ActivityIndicator} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation} from '@react-navigation/native';
+import ConsentPdfView from '../components/ConsentPdf';
 import DocumentPicker, {
   DocumentPickerResponse,
 } from 'react-native-document-picker';
@@ -105,7 +106,7 @@ const CreateTercero = () => {
 
   const [isCodigoValid, setIsCodigoValid] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-
+  const [isModalVisiblePdf, setIsModalVisiblePdf] = useState(false);
   const [isAlreadyValidate, setIsAlreadyValidate] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -345,7 +346,7 @@ const CreateTercero = () => {
     ) => {
       if (file) {
         let codigoPad = padLeftCodigo(tercero.codigo);
-        file.name = `${type}-${codigoPad}${suffix}.${file?.name
+        file.name = `${type}-${codigoPad}-${suffix}.${file?.name
           ?.split('.')
           .pop()}`;
         arrayFiles.push(file);
@@ -751,6 +752,16 @@ const CreateTercero = () => {
               disabled={isDisabled}>
               <Icon name="map-marker-radius" size={36} color={'#FFF'} />
             </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#485E8A',
+                padding: 3,
+                borderRadius: 5,
+              }}
+              onPress={() => setIsModalVisiblePdf(true)}
+              disabled={isDisabled}>
+              <Icon name="signature-freehand" size={36} color={'#FFF'} />
+            </TouchableOpacity>
           </View>
 
           {/* <View>
@@ -794,6 +805,17 @@ const CreateTercero = () => {
         }
       />
       <UploadArchives onFilesUpload={handleFilesUpload} tercero={tercero} />
+      <ConsentPdfView
+        visible={isModalVisiblePdf}
+        onClose={() => setIsModalVisiblePdf(false)}
+        onFirmar={() => console.log('Consentimiento firmado')}
+        onGuardar={path => console.log('PDF guardado en:', path)}
+        nombre={tercero.nombre}
+        codigo={tercero.codigo}
+        celular={tercero.tel}
+        email={tercero.email}
+        ciudad={tercero.ciudad}
+      />
       {isLoading && (
         <View
           style={{

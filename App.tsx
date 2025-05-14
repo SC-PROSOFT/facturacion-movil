@@ -4,6 +4,7 @@ import {StatusBar, View} from 'react-native';
 import {MD3LightTheme as DefaultTheme, PaperProvider} from 'react-native-paper';
 import Toast, {BaseToast, ErrorToast} from 'react-native-toast-message';
 import {visitaService} from './src/data_queries/local_database/services';
+
 /* store */
 import {store} from './src/redux/store';
 /* components */
@@ -15,7 +16,9 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 /* context provider */
 import GlobalProvider from './src/context/global_provider';
 import {recalculateVisitsIfNeeded} from './src/utils';
+import {Buffer} from 'buffer';
 
+global.Buffer = Buffer; // Para compatibilidad con RN 0.71.0 y superior
 /* toast config */
 const toastConfig = {
   success: props => (
@@ -126,11 +129,7 @@ const theme = {
   },
 };
 
-
-
 const App = () => {
-
-
   return (
     <StoreProvider store={store}>
       <PaperProvider theme={theme}>

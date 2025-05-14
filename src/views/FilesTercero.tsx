@@ -168,7 +168,7 @@ const FilesTercero = () => {
       if (file) {
         file.name = `${type}-${padLeftCodigo(
           objTercero.codigo,
-        )}${suffix}.${file?.name?.split('.').pop()}`;
+        )}-${suffix}.${file?.name?.split('.').pop()}`;
         arrayFiles.push(file);
       }
     };
