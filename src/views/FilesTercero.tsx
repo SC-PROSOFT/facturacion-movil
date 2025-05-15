@@ -12,61 +12,84 @@ import DocumentPicker, {
 } from 'react-native-document-picker';
 import {InfoAlert} from '../components';
 import {calcularDigitoVerificacion, padLeftCodigo} from '../utils';
+import {ITerceros} from '../common/types';
+/* components */
+import {CoolButton} from '../components';
+/* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {setObjInfoAlert} from '../redux/slices/infoAlertSlice';
+import {FilesApiServices} from '../data_queries/api/queries';
 import {
   filesService,
   tercerosService,
 } from '../data_queries/local_database/services';
+import {IFiles} from '../common/types';
 import {setFile} from '../redux/slices';
+import {useNavigation} from '@react-navigation/native';
+
 
 const FilesTercero = () => {
   const dispatch = useAppDispatch();
+  const navigation: any = useNavigation();
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
+  const files = useAppSelector(store => store.files.file);
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+  const objConfig = useAppSelector(store => store.config.objConfig);
+  const [file, setFileState] = useState<IFiles | null>(null);
+  const [copyFile, setCopyFile] = useState<IFiles | null>(null);
 
-  // Estados iniciales basados en objTercero
-  const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(
-    objTercero.rut_pdf === 'S'
-      ? {
-          name: 'Archivo cargado',
-          uri: '',
-          fileCopyUri: null,
-          type: 'application/pdf',
-          size: 0,
-        }
-      : null,
-  );
-  const [camaraComercioFile, setCamaraComercioFile] =
-    useState<DocumentPickerResponse | null>(
-      objTercero.camcom_pdf === 'S'
-        ? {
-            name: 'Archivo cargado',
-            uri: '',
-            fileCopyUri: null,
-            type: 'application/pdf',
-            size: 0,
-          }
-        : null,
-    );
-  const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
-    objTercero.di_pdf === 'S'
-      ? {
-          name: 'Archivo cargado',
-          uri: '',
-          fileCopyUri: null,
-          type: 'application/pdf',
-          size: 0,
-        }
-      : null,
-  );
-
-
-  useEffect(() => {
-    console.log('objTercero.codigo', objTercero);
-  }, [objTercero.codigo, dispatch]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
+  const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
+  const [camaraComercioFile, setCamaraComercioFile] =
+    useState<DocumentPickerResponse | null>(null);
+  const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
+    null,
+  );
+
+  const getFiles = async () => {
+    // let files = null;
+    // try {
+    //   files = await filesService.getFilesByCode(objTercero.codigo);
+    // } catch (error) {
+    //   setIsLoading(false);
+    // }
+    // console.log(files);
+    const files = await filesService.getFilesByCode(objTercero.codigo);
+    setCopyFile(files);
+    const fileTemp: DocumentPickerResponse[] = {};
+
+    try {
+      // const parsedFiles = JSON.parse(files.files);
+      // parsedFiles.forEach((file: DocumentPickerResponse) => {
+      //   if (file.name?.includes('RUT')) {
+      //     setRutFile(file);
+      //   } else if (file.name?.includes('CAMCOM')) {
+      //     setCamaraComercioFile(file);
+      //   } else if (file.name?.includes('DI')) {
+      //     setCedulaFile(file);
+      //   }
+      // });
+      if (JSON.stringify(files) !== JSON.stringify(file)) {
+        setFileState(files);
+      }
+    } catch (error) {
+      setIsLoading(false);
+      setObjInfoAlert({
+        visible: true,
+        type: 'error',
+        description: 'Error al cargar los archivos.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    getFiles();
+  }, [objTercero.codigo]);
 
   const handleFileSelection = async (type: string) => {
     setIsDisabled(false);
@@ -115,7 +138,6 @@ const FilesTercero = () => {
 
   const handleFileSelectionError = (err: any) => {
     if (DocumentPicker.isCancel(err)) {
-      // Usuario canceló la selección
     } else {
       dispatch(
         setObjInfoAlert({
@@ -143,6 +165,8 @@ const FilesTercero = () => {
       file: DocumentPickerResponse | null,
       suffix: string,
     ) => {
+      console.log('file añadida', file);
+
       if (file) {
         file.name = `${type}-${padLeftCodigo(
           objTercero.codigo,
@@ -156,26 +180,37 @@ const FilesTercero = () => {
     addFileToArray(cedulaFile, 'DI');
 
     try {
+      console.log(files.files);
       let response;
 
-      if (
-        objTercero.rut_pdf === 'S' ||
-        objTercero.camcom_pdf === 'S' ||
-        objTercero.di_pdf === 'S'
-      ) {
-        response = await filesService.updateFile(objTercero.codigo, arrayFiles);
+      if (copyFile?.files?.length ?? 0 > 0) {
+        console.log('update');
+        response = await filesService.updateFile(copyFile?.codigo, arrayFiles);
+        console.log(response);
       } else {
-        const iFile = {
+        const iFile: IFiles = {
           codigo: objTercero.codigo,
           nombre: objTercero.nombre,
           tipo: type,
           files: arrayFiles,
         };
+        console.log('add');
         response = await filesService.addFile(iFile);
       }
 
       if (response) {
         const terceroModificado = {...objTercero};
+        terceroModificado.tipo =
+          /^\d{9,10}$/.test(objTercero.codigo) &&
+          objTercero.codigo.slice(-1) ===
+            calcularDigitoVerificacion(
+              objTercero.codigo.slice(0, -1),
+            ).toString()
+            ? 'NIT'
+            : 'CC';
+        const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${
+          terceroModificado.tipo
+        }-${padLeftCodigo(terceroModificado.codigo)}`;
         terceroModificado.rut_pdf = rutFile ? 'S' : 'N';
         terceroModificado.camcom_pdf = camaraComercioFile ? 'S' : 'N';
         terceroModificado.di_pdf = cedulaFile ? 'S' : 'N';
@@ -184,7 +219,7 @@ const FilesTercero = () => {
           setObjInfoAlert({
             visible: true,
             type: 'success',
-            description: 'Archivos subidos correctamente.',
+            description: 'Archivos subidos correctamente y paths actualizados.',
           }),
         );
       } else {
@@ -206,6 +241,14 @@ const FilesTercero = () => {
       dispatch(setFile(archivos));
       setIsLoading(false);
     }
+  };
+  const filesApiServices = new FilesApiServices(
+    objConfig.direccionIp,
+    objConfig.puerto,
+  );
+  const tryUploadFiles = async () => {
+    console.log(objConfig);
+    filesApiServices._uploadFiles(rutFile, objTercero);
   };
 
   const removeFile = (type: string) => {
@@ -236,13 +279,13 @@ const FilesTercero = () => {
       alignItems: 'center',
       display: 'flex',
       justifyContent: 'center',
-      flexDirection: 'row',
+      flexDirection: 'row', // Asegura que el icono y el texto estén en la misma fila
     },
     textButton: {
       color: '#FFF',
       fontSize: 18,
       marginLeft: 10,
-      lineHeight: 40,
+      lineHeight: 40, // Añade un margen izquierdo para separar el texto del icono
     },
   });
 
@@ -250,7 +293,6 @@ const FilesTercero = () => {
     <View style={{flex: 1, position: 'relative'}}>
       <View style={{opacity: isLoading ? 0.5 : 1, height: '100%'}}>
         <View style={{padding: 10}}>
-          {/* Documento de Identificación */}
           <Text style={styles.fileTitle}>DOCUMENTO DE IDENTIFICACION</Text>
           <View style={{position: 'relative', marginBottom: 15}}>
             <TouchableOpacity
@@ -297,7 +339,6 @@ const FilesTercero = () => {
             )}
           </View>
 
-          {/* RUT */}
           <View
             style={{
               flexDirection: 'row',
@@ -355,7 +396,6 @@ const FilesTercero = () => {
               </View>
             </View>
 
-            {/* Cámara de Comercio */}
             <View style={{flex: 1, marginLeft: 5, alignItems: 'center'}}>
               <View
                 style={{
@@ -415,7 +455,6 @@ const FilesTercero = () => {
             </View>
           </View>
 
-          {/* Botón Guardar Cambios */}
           <TouchableOpacity
             style={styles.TouchableOpacityButton}
             onPress={uploadFiles}
@@ -439,7 +478,7 @@ const FilesTercero = () => {
             bottom: 0,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo oscuro con opacidad
           }}>
           <ActivityIndicator size="large" color="#092254" />
         </View>
