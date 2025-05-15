@@ -63,9 +63,9 @@ const CreateRuta = () => {
     ruta: '',
     latitude: '',
     longitude: '',
-    rut_path: '',
-    camaracomercio_path: '',
-    cc_path: '',
+    rut_pdf: '',
+    camcom_pdf: '',
+    di_pdf: '',
   });
   const [dateOfVisit, setDateOfVisit] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);

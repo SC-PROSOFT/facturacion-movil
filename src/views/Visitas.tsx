@@ -132,7 +132,9 @@ const Visitas: React.FC = () => {
     try {
       setLoadRecalcVisitas('Cargando visitas...');
       const result = await recalculateVisitsIfNeeded();
-      if (result) {
+      
+      if (result && result.length > 0) {
+        console.log('Recalculando visitas...');
         await visitaService.fillVisitas(result);
       }
       setLoadRecalcVisitas('');

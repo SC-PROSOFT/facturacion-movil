@@ -1,3 +1,5 @@
+type only = 'S' | 'N'; // S = true, N = false
+
 export interface ITerceros {
   codigo: string;
   nombre: string;
@@ -24,8 +26,8 @@ export interface ITerceros {
   ruta: string;
   latitude: string;
   longitude: string;
-  rut_path: string;
-  camaracomercio_path: string;
-  cc_path: string;
+  rut_pdf: only;
+  camcom_pdf: only;
+  di_pdf: only;
   estado?: '1' | '2'; // 1 = Creado, 2 = Actualizado
 }

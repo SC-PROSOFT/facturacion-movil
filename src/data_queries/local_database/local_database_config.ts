@@ -1,5 +1,5 @@
 import SQLite from 'react-native-sqlite-storage';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 /* local database services */
 import {
   operadoresService,
@@ -35,14 +35,17 @@ const createTables = async (): Promise<boolean> => {
     console.log('Creando tablas 5...');
     await carteraService.createTableCartera();
     console.log('Creando tablas 6...');
+    // await tercerosService.dropAllTables();
     await tercerosService.createTableTerceros();
     console.log('Creando tablas 6.12...');
     //  await visitaService.deleteTableVisitas();
     await visitaService.createTableVisitas();
-    // await tercerosService.dropAllTables();
+
     // await tercerosService.dropTableCreates();
     // await tercerosService.dropTableEdits();
     console.log('Creando tablas 6.1...');
+    // await tercerosService.deleteAllTercerosCreated();
+    // await tercerosService.deleteAllTercerosEdited();
     await tercerosService.createTableTercerosCreates();
     console.log('Creando tablas 6.2...');
     await tercerosService.createTableTercerosEdits();

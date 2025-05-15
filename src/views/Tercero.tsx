@@ -72,33 +72,41 @@ const Tercero = () => {
   const toggleFilesObj = async () => {
     try {
       setIsLoading(true);
-      const files = await filesService.getFilesByCode(objTercero.codigo);
-
-      // Verificar si files.files es una cadena y convertirla en un array
-      let parsedFiles = files.files;
-      if (typeof files.files === 'string') {
-        try {
-          parsedFiles = JSON.parse(files.files);
-        } catch (error) {
-          console.error('Error al analizar files.files como JSON:', error);
-          setShowAlert(true);
-          return;
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      // Verificar si parsedFiles es un array y tiene elementos
       if (
-        Array.isArray(parsedFiles) &&
-        parsedFiles.length > 0 &&
-        parsedFiles?.length === 3
+        objTercero.rut_pdf === 'N' ||
+        objTercero.camcom_pdf === 'N' ||
+        objTercero.di_pdf === 'N'
       ) {
-        dispatch(setFile({...files, files: parsedFiles}));
-        setShowAlert(false);
-      } else {
         setShowAlert(true);
+        setIsLoading(false);
+        return;
       }
+      // const files = await filesService.getFilesByCode(objTercero.codigo);
+
+      // // Verificar si files.files es una cadena y convertirla en un array
+      // let parsedFiles = files.files;
+      // if (typeof files.files === 'string') {
+      //   try {
+      //     parsedFiles = JSON.parse(files.files);
+      //   } catch (error) {
+      //     console.error('Error al analizar files.files como JSON:', error);
+      //     setShowAlert(true);
+      //     return;
+      //   } finally {
+      //     setIsLoading(false);
+      //   }
+      // }
+      // // Verificar si parsedFiles es un array y tiene elementos
+      // if (
+      //   Array.isArray(parsedFiles) &&
+      //   parsedFiles.length > 0 &&
+      //   parsedFiles?.length === 3
+      // ) {
+      //   dispatch(setFile({...files, files: parsedFiles}));
+      //   setShowAlert(false);
+      // } else {
+      //   setShowAlert(true);
+      // }
     } catch (error: any) {
       setShowAlert(true);
     }

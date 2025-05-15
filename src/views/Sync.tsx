@@ -55,6 +55,7 @@ import {
 import {showAlert} from '../utils/showAlert';
 /* slices */
 import {setObjInfoAlert} from '../redux/slices';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 /* local types */
 interface ProgressWindowProps {
   visible: boolean;

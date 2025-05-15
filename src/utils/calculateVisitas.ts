@@ -187,7 +187,8 @@ export async function generateVisits(
 
 export async function recalculateVisitsIfNeeded(terceros?: ITerceros[]) {
   try {
-    const shouldRecalculate = await shouldRecalculateVisits(); // Verifica si es un nuevo día
+    const shouldRecalculate = await shouldRecalculateVisits();
+    console.log(shouldRecalculate)// Verifica si es un nuevo día
     if (shouldRecalculate) {
       
       const visits = await generateVisits();

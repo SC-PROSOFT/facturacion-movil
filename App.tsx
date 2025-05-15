@@ -139,7 +139,7 @@ const App = () => {
 
           <InfoAlert />
           <DecisionAlert />
-          <Toast config={toastConfig} />
+          <Toast  config={toastConfig} />
         </GlobalProvider>
       </PaperProvider>
     </StoreProvider>

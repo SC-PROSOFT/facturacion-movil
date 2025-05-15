@@ -23,7 +23,7 @@ class TercerosApiServices {
     let directorio = TercerosApiServices.objConfig
       ? TercerosApiServices.objConfig.directorioContabilidad
       : 'COMER25';
-    let datos = `00000086005264920250220112018|${directorio}|CONTROL|${novedad}|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_path}|${tercero.camaracomercio_path}`;
+    let datos = `00000086005264920250220112018|${directorio}|CONTROL|${novedad}|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_pdf}|${tercero.camcom_pdf}`;
     return datos;
   };
 
@@ -91,8 +91,8 @@ class TercerosApiServices {
         tercero.ruta,
         tercero.latitude,
         tercero.longitude,
-        tercero.rut_path,
-        tercero.camaracomercio_path,
+        tercero.rut_pdf,
+        tercero.camcom_pdf,
       ].join('|');
     };
 

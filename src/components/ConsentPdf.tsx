@@ -201,18 +201,21 @@ export default function ConsentPdfView({
   const handleGuardar = async () => {
     try {
       const destinationPath = `${
-        RNFS.DocumentDirectoryPath
+        RNFS.TemporaryDirectoryPath
       }/consentimiento_guardado_${Date.now()}.pdf`;
+
+      // Copia el archivo a la ubicación temporal
       await RNFS.copyFile(
-        pdfSource.uri.replace('file://', ''),
+        pdfSource.uri.replace('file://', ''), // Asegúrate de eliminar el esquema si ya existe
         destinationPath,
       );
 
-      Alert.alert('Éxito', 'El consentimiento firmado ha sido guardado.');
-      onGuardar(destinationPath);
+      // Llama al método `onGuardar` con la nueva ruta
+      onGuardar(`file://${destinationPath}`); // Asegúrate de incluir el esquema `file://`
+     
     } catch (e) {
       console.error('Error al guardar el archivo:', e);
-      Alert.alert('Error', 'No se pudo guardar el archivo.');
+     
     }
   };
   const styles = StyleSheet.create({
@@ -269,6 +272,17 @@ export default function ConsentPdfView({
           onError={error => console.log('Error al cargar PDF:', error)}
         />
 
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: 30,
+            right: 20,
+            zIndex: 1,
+          }}
+          onPress={onClose}>
+          <Icon name="close" size={36} color={'#092254'} />
+        </TouchableOpacity>
+
         <View style={styles.botonesContainer}>
           <TouchableOpacity
             style={styles.botonFirmar}
@@ -280,7 +294,6 @@ export default function ConsentPdfView({
           <TouchableOpacity
             disabled={signature ? false : true}
             style={styles.botonGuardar}
-            
             onPress={handleGuardar}>
             <Icon name="content-save" size={36} color={'#FFF'} />
             <Text style={styles.botonTexto}>Guardar</Text>

@@ -31,8 +31,9 @@ class TercerosRepository implements IRepository<ITerceros> {
         ruta TEXT,
         latitude TEXT,
         longitude TEXT,
-        rut_path TEXT,
-        camaracomercio_path TEXT
+        rut_pdf TEXT,
+        camcom_pdf TEXT,
+        di_pdf TEXT
     )
     `;
 
@@ -77,8 +78,9 @@ class TercerosRepository implements IRepository<ITerceros> {
         ruta TEXT,
         latitude REAL,
         longitude REAL,
-        rut_path TEXT,
-        camaracomercio_path TEXT
+        rut_pdf TEXT,
+        camcom_pdf TEXT,
+        di_pdf TEXT
       )`;
 
     return new Promise((resolve, reject) => {
@@ -123,8 +125,9 @@ class TercerosRepository implements IRepository<ITerceros> {
         ruta TEXT,
         latitude REAL,
         longitude REAL,
-        rut_path TEXT,
-        camaracomercio_path TEXT
+        rut_pdf TEXT,
+        camcom_pdf TEXT,
+        di_pdf TEXT
       )`;
 
     return new Promise((resolve, reject) => {
@@ -169,9 +172,10 @@ class TercerosRepository implements IRepository<ITerceros> {
         ruta,
         latitude,
         longitude,
-        rut_path,
-        camaracomercio_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        rut_pdf,
+        camcom_pdf,
+        di_pdf
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
    `;
 
     const valuesTercero = [
@@ -197,8 +201,9 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.ruta,
       tercero.latitude,
       tercero.longitude,
-      tercero.rut_path,
-      tercero.camaracomercio_path,
+      tercero.rut_pdf,
+      tercero.camcom_pdf,
+      tercero.di_pdf,
     ];
 
     return new Promise((resolve, reject) => {
@@ -244,8 +249,9 @@ class TercerosRepository implements IRepository<ITerceros> {
         ruta = ?,
         latitude = ?,
         longitude = ?,
-        rut_path = ?,
-        camaracomercio_path = ?
+        rut_pdf = ?,
+        camcom_pdf = ?,
+        di_pdf = ?
     WHERE codigo = ?
    `;
 
@@ -271,8 +277,9 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.ruta,
       tercero.latitude,
       tercero.longitude,
-      tercero.rut_path,
-      tercero.camaracomercio_path,
+      tercero.rut_pdf,
+      tercero.camcom_pdf,
+      tercero.di_pdf,
       id,
     ];
 
@@ -320,8 +327,9 @@ class TercerosRepository implements IRepository<ITerceros> {
         ruta = ?,
         latitude = ?,
         longitude = ?,
-        rut_path = ?,
-        camaracomercio_path = ?
+        rut_pdf = ?,
+        camcom_pdf = ?,
+        di_pdf = ?
     WHERE codigo = ?
     `;
     const valuesTercero = [
@@ -346,8 +354,9 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.ruta,
       tercero.latitude,
       tercero.longitude,
-      tercero.rut_path,
-      tercero.camaracomercio_path,
+      tercero.rut_pdf,
+      tercero.camcom_pdf,
+      tercero.di_pdf,
       tercero.codigo,
     ];
     return new Promise((resolve, reject) => {
@@ -377,7 +386,9 @@ class TercerosRepository implements IRepository<ITerceros> {
       if (existingTercero) {
         return await this.updateEditedTercero({...existingTercero, ...tercero});
       } else {
-        return await this.saveEditedTerceroToDB({codigo: id, ...tercero});
+        const {codigo, ...rest} = tercero;
+        await this.saveEditedTerceroToDB({codigo: id, ...rest});
+        return true;
       }
     } catch (error) {
       throw new Error(`[Error en saveOrUpdateEditedTercero]: ${error}`);
@@ -405,7 +416,7 @@ class TercerosRepository implements IRepository<ITerceros> {
   }
 
   async fillTable(terceros: ITerceros[]): Promise<boolean> {
-    const batchSize = 40;
+    const batchSize = Math.floor(999 / 25);
     const totalRecords = terceros.length;
     const totalBatches = Math.ceil(totalRecords / batchSize);
 
@@ -436,7 +447,7 @@ class TercerosRepository implements IRepository<ITerceros> {
                 const placeholders = batch
                   .map(
                     () =>
-                      '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                      '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                   )
                   .join(', ');
 
@@ -464,8 +475,9 @@ class TercerosRepository implements IRepository<ITerceros> {
                     ruta,
                     latitude,
                     longitude,
-                    rut_path,
-                    camaracomercio_path
+                    rut_pdf,
+                    camcom_pdf,
+                    di_pdf
                   ) VALUES ${placeholders}
                 `;
 
@@ -493,8 +505,9 @@ class TercerosRepository implements IRepository<ITerceros> {
                   tercero.ruta,
                   tercero.latitude,
                   tercero.longitude,
-                  tercero.rut_path,
-                  tercero.camaracomercio_path,
+                  tercero.rut_pdf,
+                  tercero.camcom_pdf,
+                  tercero.di_pdf,
                 ]);
 
                 // Ejecutar la inserción del lote dentro de la misma transacción
@@ -886,9 +899,10 @@ class TercerosRepository implements IRepository<ITerceros> {
         ruta,
         latitude,
         longitude,
-        rut_path,
-        camaracomercio_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        rut_pdf,
+        camcom_pdf,
+        di_pdf
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
    `;
 
     const valuesTercero = [
@@ -914,8 +928,9 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.ruta,
       tercero.latitude,
       tercero.longitude,
-      tercero.rut_path,
-      tercero.camaracomercio_path,
+      tercero.rut_pdf,
+      tercero.camcom_pdf,
+      tercero.di_pdf,
     ];
 
     db.transaction((tx: any) => {
@@ -960,9 +975,10 @@ class TercerosRepository implements IRepository<ITerceros> {
         ruta,
         latitude,
         longitude,
-        rut_path,
-        camaracomercio_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?)
+        rut_pdf,
+        camcom_pdf,
+        di_pdf
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
    `;
 
     const valuesTercero = [
@@ -988,8 +1004,9 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.ruta,
       tercero.latitude,
       tercero.longitude,
-      tercero.rut_path,
-      tercero.camaracomercio_path,
+      tercero.rut_pdf,
+      tercero.camcom_pdf,
+      tercero.di_pdf,
     ];
 
     db.transaction((tx: any) => {

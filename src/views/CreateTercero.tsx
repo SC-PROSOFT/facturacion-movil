@@ -29,7 +29,7 @@ import {
   SearchLocation,
 } from '../components';
 /* types */
-import {ITerceros} from '../common/types';
+import {IFiles, ITerceros} from '../common/types';
 /* utils */
 import {
   getUbication,
@@ -54,8 +54,10 @@ import {
   filesService,
   visitaService,
 } from '../data_queries/local_database/services';
-
+import {Loader} from '../components';
 import {setFile} from '../redux/slices';
+import {FilesApiServices} from '../data_queries/api/queries';
+import Toast from 'react-native-toast-message';
 
 const CreateTercero = () => {
   const dispatch = useAppDispatch();
@@ -85,9 +87,9 @@ const CreateTercero = () => {
     ruta: '',
     latitude: '',
     longitude: '',
-    rut_path: '',
-    camaracomercio_path: '',
-    cc_path: '',
+    rut_pdf: 'N',
+    camcom_pdf: 'N',
+    di_pdf: 'N',
   });
 
   const [activeFrecuenciaField, setActiveFrecuenciaField] = useState<
@@ -117,6 +119,11 @@ const CreateTercero = () => {
   const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
     null,
   );
+  const [consentFile, setConsentFile] = useState<DocumentPickerResponse | null>(
+    null,
+  );
+  const [loaderMessage, setLoaderMessage] = useState<string>('');
+  const objConfig = useAppSelector(store => store.config.objConfig);
   const objOperador = useAppSelector(store => store.operator.objOperator);
 
   const validateFields = () => {
@@ -237,6 +244,7 @@ const CreateTercero = () => {
     setIsLoading(true);
     try {
       // Calcular el tipo de tercero (NIT o CC)
+      setLoaderMessage('Creando tercero...');
       const type =
         /^\d{9,10}$/.test(tercero.codigo) &&
         tercero.codigo.slice(-1) ===
@@ -248,22 +256,20 @@ const CreateTercero = () => {
       const basePath = `D:\\psc\\prog\\DATOS\\ANEXOS\\${type}-${padLeftCodigo(
         tercero.codigo,
       )}`;
-
-      // Asignar las rutas de los archivos al tercero
-      console.log(objOperador.cod_vendedor);
-      const updatedTercero = {
+      const updatedTercero: ITerceros = {
         ...tercero,
         vendedor: objOperador.cod_vendedor,
-        rut_path: rutFile ? `S` : 'N',
-        camaracomercio_path: camaraComercioFile ? `S` : 'N',
-        cc_path: cedulaFile ? `S` : 'N',
+        rut_pdf: rutFile ? `S` : 'N',
+        camcom_pdf: camaraComercioFile ? `S` : 'N',
+        di_pdf: cedulaFile ? `S` : 'N',
       };
       const response = await tercerosService.createTercero(updatedTercero);
+
       if (response) {
         try {
           const visitas = await generateVisits([updatedTercero]);
           if (visitas.length > 0) {
-            console.log('visitas', visitas);
+            setLoaderMessage('Calculando visitas...');
             await visitaService.fillVisitas(visitas);
           }
           if (rutFile || camaraComercioFile || cedulaFile) {
@@ -332,6 +338,7 @@ const CreateTercero = () => {
   };
 
   const uploadFiles = async () => {
+    setLoaderMessage('Subiendo archivos...');
     const arrayFiles: DocumentPickerResponse[] = [];
     const type =
       /^\d{9,10}$/.test(tercero.codigo) &&
@@ -353,42 +360,169 @@ const CreateTercero = () => {
       }
     };
 
+    // Agregar archivos al array
     addFileToArray(rutFile, 'RUT');
     addFileToArray(camaraComercioFile, 'CAMCOM');
     addFileToArray(cedulaFile, 'DI');
 
     try {
-      const iFile = {
-        codigo: tercero.codigo,
-        nombre: tercero.nombre,
-        tipo: type,
-        files: arrayFiles,
+      setLoaderMessage('Subiendo archivos al servidor...');
+      // Subir archivos a la API
+      const uploadResults = await Promise.all(
+        arrayFiles.map(async file => {
+          const success = await uploadFilesApi(file, tercero);
+          return {file, success};
+        }),
+      );
+
+      // Filtrar los archivos que no se subieron correctamente
+      const failedUploads = uploadResults.filter(result => !result.success);
+
+      // Guardar localmente los archivos que fallaron
+      if (failedUploads.length > 0) {
+        setLoaderMessage('Guardando archivos localmente...');
+        const failedFiles = failedUploads.map(result => result.file);
+        const localFile: IFiles = {
+          codigo: tercero.codigo,
+          nombre: tercero.nombre,
+          tipo: type,
+          files: failedFiles,
+          sincronizado: 'N',
+        };
+
+        const response = await filesService.addFile(localFile);
+
+        if (response) {
+          Toast.show({
+            type: 'info',
+            text1: 'Archivos guardados localmente.',
+          });
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Error al guardar los archivos localmente.',
+          });
+        }
+      }
+
+      // Determinar el estado final de los archivos (subidos o guardados localmente)
+      const allFiles = uploadResults.map(result => ({
+        file: result.file,
+        success:
+          result.success || failedUploads.some(f => f.file === result.file),
+      }));
+
+      const updatedTercero: ITerceros = {
+        ...tercero,
+        rut_pdf: allFiles.some(
+          result => result.file.name.includes('RUT') && result.success,
+        )
+          ? 'S'
+          : 'N',
+        camcom_pdf: allFiles.some(
+          result => result.file.name.includes('CAMCOM') && result.success,
+        )
+          ? 'S'
+          : 'N',
+        di_pdf: allFiles.some(
+          result => result.file.name.includes('DI') && result.success,
+        )
+          ? 'S'
+          : 'N',
       };
 
-      const response = await filesService.addFile(iFile);
+      setTercero(updatedTercero);
 
-      if (response) {
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'success',
-            description: 'Tercero creado correctamente.',
-          }),
-        );
+      // Mostrar mensajes de éxito o información
+      const allUploaded = uploadResults.every(result => result.success);
+      if (allUploaded) {
+        Toast.show({
+          type: 'success',
+          text1: 'Archivos subidos correctamente.',
+        });
+      } else {
+        Toast.show({
+          type: 'info',
+          text1:
+            'Algunos archivos no se subieron correctamente y se guardaron localmente.',
+        });
       }
+
+      // Limpiar los archivos subidos
       handleFilesUpload({
         rutFile: null,
         camaraComercioFile: null,
         cedulaFile: null,
       });
     } catch (error) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: 'Error al subir los archivos.',
-        }),
+      console.error('Error al subir los archivos:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error al subir los archivos.',
+      });
+    }
+  };
+
+  const uploadFilesApi = async (
+    file: DocumentPickerResponse,
+    tercero: ITerceros,
+  ): Promise<boolean> => {
+    try {
+      const filesApiServices = new FilesApiServices(
+        objConfig.direccionIp,
+        objConfig.puerto,
       );
+      const success = await filesApiServices._uploadFiles(file, tercero);
+      return success;
+    } catch (error) {
+      console.error('Error al subir el archivo:', error);
+      return false;
+    }
+  };
+  const saveConsentPdf = async (pdfPath: string) => {
+    try {
+      const type =
+        /^\d{9,10}$/.test(tercero.codigo) &&
+        tercero.codigo.slice(-1) ===
+          calcularDigitoVerificacion(tercero.codigo.slice(0, -1)).toString()
+          ? 'NIT'
+          : 'CC';
+
+      const codigoPad = padLeftCodigo(tercero.codigo);
+      const fileName = `${type}-${codigoPad}-CONSENT.pdf`;
+      const file = {
+        uri: pdfPath,
+        type: 'application/pdf',
+        name: fileName,
+        fileCopyUri: pdfPath,
+      } as DocumentPickerResponse;
+
+      const filesApiServices = new FilesApiServices(
+        objConfig.direccionIp,
+        objConfig.puerto,
+      );
+      const success = await filesApiServices._uploadFiles(file, tercero);
+      if (success) {
+        setIsModalVisiblePdf(false);
+        Toast.show({
+          type: 'success',
+          text1: 'Archivo PDF subido correctamente.',
+        });
+      } else {
+        setConsentFile(file);
+        setIsModalVisiblePdf(false);
+        Toast.show({
+          type: 'error',
+          text1: 'El archivo PDF se ha guardado localmente.',
+        });
+      }
+    } catch (error) {
+      // setConsentFile(null);
+      console.log('Error al subir el archivo PDF:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error al subir el archivo PDF.',
+      });
     }
   };
   const numericOnly = (text: string) => {
@@ -809,28 +943,14 @@ const CreateTercero = () => {
         visible={isModalVisiblePdf}
         onClose={() => setIsModalVisiblePdf(false)}
         onFirmar={() => console.log('Consentimiento firmado')}
-        onGuardar={path => console.log('PDF guardado en:', path)}
+        onGuardar={saveConsentPdf}
         nombre={tercero.nombre}
         codigo={tercero.codigo}
         celular={tercero.tel}
         email={tercero.email}
         ciudad={tercero.ciudad}
       />
-      {isLoading && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo oscuro con opacidad
-          }}>
-          <ActivityIndicator size="large" color="#092254" />
-        </View>
-      )}
+      <Loader visible={isLoading} message="Guardando cliente..." />
     </View>
   );
 };

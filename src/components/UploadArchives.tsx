@@ -118,16 +118,7 @@ export const UploadArchives: React.FC<UploadArchivesProps> = React.memo(
     };
 
     const handleUpload = async () => {
-      if (!rutFile || !camaraComercioFile || !cedulaFile) {
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'error',
-            description: 'Todos los archivos deben ser seleccionados.',
-          }),
-        );
-        return;
-      }
+      
       setIsLoading(true);
       onFilesUpload({rutFile, camaraComercioFile, cedulaFile});
       setIsLoading(false);

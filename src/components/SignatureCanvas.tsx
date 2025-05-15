@@ -1,11 +1,26 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef, useState, useEffect} from 'react';
 import {StyleSheet, View, Image, Modal, Button, Dimensions} from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
 import {CoolButton} from './CoolButton';
+import Orientation from 'react-native-orientation-locker';
+
 
 const SignatureModal = ({visible, onClose, onOK, onEmpty}) => {
   const [signature, setSignature] = useState(null);
   const signatureRef = useRef(null);
+
+  useEffect(() => {
+    if (visible) {
+      Orientation.lockToLandscape();
+    } else {
+      Orientation.lockToPortrait(); // O Orientation.unlockAllOrientations();
+    }
+
+    return () => {
+      Orientation.lockToPortrait(); // Asegura que se restaure al desmontar
+    };
+  }, [visible]);
+
 
   const handleOK = signature => {
     setSignature(signature);

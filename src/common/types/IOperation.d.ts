@@ -73,8 +73,8 @@ export interface IOperationDb {
   tercero_ruta: string;
   tercero_latitude: string;
   tercero_longitude: string;
-  tercero_rut_path: string;
-  tercero_camaracomercio_path: string;
+  tercero_rut_pdf: string;
+  tercero_camcom_pdf: string;
 
   guardadoEnServer: 'S' | 'N'; // fue guardado almenos una ves en el servidor, sirve para saber si debo guardar o actualizar en la vista ActualizarPedidos
   sincronizado: 'S' | 'N'; // Pedido sincronizado en servidor
