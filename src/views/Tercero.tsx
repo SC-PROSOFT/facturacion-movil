@@ -135,6 +135,7 @@ const Tercero = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   useFocusEffect(
     React.useCallback(() => {
+      console.log(objTercero);
       toggleLocation();
       toggleFilesObj();
       loadCartera();

@@ -10,7 +10,8 @@ class FilesRepository implements IRepository<IFiles> {
         nombre TEXT NOT NULL,
         tipo TEXT NOT NULL,
         files TEXT,
-        sincronizado TEXT DEFAULT 'N'
+        sincronizado TEXT DEFAULT 'N',
+        guardado TEXT DEFAULT 'N'
       );`;
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
@@ -34,7 +35,7 @@ class FilesRepository implements IRepository<IFiles> {
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
         tx.executeSql(
-          `INSERT INTO files (codigo, nombre, tipo, files) VALUES (?, ?, ?, ?);`,
+          `INSERT INTO files (codigo, nombre, tipo, files, sincronizado, guardado) VALUES (?, ?, ?, ?, ?, ?);`,
           [item.codigo, item.nombre, item.tipo, JSON.stringify(item.files)],
           (_: ResultSet, response: ResultSet) => {
             resolve(true);
@@ -73,10 +74,18 @@ class FilesRepository implements IRepository<IFiles> {
 
   async add(file: IFiles): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      console.log('Agregando.........');
       db.transaction((tx: any) => {
         tx.executeSql(
-          `INSERT INTO files (codigo, nombre, tipo, files, sincronizado) VALUES (?, ?, ?, ?, ?);`,
-          [file.codigo, file.nombre, file.tipo, JSON.stringify(file.files)],
+          `INSERT INTO files (codigo, nombre, tipo, files, sincronizado, guardado) VALUES (?, ?, ?, ?, ?, ?);`,
+          [
+            file.codigo,
+            file.nombre,
+            file.tipo,
+            JSON.stringify(file.files),
+            file.sincronizado,
+            file.guardado,
+          ],
           (_: ResultSet, response: ResultSet) => {
             resolve(true);
           },
@@ -92,7 +101,7 @@ class FilesRepository implements IRepository<IFiles> {
     return new Promise((resolve, reject) => {
       db.transaction((tx: any) => {
         tx.executeSql(
-          `UPDATE files SET nombre = ?, tipo = ?, files = ?, sincronizado ? WHERE codigo = ?;`,
+          `UPDATE files SET nombre = ?, tipo = ?, files = ?, sincronizado = ?, guardado = ? WHERE codigo = ?;`,
           [item.nombre, item.tipo, JSON.stringify(item.files), id],
           (_: ResultSet, response: ResultSet) => {
             resolve(true);
@@ -109,9 +118,6 @@ class FilesRepository implements IRepository<IFiles> {
     codigo: string,
     updatedFiles: DocumentPickerResponse[],
   ): Promise<boolean> {
-    console.log('codigo:', codigo);
-    console.log('updatedFiles:', updatedFiles);
-
     try {
       const existingFiles: IFiles = await this.getById(codigo);
 
@@ -155,8 +161,8 @@ class FilesRepository implements IRepository<IFiles> {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
           tx.executeSql(
-            `UPDATE files SET files = ?, sincronizado = 'N' WHERE codigo = ?;`,
-            [updatedFilesJson, codigo],
+            `UPDATE files SET files = ?, sincronizado = ?, guardado = ? WHERE codigo = ?;`,
+            [updatedFilesJson, 'N', 'S', codigo],
             (_: ResultSet, response: ResultSet) => {
               resolve(true);
             },

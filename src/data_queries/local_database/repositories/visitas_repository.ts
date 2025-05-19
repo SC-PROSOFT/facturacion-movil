@@ -200,6 +200,7 @@ class VisitasRepository implements IRepository<IVisita> {
     WHERE id_visita = ?;
     `;
     return new Promise((resolve, reject) => {
+      console.log('Actualizando visita', data);
       db.transaction((tx: any) => {
         tx.executeSql(
           sqlUpdateStatement,
@@ -221,11 +222,11 @@ class VisitasRepository implements IRepository<IVisita> {
             id,
           ],
           (_: ResultSet, response: ResultSet) => {
+            console.log('Visita actualizada', response);
             resolve(true);
           },
           (error: any) => {
             console.log('Error al actualizar visita:', error);
-
             reject(new Error('Fallo actualizar visita'));
           },
         );

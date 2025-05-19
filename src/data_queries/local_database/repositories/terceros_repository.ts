@@ -289,6 +289,7 @@ class TercerosRepository implements IRepository<ITerceros> {
           sqlUpdateTerceroStatement,
           valuesTercero,
           async (_: ResultSet, result: ResultSet) => {
+            console.log('Entrando a editar tercero');
             // store.dispatch(addTerceroEditado(tercero));
             await this.saveOrUpdateEditedTercero(id, tercero);
             // this.saveEditedTerceroToDB(tercero);

@@ -5,4 +5,5 @@ export interface IFiles {
   tipo: string;
   files?: DocumentPickerResponse[];
   sincronizado: sincronizado; // 0 = No sincronizado, 1 = Sincronizado
+  guardado: sincronizado;
 }

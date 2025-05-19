@@ -73,6 +73,7 @@ import {
   ValidationsBeforeSavingError,
   ApiSaveOrderError,
 } from '../common/errors';
+import {useNavigation} from '@react-navigation/native';
 
 /* local types */
 interface State {
@@ -788,6 +789,7 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
 
 const ElaborarPedido: React.FC = () => {
   const dispatch = useAppDispatch();
+  const navigation: any = useNavigation(); // Obtener el objeto de navegación
 
   const {showDecisionAlert} = decisionAlertContext();
 
@@ -945,6 +947,42 @@ const ElaborarPedido: React.FC = () => {
   const handleInputChange = (input: string, text: string) => {
     setState(prevState => ({...prevState, [input]: text}));
   };
+
+  const handleModalSubmit = (data: {observacion: string; status: boolean}) => {
+    console.log('AwayFromUbication onSubmit en Padre - data:', data);
+
+    // 1. Actualiza el estado del componente padre con la observación del modal
+    setState(prevState => ({
+      ...prevState,
+      observaciones: data.observacion,
+    }));
+
+    // 2. Cierra el modal (ya lo haces en tu código original)
+    setIsModalVisible(false);
+
+    // 3. Ejecuta la lógica de navegación CONDICIONALMENTE basada en data.status
+    if (data.status === false) {
+      // Solo navega si el modal indicó un flujo que NO era el de "guardar observación por estar fuera de zona"
+      // (Es decir, para los casos donde locationStatus fue 0, 1, 2, o 99 en el modal)
+      requestAnimationFrame(() => {
+        // Usar requestAnimationFrame para suavizar la transición
+        if (navigation.canGoBack()) {
+          console.log('Navegando hacia atrás (modal status: false)');
+          navigation.goBack();
+        } else {
+          console.log('Navegando a TabNavPrincipal (modal status: false)');
+          navigation.navigate('TabNavPrincipal'); // Reemplaza 'TabNavPrincipal' con tu ruta principal
+        }
+      });
+    } else {
+      // data.status === true (esto significa que fue el caso locationStatus === 3 y se guardó la observación)
+      // En este escenario, solo cerramos el modal (ya hecho con setIsModalVisible(false)) y no navegamos.
+      console.log(
+        'Observación por estar fuera de zona guardada. No se navega.',
+      );
+    }
+  };
+
   const toggleSaveOrder = async () => {
     setIsLoadingSave(true);
     const pedidosApiService = new PedidosApiService(
@@ -1301,13 +1339,7 @@ const ElaborarPedido: React.FC = () => {
         visible={isModalVisible && !noMoreAwayUbication}
         onClose={() => setIsModalVisible(false)}
         tercero={objTercero}
-        onSubmit={data => {
-          setState(prevState => ({
-            ...prevState,
-            observaciones: data.observacion,
-          }));
-          setIsModalVisible(false);
-        }}
+        onSubmit={handleModalSubmit}
       />
     </View>
   );

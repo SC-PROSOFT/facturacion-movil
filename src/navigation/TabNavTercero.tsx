@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useFocusEffect} from '@react-navigation/native';
-import {TercerosModal, Loader} from '../components';
+import {VisitaSinPedidoModal, Loader} from '../components';
 /* Views */
 import {Tercero, Survey, ElaborarPedido, ElaborarFactura} from '../views';
 /* utils */
@@ -16,6 +16,7 @@ import {setArrProductAdded, setObjOperator} from '../redux/slices';
 /* services */
 import {encuestaService} from '../data_queries/local_database/services';
 import {View} from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const Tab = createBottomTabNavigator();
 
@@ -63,8 +64,12 @@ const TabNavTercero = () => {
     setIsModalVisible(false);
   };
   const handleSubmit = (data: {observacion: string; status: boolean}) => {
-    console.log('Datos enviados desde el modal:', data);
     handleCloseModal();
+    Toast.show({
+      type: 'success',
+      text1: 'Observacion registrada correctamente.',
+      visibilityTime: 3000,
+    });
   };
 
   const optionsTabScreenLeft = ({
@@ -302,7 +307,7 @@ const TabNavTercero = () => {
 
       {/* Modal separado del Navigator */}
       {isModalVisible && (
-        <TercerosModal
+        <VisitaSinPedidoModal
           visible={isModalVisible}
           onClose={handleCloseModal}
           tercero={tercero}

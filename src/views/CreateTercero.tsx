@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   ScrollView,
@@ -104,6 +104,7 @@ const CreateTercero = () => {
     zona: '',
     ruta: '',
     frecuencia: '',
+    tel: '',
   });
 
   const [isCodigoValid, setIsCodigoValid] = useState(false);
@@ -122,10 +123,21 @@ const CreateTercero = () => {
   const [consentFile, setConsentFile] = useState<DocumentPickerResponse | null>(
     null,
   );
+  const [disabledConsent, setDisabledConsent] = useState(true);
+  const [isConsentSigned, setIsConsentSigned] = useState(false);
   const [loaderMessage, setLoaderMessage] = useState<string>('');
   const objConfig = useAppSelector(store => store.config.objConfig);
   const objOperador = useAppSelector(store => store.operator.objOperator);
-
+  useEffect(() => {
+    const areInputsValid = validateFields();
+    const canEnableSave = isConsentSigned && isCodigoValid;
+    const canEnableSign = isCodigoValid && areInputsValid;
+    console.log(isConsentSigned, isCodigoValid);
+    setIsDisabled(!canEnableSave);
+    setDisabledConsent(!canEnableSign);
+    console.log('CanEnable =>', canEnableSave);
+    console.log(isDisabled); // Actualiza el estado isDisabled
+  }, [isConsentSigned, tercero, isCodigoValid]);
   const validateFields = () => {
     const newErrors = {
       codigo: '',
@@ -135,6 +147,7 @@ const CreateTercero = () => {
       zona: '',
       ruta: '',
       frecuencia: '',
+      tel: '',
     };
 
     if (!tercero.codigo) newErrors.codigo = 'El código es requerido';
@@ -145,6 +158,7 @@ const CreateTercero = () => {
     if (!tercero.ruta) newErrors.ruta = 'La ruta es requerida';
     if (!tercero.frecuencia)
       newErrors.frecuencia = 'La frecuencia es requerida';
+    if (!tercero.tel) newErrors.tel = 'El telefono es requerido';
 
     setErrors(newErrors);
 
@@ -154,7 +168,6 @@ const CreateTercero = () => {
   const checkCodigoExists = async () => {
     console.log(codeTemp, tercero.codigo);
     if (isCodigoValid && codeTemp == tercero.codigo) {
-      setIsDisabled(false);
       return;
     }
     if (!tercero.codigo) {
@@ -162,7 +175,7 @@ const CreateTercero = () => {
         ...prevErrors,
         codigo: 'El código es requerido',
       }));
-      setIsDisabled(true);
+
       return;
     }
 
@@ -184,17 +197,14 @@ const CreateTercero = () => {
         );
         setIsLoading(false);
         setIsCodigoValid(false);
-        setIsDisabled(true);
       } else {
         setIsLoading(false);
         setIsCodigoValid(true);
         setCodeTemp(tercero.codigo);
-        setIsDisabled(false);
       }
     } catch (error) {
       setIsLoading(false);
       setIsCodigoValid(true);
-      setIsDisabled(false);
     }
   };
 
@@ -388,6 +398,7 @@ const CreateTercero = () => {
           tipo: type,
           files: failedFiles,
           sincronizado: 'N',
+          guardado: 'S',
         };
 
         const response = await filesService.addFile(localFile);
@@ -480,23 +491,22 @@ const CreateTercero = () => {
     }
   };
   const saveConsentPdf = async (pdfPath: string) => {
+    const type =
+      /^\d{9,10}$/.test(tercero.codigo) &&
+      tercero.codigo.slice(-1) ===
+        calcularDigitoVerificacion(tercero.codigo.slice(0, -1)).toString()
+        ? 'NIT'
+        : 'CC';
+
+    const codigoPad = padLeftCodigo(tercero.codigo);
+    const fileName = `${type}-${codigoPad}-CONSENT.pdf`;
+    const file = {
+      uri: pdfPath,
+      type: 'application/pdf',
+      name: fileName,
+      fileCopyUri: pdfPath,
+    } as DocumentPickerResponse;
     try {
-      const type =
-        /^\d{9,10}$/.test(tercero.codigo) &&
-        tercero.codigo.slice(-1) ===
-          calcularDigitoVerificacion(tercero.codigo.slice(0, -1)).toString()
-          ? 'NIT'
-          : 'CC';
-
-      const codigoPad = padLeftCodigo(tercero.codigo);
-      const fileName = `${type}-${codigoPad}-CONSENT.pdf`;
-      const file = {
-        uri: pdfPath,
-        type: 'application/pdf',
-        name: fileName,
-        fileCopyUri: pdfPath,
-      } as DocumentPickerResponse;
-
       const filesApiServices = new FilesApiServices(
         objConfig.direccionIp,
         objConfig.puerto,
@@ -512,17 +522,19 @@ const CreateTercero = () => {
         setConsentFile(file);
         setIsModalVisiblePdf(false);
         Toast.show({
-          type: 'error',
+          type: 'info',
           text1: 'El archivo PDF se ha guardado localmente.',
         });
       }
     } catch (error) {
-      // setConsentFile(null);
+      // setConsentFile(file);
       console.log('Error al subir el archivo PDF:', error);
       Toast.show({
         type: 'error',
         text1: 'Error al subir el archivo PDF.',
       });
+    } finally {
+      setIsConsentSigned(pdfPath ? true : false);
     }
   };
   const numericOnly = (text: string) => {
@@ -622,7 +634,7 @@ const CreateTercero = () => {
                   setTercero(prevState => ({...prevState, dv: text}));
                 }}
                 error={errors.dv}
-                disabled={isDisabled}
+                disabled={!isCodigoValid}
               />
             </View>
           </View>
@@ -637,7 +649,8 @@ const CreateTercero = () => {
                   numericOnly(text);
                   setTercero(prevState => ({...prevState, tel: text}));
                 }}
-                disabled={isDisabled}
+                disabled={!isCodigoValid}
+                error={errors.tel}
               />
             </View>
 
@@ -646,6 +659,7 @@ const CreateTercero = () => {
                 label="Plazo"
                 name="plazo"
                 maxLength={3}
+                keyboardType="number-pad"
                 onChangeText={(text: string) => {
                   numericOnly(text);
                   setTercero(prevState => ({
@@ -653,7 +667,7 @@ const CreateTercero = () => {
                     plazo: parseInt(text),
                   }));
                 }}
-                disabled={isDisabled}
+                disabled={!isCodigoValid}
               />
             </View>
           </View>
@@ -665,7 +679,7 @@ const CreateTercero = () => {
                 onChangeText={(text: string) =>
                   setTercero(prevState => ({...prevState, departamento: text}))
                 }
-                disabled={isDisabled}
+                disabled={!isCodigoValid}
               />
             </View>
 
@@ -676,7 +690,7 @@ const CreateTercero = () => {
                 onChangeText={(text: string) =>
                   setTercero(prevState => ({...prevState, ciudad: text}))
                 }
-                disabled={isDisabled}
+                disabled={!isCodigoValid}
               />
             </View>
           </View>
@@ -686,7 +700,7 @@ const CreateTercero = () => {
             onChangeText={(text: string) =>
               setTercero(prevState => ({...prevState, barrio: text}))
             }
-            disabled={isDisabled}
+            disabled={!isCodigoValid}
           />
           <_Input
             label="Direccion*"
@@ -695,7 +709,7 @@ const CreateTercero = () => {
               setTercero(prevState => ({...prevState, direcc: text}))
             }
             error={errors.direcc}
-            disabled={isDisabled}
+            disabled={!isCodigoValid}
           />
           <_Input
             label="Correo electronico"
@@ -703,7 +717,7 @@ const CreateTercero = () => {
             onChangeText={(text: string) =>
               setTercero(prevState => ({...prevState, email: text}))
             }
-            disabled={isDisabled}
+            disabled={!isCodigoValid}
           />
 
           <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -756,7 +770,7 @@ const CreateTercero = () => {
                     setTercero(prevState => ({...prevState, zona: text}))
                   }
                   error={errors.zona}
-                  disabled={isDisabled}
+                  disabled={!isCodigoValid}
                 />
               </View>
               <View style={{flex: 2, marginLeft: 6}}>
@@ -780,7 +794,7 @@ const CreateTercero = () => {
                     setTercero(prevState => ({...prevState, ruta: text}))
                   }
                   error={errors.ruta}
-                  disabled={isDisabled}
+                  disabled={!isCodigoValid}
                 />
               </View>
               <View style={{flex: 0.33, marginLeft: 6}}>
@@ -805,6 +819,7 @@ const CreateTercero = () => {
                   onChangeText={(text: string) =>
                     setTercero(prevState => ({...prevState, frecuencia: text}))
                   }
+                  error={errors.frecuencia}
                 />
               </View>
               <View style={styles.buttonContainer}>
@@ -865,12 +880,12 @@ const CreateTercero = () => {
           <View style={{flexDirection: 'row', gap: 8}}>
             <TouchableOpacity
               style={{
-                backgroundColor: '#485E8A',
+                backgroundColor: !isCodigoValid ? '#485E8A70' : '#485E8A',
                 padding: 3,
                 borderRadius: 5,
               }}
               onPress={() => openFileModal()}
-              disabled={isDisabled}>
+              disabled={!isCodigoValid}>
               <Icon name="attachment" size={36} color={'#FFF'} />
             </TouchableOpacity>
 
@@ -888,15 +903,30 @@ const CreateTercero = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={{
-                backgroundColor: '#485E8A',
+                backgroundColor: disabledConsent ? '#485E8A70' : '#485E8A',
                 padding: 3,
                 borderRadius: 5,
               }}
-              onPress={() => setIsModalVisiblePdf(true)}
-              disabled={isDisabled}>
+              disabled={disabledConsent}
+              onPress={() => setIsModalVisiblePdf(true)}>
               <Icon name="signature-freehand" size={36} color={'#FFF'} />
             </TouchableOpacity>
           </View>
+          {isDisabled && (
+            <View style={{marginVertical: 5}}>
+              <Text
+                style={{
+                  color: 'red',
+                  fontSize: 12,
+                  paddingHorizontal: 10,
+                  alignContent: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                }}>
+                Se necesita la firma del consentimiento para crear el cliente.
+              </Text>
+            </View>
+          )}
 
           {/* <View>
             {tercero.codigo.length < 10 && (
@@ -908,15 +938,23 @@ const CreateTercero = () => {
         </View>
 
         <View style={{marginVertical: 20}}>
-          <CoolButton
-            value="Guardar cliente"
-            iconName="content-save"
-            colorButton="#09540B"
-            colorText="#fff"
-            iconSize={20}
-            fontSize={18}
-            pressCoolButton={() => saveTercero()}
-          />
+          <TouchableOpacity
+            style={{
+              backgroundColor: isDisabled ? '#09540B70' : '#09540B',
+              padding: 6,
+              borderRadius: 5,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              gap: 8,
+              width: screenWidth - 30,
+              alignSelf: 'center',
+            }}
+            onPress={saveTercero}
+            disabled={isDisabled}>
+            <Icon name="content-save" size={36} color={'#FFF'} />
+            <Text style={{color: '#fff', fontSize: 18}}>Crear cliente</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
       <SearchLocation
@@ -950,7 +988,7 @@ const CreateTercero = () => {
         email={tercero.email}
         ciudad={tercero.ciudad}
       />
-      <Loader visible={isLoading} message="Guardando cliente..." />
+      <Loader visible={isLoading} message={loaderMessage} />
     </View>
   );
 };

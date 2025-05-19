@@ -138,7 +138,7 @@ export default function ConsentPdfView({
         firstPage.drawImage(pngImage, {
           x: 120,
           y: 91,
-          width: pngDims.width * 1.8,
+          width: pngDims.width ,
           height: pngDims.height * 0.6,
         });
       }

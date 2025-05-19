@@ -12,87 +12,129 @@ import DocumentPicker, {
 } from 'react-native-document-picker';
 import {InfoAlert} from '../components';
 import {calcularDigitoVerificacion, padLeftCodigo} from '../utils';
-import {ITerceros} from '../common/types';
-/* components */
-import {CoolButton} from '../components';
-/* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {setObjInfoAlert} from '../redux/slices/infoAlertSlice';
-import {FilesApiServices} from '../data_queries/api/queries';
 import {
   filesService,
   tercerosService,
 } from '../data_queries/local_database/services';
-import {IFiles} from '../common/types';
-import {setFile} from '../redux/slices';
-import {useNavigation} from '@react-navigation/native';
-
-
+import {setFile, setObjTercero} from '../redux/slices';
+import {ITerceros, IFiles} from '../common/types';
+import Toast from 'react-native-toast-message';
+import {FilesApiServices} from '../data_queries/api/queries';
+import {Loader} from '../components';
 const FilesTercero = () => {
   const dispatch = useAppDispatch();
-  const navigation: any = useNavigation();
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
-  const files = useAppSelector(store => store.files.file);
-  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
   const objConfig = useAppSelector(store => store.config.objConfig);
-  const [file, setFileState] = useState<IFiles | null>(null);
-  const [copyFile, setCopyFile] = useState<IFiles | null>(null);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDisabled, setIsDisabled] = useState(true);
-  const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(null);
-  const [camaraComercioFile, setCamaraComercioFile] =
-    useState<DocumentPickerResponse | null>(null);
-  const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
-    null,
+  const [loaderMessage, setLoaderMessage] = useState<string>('');
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+
+  const placeholderCargado = {
+    name: 'Archivo cargado',
+    uri: '', // URI no es relevante para el placeholder
+    fileCopyUri: null,
+    type: 'application/pdf', // O un tipo genérico
+    size: 0, // Indica que no es un archivo real seleccionado
+  };
+  // Estados iniciales basados en objTercero
+  const [rutFile, setRutFile] = useState<DocumentPickerResponse | null>(
+    objTercero.rut_pdf === 'S'
+      ? {
+          name: 'Archivo cargado',
+          uri: '',
+          fileCopyUri: null,
+          type: 'application/pdf',
+          size: 0,
+        }
+      : null,
   );
-
-  const getFiles = async () => {
-    // let files = null;
-    // try {
-    //   files = await filesService.getFilesByCode(objTercero.codigo);
-    // } catch (error) {
-    //   setIsLoading(false);
-    // }
-    // console.log(files);
-    const files = await filesService.getFilesByCode(objTercero.codigo);
-    setCopyFile(files);
-    const fileTemp: DocumentPickerResponse[] = {};
-
-    try {
-      // const parsedFiles = JSON.parse(files.files);
-      // parsedFiles.forEach((file: DocumentPickerResponse) => {
-      //   if (file.name?.includes('RUT')) {
-      //     setRutFile(file);
-      //   } else if (file.name?.includes('CAMCOM')) {
-      //     setCamaraComercioFile(file);
-      //   } else if (file.name?.includes('DI')) {
-      //     setCedulaFile(file);
-      //   }
-      // });
-      if (JSON.stringify(files) !== JSON.stringify(file)) {
-        setFileState(files);
+  const [camaraComercioFile, setCamaraComercioFile] =
+    useState<DocumentPickerResponse | null>(
+      objTercero.camcom_pdf === 'S'
+        ? {
+            name: 'Archivo cargado',
+            uri: '',
+            fileCopyUri: null,
+            type: 'application/pdf',
+            size: 0,
+          }
+        : null,
+    );
+  const [cedulaFile, setCedulaFile] = useState<DocumentPickerResponse | null>(
+    objTercero.di_pdf === 'S'
+      ? {
+          name: 'Archivo cargado',
+          uri: '',
+          fileCopyUri: null,
+          type: 'application/pdf',
+          size: 0,
+        }
+      : null,
+  );
+  useEffect(() => {
+    // Sincronizar RUT
+    if (objTercero.rut_pdf === 'S') {
+      // Si no hay un archivo seleccionado por el usuario (size > 0), mostrar placeholder
+      if (!rutFile || rutFile.size === 0) {
+        setRutFile(placeholderCargado);
       }
-    } catch (error) {
-      setIsLoading(false);
-      setObjInfoAlert({
-        visible: true,
-        type: 'error',
-        description: 'Error al cargar los archivos.',
-      });
-    } finally {
-      setIsLoading(false);
+    } else {
+      // Si objTercero dice 'N' y el estado local es el placeholder, limpiarlo.
+      // No limpiar si es un archivo recién seleccionado por el usuario.
+      if (rutFile && rutFile.name === 'Archivo cargado' && rutFile.size === 0) {
+        setRutFile(null);
+      }
     }
 
-    setIsLoading(false);
-  };
+    // Sincronizar Cámara de Comercio
+    if (objTercero.camcom_pdf === 'S') {
+      if (!camaraComercioFile || camaraComercioFile.size === 0) {
+        setCamaraComercioFile(placeholderCargado);
+      }
+    } else {
+      if (
+        camaraComercioFile &&
+        camaraComercioFile.name === 'Archivo cargado' &&
+        camaraComercioFile.size === 0
+      ) {
+        setCamaraComercioFile(null);
+      }
+    }
 
+    // Sincronizar Cédula/DI
+    if (objTercero.di_pdf === 'S') {
+      if (!cedulaFile || cedulaFile.size === 0) {
+        setCedulaFile(placeholderCargado);
+      }
+    } else {
+      if (
+        cedulaFile &&
+        cedulaFile.name === 'Archivo cargado' &&
+        cedulaFile.size === 0
+      ) {
+        setCedulaFile(null);
+      }
+    }
+  }, [objTercero.rut_pdf, objTercero.camcom_pdf, objTercero.di_pdf]);
   useEffect(() => {
-    getFiles();
-  }, [objTercero.codigo]);
+    const fetchFiles = async () => {
+      setIsLoading(true);
+      await getFiles();
+      setIsLoading(false);
+    };
+    fetchFiles();
+    console.log('objTercero.codigo', objTercero);
+  }, [objTercero.codigo, dispatch]);
 
+  const [filesObj, setFiles] = useState<IFiles>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
+  const [hasChanges, setHasChanges] = useState(false);
   const handleFileSelection = async (type: string) => {
     setIsDisabled(false);
+    setHasChanges(true); // Activar el estado de cambios
     try {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.pdf, DocumentPicker.types.images],
@@ -119,7 +161,56 @@ const FilesTercero = () => {
       handleFileSelectionError(err);
     }
   };
+  const getFiles = async () => {
+    let files = null;
+    try {
+      files = await filesService.getFilesByCode(objTercero.codigo);
+    } catch (error) {
+      setIsLoading(false);
+    } finally {
+      setFiles(files);
+      updateFileStates(); // Actualizar los estados de los archivos
+    }
+  };
 
+  const updateFileStates = () => {
+    // Actualizar los estados de los archivos basados en objTercero
+    setRutFile(
+      objTercero.rut_pdf === 'S'
+        ? {
+            name: 'Archivo cargado',
+            uri: '',
+            fileCopyUri: null,
+            type: 'application/pdf',
+            size: 0,
+          }
+        : null,
+    );
+    setCamaraComercioFile(
+      objTercero.camcom_pdf === 'S'
+        ? {
+            name: 'Archivo cargado',
+            uri: '',
+            fileCopyUri: null,
+            type: 'application/pdf',
+            size: 0,
+          }
+        : null,
+    );
+    setCedulaFile(
+      objTercero.di_pdf === 'S'
+        ? {
+            name: 'Archivo cargado',
+            uri: '',
+            fileCopyUri: null,
+            type: 'application/pdf',
+            size: 0,
+          }
+        : null,
+    );
+    setIsDisabled(true); // Bloquear el botón después de actualizar los estados
+    setHasChanges(false); // Reiniciar el estado de cambios
+  };
   const assignFile = (type: string, file: DocumentPickerResponse) => {
     switch (type) {
       case 'RUT':
@@ -138,6 +229,7 @@ const FilesTercero = () => {
 
   const handleFileSelectionError = (err: any) => {
     if (DocumentPicker.isCancel(err)) {
+      // Usuario canceló la selección
     } else {
       dispatch(
         setObjInfoAlert({
@@ -148,6 +240,15 @@ const FilesTercero = () => {
         }),
       );
     }
+  };
+  const handleFilesUpload = (files: {
+    rutFile: DocumentPickerResponse | null;
+    camaraComercioFile: DocumentPickerResponse | null;
+    cedulaFile: DocumentPickerResponse | null;
+  }) => {
+    setRutFile(files.rutFile);
+    setCamaraComercioFile(files.camaraComercioFile);
+    setCedulaFile(files.cedulaFile);
   };
 
   const uploadFiles = async () => {
@@ -165,8 +266,6 @@ const FilesTercero = () => {
       file: DocumentPickerResponse | null,
       suffix: string,
     ) => {
-      console.log('file añadida', file);
-
       if (file) {
         file.name = `${type}-${padLeftCodigo(
           objTercero.codigo,
@@ -175,83 +274,154 @@ const FilesTercero = () => {
       }
     };
 
+    // Agregar archivos al array
     addFileToArray(rutFile, 'RUT');
     addFileToArray(camaraComercioFile, 'CAMCOM');
     addFileToArray(cedulaFile, 'DI');
 
-    try {
-      console.log(files.files);
-      let response;
+    // Filtrar archivos válidos
+    const validFiles = arrayFiles.filter(
+      file => file.size > 0 && !file.name.includes('.Archivo cargado'),
+    );
 
-      if (copyFile?.files?.length ?? 0 > 0) {
-        console.log('update');
-        response = await filesService.updateFile(copyFile?.codigo, arrayFiles);
-        console.log(response);
-      } else {
-        const iFile: IFiles = {
+    if (validFiles.length === 0) {
+      Toast.show({
+        type: 'info',
+        text1: 'No hay archivos válidos para subir.',
+      });
+      setIsLoading(false);
+      setIsDisabled(false);
+      return;
+    }
+
+    try {
+      setLoaderMessage('Subiendo archivos al servidor...');
+      // Subir archivos válidos a la API
+      const uploadResults = await Promise.all(
+        validFiles.map(async file => {
+          const success = await uploadFilesApi(file, objTercero);
+          return {file, success};
+        }),
+      );
+
+      // Filtrar los archivos que no se subieron correctamente
+      const failedUploads = uploadResults.filter(result => !result.success);
+
+      // Guardar localmente los archivos que fallaron
+      if (failedUploads.length > 0) {
+        setLoaderMessage('Guardando archivos localmente...');
+        const failedFiles = failedUploads.map(result => result.file);
+        const localFile: IFiles = {
           codigo: objTercero.codigo,
           nombre: objTercero.nombre,
           tipo: type,
-          files: arrayFiles,
+          files: validFiles,
+          sincronizado: 'N',
+          guardado: 'S',
         };
-        console.log('add');
-        response = await filesService.addFile(iFile);
+
+        // Verificar si objFiles tiene guardado en 'S' o 'N'
+        let response;
+        console.log(filesObj);
+        if (filesObj?.guardado === 'S') {
+          // Actualizar archivos existentes
+          response = await filesService.updateFile(
+            objTercero.codigo,
+            validFiles,
+          );
+        } else {
+          // Agregar nuevos archivos
+          const iFile: IFiles = {
+            codigo: objTercero.codigo,
+            nombre: objTercero.nombre,
+            tipo: type,
+            files: validFiles,
+            sincronizado: 'N',
+            guardado: 'S', // Cambiar a 'S' porque se guardarán en la base de datos
+          };
+          response = await filesService.addFile(iFile);
+        }
+        console.log('response', response);
+        if (response) {
+          // Actualizar objTercero y los estados de los archivos
+          const terceroModificado: ITerceros = {
+            ...objTercero,
+            rut_pdf: validFiles.some(file => file.name.includes('RUT'))
+              ? 'S'
+              : 'N',
+            camcom_pdf: validFiles.some(file => file.name.includes('CAMCOM'))
+              ? 'S'
+              : 'N',
+            di_pdf: validFiles.some(file => file.name.includes('DI'))
+              ? 'S'
+              : 'N',
+          };
+
+          // Guardar cambios en la base de datos
+          console.log('terceroModificado', terceroModificado);
+          await tercerosService.updateTercero(terceroModificado);
+          dispatch(setObjTercero(terceroModificado));
+          dispatch(
+            setFile(await filesService.getFilesByCode(objTercero.codigo)),
+          );
+        }
+        if (response) {
+          Toast.show({
+            type: 'info',
+            text1: 'Archivos guardados localmente.',
+          });
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Error al guardar los archivos localmente.',
+          });
+        }
+      }
+      // Mostrar mensajes de éxito o información
+      const allUploaded = uploadResults.every(result => result.success);
+      if (allUploaded) {
+        Toast.show({
+          type: 'success',
+          text1: 'Archivos subidos correctamente.',
+        });
+      } else {
+        Toast.show({
+          type: 'info',
+          text1: 'Se guardaron los archivos localmente.',
+        });
       }
 
-      if (response) {
-        const terceroModificado = {...objTercero};
-        terceroModificado.tipo =
-          /^\d{9,10}$/.test(objTercero.codigo) &&
-          objTercero.codigo.slice(-1) ===
-            calcularDigitoVerificacion(
-              objTercero.codigo.slice(0, -1),
-            ).toString()
-            ? 'NIT'
-            : 'CC';
-        const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${
-          terceroModificado.tipo
-        }-${padLeftCodigo(terceroModificado.codigo)}`;
-        terceroModificado.rut_pdf = rutFile ? 'S' : 'N';
-        terceroModificado.camcom_pdf = camaraComercioFile ? 'S' : 'N';
-        terceroModificado.di_pdf = cedulaFile ? 'S' : 'N';
-        await tercerosService.updateTercero(terceroModificado);
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'success',
-            description: 'Archivos subidos correctamente y paths actualizados.',
-          }),
-        );
-      } else {
-        setIsDisabled(true);
-        setIsLoading(false);
-      }
+      // Limpiar los archivos subidos
     } catch (error) {
-      setIsDisabled(false);
-      setIsLoading(false);
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: 'Error al subir los archivos.',
-        }),
-      );
+      console.error('Error al subir los archivos:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error al subir los archivos.',
+      });
     } finally {
-      const archivos = await filesService.getFilesByCode(objTercero.codigo);
-      dispatch(setFile(archivos));
       setIsLoading(false);
     }
   };
-  const filesApiServices = new FilesApiServices(
-    objConfig.direccionIp,
-    objConfig.puerto,
-  );
-  const tryUploadFiles = async () => {
-    console.log(objConfig);
-    filesApiServices._uploadFiles(rutFile, objTercero);
+
+  const uploadFilesApi = async (
+    file: DocumentPickerResponse,
+    tercero: ITerceros,
+  ): Promise<boolean> => {
+    try {
+      const filesApiServices = new FilesApiServices(
+        objConfig.direccionIp,
+        objConfig.puerto,
+      );
+      const success = await filesApiServices._uploadFiles(file, tercero);
+      return success;
+    } catch (error) {
+      console.error('Error al subir el archivo:', error);
+      return false;
+    }
   };
 
   const removeFile = (type: string) => {
+    setHasChanges(true); // Activar el estado de cambios
     if (type === 'RUT') {
       setRutFile(null);
     } else if (type === 'Cámara de Comercio') {
@@ -279,13 +449,13 @@ const FilesTercero = () => {
       alignItems: 'center',
       display: 'flex',
       justifyContent: 'center',
-      flexDirection: 'row', // Asegura que el icono y el texto estén en la misma fila
+      flexDirection: 'row',
     },
     textButton: {
       color: '#FFF',
       fontSize: 18,
       marginLeft: 10,
-      lineHeight: 40, // Añade un margen izquierdo para separar el texto del icono
+      lineHeight: 40,
     },
   });
 
@@ -293,6 +463,7 @@ const FilesTercero = () => {
     <View style={{flex: 1, position: 'relative'}}>
       <View style={{opacity: isLoading ? 0.5 : 1, height: '100%'}}>
         <View style={{padding: 10}}>
+          {/* Documento de Identificación */}
           <Text style={styles.fileTitle}>DOCUMENTO DE IDENTIFICACION</Text>
           <View style={{position: 'relative', marginBottom: 15}}>
             <TouchableOpacity
@@ -339,6 +510,7 @@ const FilesTercero = () => {
             )}
           </View>
 
+          {/* RUT */}
           <View
             style={{
               flexDirection: 'row',
@@ -396,6 +568,7 @@ const FilesTercero = () => {
               </View>
             </View>
 
+            {/* Cámara de Comercio */}
             <View style={{flex: 1, marginLeft: 5, alignItems: 'center'}}>
               <View
                 style={{
@@ -455,6 +628,7 @@ const FilesTercero = () => {
             </View>
           </View>
 
+          {/* Botón Guardar Cambios */}
           <TouchableOpacity
             style={styles.TouchableOpacityButton}
             onPress={uploadFiles}
@@ -468,21 +642,7 @@ const FilesTercero = () => {
           <InfoAlert />
         </View>
       </View>
-      {isLoading && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo oscuro con opacidad
-          }}>
-          <ActivityIndicator size="large" color="#092254" />
-        </View>
-      )}
+      <Loader visible={isLoading} message={loaderMessage} />
     </View>
   );
 };
