@@ -24,6 +24,7 @@ const db: any = SQLite.openDatabase({name: 'localdb16'}); // 14
 /* create tables */
 const createTables = async (): Promise<boolean> => {
   try {
+    // await pedidosService.deleteTablaPedidos();
     console.log('Creando tablas 1...');
     await configService.createTableConfig();
     console.log('Creando tablas 2...');

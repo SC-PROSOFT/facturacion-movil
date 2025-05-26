@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {View, ScrollView, StyleSheet, ActivityIndicator} from 'react-native';
 import {Button, Text} from 'react-native-paper';
-import {generateVisits} from '../utils';
+import {generatePotentialVisits} from '../utils';
 
 /* components */
 import {
@@ -128,7 +128,7 @@ const CreateRuta = () => {
 
   const generateVisitas = async (tercero: ITerceros) => {
     try {
-      const visitas = await generateVisits([tercero]);
+      const visitas = await generatePotentialVisits([tercero]);
       if (visitas.length > 0) {
         console.log('visitas', visitas);
         await visitaService.fillVisitas(visitas);

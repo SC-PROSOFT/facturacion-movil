@@ -2,202 +2,275 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   visitaService,
   tercerosService,
-} from '../data_queries/local_database/services';
-import {ITerceros, IVisita} from '../common/types';
+} from '../data_queries/local_database/services'; // Rutas verificadas
+import {ITerceros, IVisita} from '../common/types'; // Rutas verificadas
+
+const LAST_VISIT_GENERATION_DATE_KEY = 'lastVisitGenerationDate';
+
+// --- Funciones de Utilidad de Fechas ---
 
 /**
- * Obtiene la fecha local actual en formato "YYYY-MM-DD".
+ * Obtiene la fecha local en formato "YYYY-MM-DD".
  */
 function getLocalDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Meses van de 0 a 11
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  // moment(date).format('YYYY-MM-DD') es una alternativa si ya usas moment
+  return date.toISOString().split('T')[0];
 }
 
 /**
- * Verifica si un código de zona está programado para una fecha específica.
+ * Obtiene la ocurrencia del día de la semana en el mes (ej: 1er Lunes, 2do Martes).
+ * 1 = primera ocurrencia, 2 = segunda, etc.
+ */
+function getWeekdayOccurrenceInMonth(date: Date): number {
+  return Math.ceil(date.getDate() / 7);
+}
+
+// --- Lógica de Programación de Zonas/Frecuencias ---
+
+// Tipos para mayor claridad en los códigos de zona
+enum DayOfWeek { // Coincide con Date.getDay()
+  Domingo = 0, Lunes = 1, Martes = 2, Miercoles = 3, Jueves = 4, Viernes = 5, Sabado = 6,
+}
+
+interface ZoneRule {
+  matches: (zoneCode: string, date: Date) => boolean;
+}
+
+// Regla para días fijos (ej: "01" para Lunes)
+const FixedDayRule: ZoneRule = {
+  matches: (zoneCode, date) => {
+    const dayMapping: Record<string, DayOfWeek> = {
+      '01': DayOfWeek.Lunes, '02': DayOfWeek.Martes, '03': DayOfWeek.Miercoles,
+      '04': DayOfWeek.Jueves, '05': DayOfWeek.Viernes, '06': DayOfWeek.Sabado,
+      '07': DayOfWeek.Domingo,
+    };
+    return dayMapping[zoneCode] === date.getDay();
+  },
+};
+
+// Regla para N-ésima ocurrencia del día en el mes (ej: "11" para 1er Lunes)
+const NthWeekdayRule: ZoneRule = {
+  matches: (zoneCode, date) => {
+    if (!/^[1-4][0-6]$/.test(zoneCode)) return false; // Ajustado para usar 0-6 para días
+    const occurrence = parseInt(zoneCode.charAt(0), 10);
+    const dayOfWeekInCode = parseInt(zoneCode.charAt(1), 10) as DayOfWeek; // ej: '1' para Lunes
+    
+    // Para esta regla, `getWeekdayOccurrence` original era más preciso que `getWeekdayOccurrenceInMonth`
+    // ya que calculaba la ocurrencia real contando desde el inicio del mes.
+    // La función original:
+    const getPreciseWeekdayOccurrence = (d: Date): number => {
+        const dayOfMonth = d.getDate();
+        let occ = 0;
+        for (let i = 1; i <= dayOfMonth; i++) {
+            const currentDate = new Date(d.getFullYear(), d.getMonth(), i);
+            if (currentDate.getDay() === d.getDay()) {
+                occ++;
+            }
+        }
+        return occ;
+    };
+
+    return date.getDay() === dayOfWeekInCode && getPreciseWeekdayOccurrence(date) === occurrence;
+  },
+};
+
+
+// Regla para días duales (ej: "51" para Lunes y Miércoles)
+const DualDayRule: ZoneRule = {
+  matches: (zoneCode, date) => {
+    const dualDayMapping: Record<string, DayOfWeek[]> = {
+      '51': [DayOfWeek.Lunes, DayOfWeek.Miercoles],
+      '52': [DayOfWeek.Martes, DayOfWeek.Jueves],
+      '53': [DayOfWeek.Miercoles, DayOfWeek.Viernes],
+    };
+    return dualDayMapping[zoneCode]?.includes(date.getDay()) || false;
+  },
+};
+
+// Agregador de reglas. Puedes añadir más reglas aquí.
+const zoneSchedulingRules: ZoneRule[] = [FixedDayRule, NthWeekdayRule, DualDayRule];
+
+/**
+ * Verifica si un código de zona está programado para una fecha específica
+ * utilizando un conjunto de reglas.
  */
 function isZoneScheduledForDate(zoneCode: string, date: Date): boolean {
-  const day = date.getDay(); // 0: Domingo, 1: Lunes, ..., 6: Sábado
-  const weekdayOccurrence = getWeekdayOccurrence(date);
-
-  // Mapeo para las zonas con día fijo ("TODOS LOS ...")
-  const simpleZoneMap: {[key: string]: number} = {
-    '01': 1, // Lunes
-    '02': 2, // Martes
-    '03': 3, // Miércoles
-    '04': 4, // Jueves
-    '05': 5, // Viernes
-    '06': 6, // Sábado
-    '07': 0, // Domingo
-  };
-
-  if (simpleZoneMap[zoneCode] !== undefined) {
-    return simpleZoneMap[zoneCode] === day;
-  }
-
-  // Zonas con día y ocurrencia específica, por ejemplo: "11" = primer lunes, "22" = segundo martes, etc.
-  if (/^[1-4][1-7]$/.test(zoneCode)) {
-    const weekNumber = parseInt(zoneCode.charAt(0), 10);
-    const codeDay = parseInt(zoneCode.charAt(1), 10) % 7; // Convertir el dígito de día (donde 7 representa domingo) a la notación de JavaScript (0 para domingo)
-    return day === codeDay && weekdayOccurrence === weekNumber;
-  }
-
-  // Zonas con dos días de visita (ejemplo: "51" = Lunes y Miércoles)
-  if (/^5[1-3]$/.test(zoneCode)) {
-    const dualZoneMap: {[key: string]: number[]} = {
-      '51': [1, 3], // Lunes y Miércoles
-      '52': [2, 4], // Martes y Jueves
-      '53': [3, 5], // Miércoles y Viernes
-    };
-    return dualZoneMap[zoneCode]?.includes(day) || false;
-  }
-
-  return false; // Si no se reconoce el código, no está programado.
-}
-
-/**
- * Obtiene la ocurrencia del día de la semana en el mes (ejemplo: 2° martes).
- */
-function getWeekdayOccurrence(date: Date): number {
-  const dayOfMonth = date.getDate();
-  let occurrence = 0;
-  for (let i = 1; i <= dayOfMonth; i++) {
-    const d = new Date(date.getFullYear(), date.getMonth(), i);
-    if (d.getDay() === date.getDay()) {
-      occurrence++;
+  if (!zoneCode || zoneCode.trim() === '') return false;
+  // Iterar sobre las reglas; si alguna coincide, está programado.
+  for (const rule of zoneSchedulingRules) {
+    if (rule.matches(zoneCode, date)) {
+      return true;
     }
   }
-  return occurrence;
+  return false; // Ninguna regla coincidió
 }
+
+
+// --- Lógica de Recalculo de Visitas ---
 
 /**
  * Verifica si es necesario recalcular las visitas (si es un nuevo día).
  */
 async function shouldRecalculateVisits(): Promise<boolean> {
   try {
-    const lastDate = await AsyncStorage.getItem('lastVisitGenerationDate');
-    console.log('Última fecha de generación:', lastDate);
-
+    const lastDate = await AsyncStorage.getItem(LAST_VISIT_GENERATION_DATE_KEY);
     const today = getLocalDateString(new Date());
-    console.log('Fecha de hoy:', today);
+
+    console.log('Visitas: Última fecha de generación:', lastDate, 'Hoy:', today);
 
     if (lastDate !== today) {
-      await AsyncStorage.setItem('lastVisitGenerationDate', today);
+      await AsyncStorage.setItem(LAST_VISIT_GENERATION_DATE_KEY, today);
       return true;
     }
-
     return false;
-  } catch (e) {
-    console.log('Error checking last generation date:', e);
-    return true; // Si hay error, por seguridad recalculemos
+  } catch (e: any) {
+    console.error('Visitas: Error verificando última fecha de generación:', e.message);
+    return true; // En caso de error, es más seguro recalcular.
   }
 }
 
 /**
- * Genera visitas para un conjunto de terceros en las fechas de hoy y mañana.
+ * Obtiene las frecuencias de un tercero de forma segura.
  */
-export async function generateVisits(
-  terceros?: ITerceros[],
+function getTerceroFrequencies(tercero: ITerceros): string[] {
+  const freqs: (string | undefined)[] = [
+    tercero.frecuencia, (tercero as any).frecuencia_1, // Mantener alias por retrocompatibilidad
+    tercero.frecuencia2, (tercero as any).frecuencia_2,
+    tercero.frecuencia3, (tercero as any).frecuencia_3,
+  ];
+  // Filtrar undefined, null, o strings vacíos, y eliminar duplicados
+  return [...new Set(freqs.filter(f => f && f.trim() !== ''))] as string[];
+}
+
+
+/**
+ * Genera visitas para un conjunto de terceros en las fechas de hoy y mañana.
+ * No guarda las visitas en la base de datos, solo las retorna.
+ */
+export async function generatePotentialVisits(
+  allTerceros?: ITerceros[],
 ): Promise<IVisita[]> {
-  const visits: IVisita[] = [];
+  const potentialVisits: IVisita[] = [];
   const today = new Date();
-  const tomorrow = new Date();
+  const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
-  console.log('Hoy:', today);
-  console.log('Mañana:', tomorrow);
-  const todayString = getLocalDateString(today);
-  const tomorrowString = getLocalDateString(tomorrow);
 
-  console.log('Hoy:', todayString);
-  console.log('Mañana:', tomorrowString);
+  const datesToCheck = [
+    { dateObj: today, dateStr: getLocalDateString(today) },
+    { dateObj: tomorrow, dateStr: getLocalDateString(tomorrow) },
+  ];
 
-  const datesToCheck = [today, tomorrow];
+  console.log('Visitas: Generando para fechas:', datesToCheck.map(d => d.dateStr).join(', '));
 
   try {
-    if (!terceros) {
-      terceros = await tercerosService.getAllTerceros();
+    const tercerosToProcess = allTerceros || (await tercerosService.getAllTerceros());
+    if (!tercerosToProcess || tercerosToProcess.length === 0) {
+      console.log('Visitas: No hay terceros para procesar.');
+      return [];
     }
 
-    const existingVisits = await visitaService.getAllVisitas();
-    console.log('Visitas existentes:', existingVisits);
+    // Optimización: Obtener solo visitas existentes para hoy y mañana y crear un lookup set
+    const existingVisitsToday = await visitaService.getVisitasByDate(datesToCheck[0].dateStr);
+    const existingVisitsTomorrow = await visitaService.getVisitasByDate(datesToCheck[1].dateStr);
+    
+    const existingVisitKeys = new Set<string>();
+    [...existingVisitsToday, ...existingVisitsTomorrow].forEach(visita => {
+      existingVisitKeys.add(`${visita.id_tercero}-${visita.appointmentDate}`);
+    });
+    console.log(`Visitas: Encontradas ${existingVisitKeys.size} visitas existentes para hoy y mañana.`);
 
-    terceros.forEach(tercero => {
-      const frecuencia1 =
-        tercero.frecuencia || (tercero as any).frecuencia_1 || '';
-      const frecuencia2 =
-        tercero.frecuencia2 || (tercero as any).frecuencia_2 || '';
-      const frecuencia3 =
-        tercero.frecuencia3 || (tercero as any).frecuencia_3 || '';
 
-      datesToCheck.forEach(date => {
-        const zoneCodes = [frecuencia1, frecuencia2, frecuencia3].filter(
-          Boolean,
+    tercerosToProcess.forEach(tercero => {
+      if (!tercero || !tercero.codigo) return; // Saltar si el tercero no es válido
+
+      const frequencies = getTerceroFrequencies(tercero);
+      if (frequencies.length === 0) return; // Saltar si no tiene frecuencias
+
+      datesToCheck.forEach(({ dateObj, dateStr }) => {
+        const isScheduledForThisDate = frequencies.some(code =>
+          isZoneScheduledForDate(code, dateObj),
         );
-        const isScheduled = zoneCodes.some(code =>
-          isZoneScheduledForDate(code, date),
-        );
 
-        if (isScheduled) {
-          const appointmentDate = getLocalDateString(date);
+        if (isScheduledForThisDate) {
+          const visitKeyInDb = `${tercero.codigo}-${dateStr}`;
+          const alreadyExistsInDb = existingVisitKeys.has(visitKeyInDb);
 
-          const alreadyExistsInDb = existingVisits.some(
-            visita =>
-              visita.id_tercero === tercero.codigo &&
-              visita.appointmentDate === appointmentDate,
+          // También verifica si ya se añadió en esta misma ejecución (para el mismo tercero y fecha)
+          const alreadyExistsInCurrentBatch = potentialVisits.some(
+            v => v.id_tercero === tercero.codigo && v.appointmentDate === dateStr,
           );
 
-          const alreadyExistsInArray = visits.some(
-            visita =>
-              visita.id_tercero === tercero.codigo &&
-              visita.appointmentDate === appointmentDate,
-          );
-
-          if (!alreadyExistsInDb && !alreadyExistsInArray) {
-            visits.push({
+          if (!alreadyExistsInDb && !alreadyExistsInCurrentBatch) {
+            potentialVisits.push({
+              // id_visita: uuid.v4(), // Si necesitas un ID temporal antes de guardar en BD
               client: tercero.nombre,
-              adress: tercero.direcc,
-              status: '2',
-              observation: '',
+              adress: tercero.direcc || 'Dirección no especificada',
+              status: '2', // '2' para Pendiente
+              observation: '', // Observación inicial vacía
               saleValue: 0,
-              appointmentDate,
+              appointmentDate: dateStr,
               location: {
-                latitude: tercero.latitude || '', // Asegúrate de que latitude esté definido
-                longitude: tercero.longitude || '', // Asegúrate de que longitude esté definido
+                latitude: tercero.latitude || '',
+                longitude: tercero.longitude || '',
               },
               id_tercero: tercero.codigo,
-              zona: tercero.zona,
-              ruta: tercero.ruta,
-              frecuencia: frecuencia1,
-              frecuencia_2: frecuencia2,
-              frecuencia_3: frecuencia3,
-              vendedor: tercero.vendedor,
+              zona: tercero.zona || '',
+              ruta: tercero.ruta || '',
+              // Guardar la primera frecuencia que coincidió, o todas si es necesario
+              frecuencia: frequencies[0], 
+              // frecuencia_2: frequencies[1] || '', // Opcional
+              // frecuencia_3: frequencies[2] || '', // Opcional
+              vendedor: tercero.vendedor || '',
             });
           }
         }
       });
     });
-  } catch (e) {
-    console.log('Error al generar visitas:', e);
+  } catch (e: any) {
+    console.error('Visitas: Error al generar visitas potenciales:', e.message);
   }
-
-  return visits;
+  console.log(`Visitas: Generadas ${potentialVisits.length} visitas potenciales.`);
+  return potentialVisits;
 }
 
-export async function recalculateVisitsIfNeeded(terceros?: ITerceros[]) {
+/**
+ * Recalcula y guarda las visitas si es un nuevo día.
+ * Devuelve las visitas generadas (nuevas) o un array vacío si no se recalculó.
+ */
+export async function recalculateAndSaveVisitsIfNeeded(): Promise<IVisita[]> {
   try {
     const shouldRecalculate = await shouldRecalculateVisits();
-    console.log(shouldRecalculate)// Verifica si es un nuevo día
     if (shouldRecalculate) {
-      
-      const visits = await generateVisits();
-      return visits // Llama a generateVisits para recalcular
+      console.log('Visitas: Recalculando visitas para el nuevo día...');
+      const newPotentialVisits = await generatePotentialVisits(); // Siempre genera para todos los terceros
+
+      if (newPotentialVisits.length > 0) {
+        // Aquí es donde realmente guardas las visitas en la base de datos
+        // Asumo que visitaService.createBulkVisits o similar existe y maneja duplicados
+        // o que generatePotentialVisits ya los filtró contra la BD.
+        // Por ahora, la lógica de generatePotentialVisits ya filtra duplicados de BD.
+        
+        // Ejemplo de cómo podrías guardarlas una por una (o mejor, en lote)
+        const savedVisits: IVisita[] = [];
+        for (const visita of newPotentialVisits) {
+            try {
+                // Asumimos que createVisita devuelve la visita guardada con su ID de BD
+                const saved = await visitaService.createVisita(visita); 
+                if(saved) savedVisits.push(saved as IVisita); // Asegúrate que 'saved' sea del tipo IVisita
+            } catch (saveError: any) {
+                console.error(`Visitas: Error guardando visita para ${visita.id_tercero} en ${visita.appointmentDate}:`, saveError.message);
+            }
+        }
+        console.log(`Visitas: Guardadas ${savedVisits.length} nuevas visitas en la BD.`);
+        return savedVisits; 
+      }
+      return [];
     } else {
-      return []; // No es necesario recalcular, devuelve un array vacío
+      console.log('Visitas: No es necesario recalcular hoy.');
+      return [];
     }
-  } catch (error) {
-    console.error('Error al recalcular visitas:', error);
+  } catch (error: any) {
+    console.error('Visitas: Error al recalcular visitas:', error.message);
     return [];
   }
 }

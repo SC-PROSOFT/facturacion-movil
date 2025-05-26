@@ -260,6 +260,50 @@ class FilesRepository implements IRepository<IFiles> {
       });
     });
   }
+
+  async updateGuardado(codigo: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `UPDATE files SET guardado = 'S' WHERE codigo = ?;`,
+          [codigo],
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            console.error('Error al actualizar guardado:', error);
+            reject(new Error('Fallo actualizar guardado'));
+          },
+        );
+      });
+    });
+  }
+
+  async getAllUnsynced(): Promise<IFiles[]> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `SELECT * FROM files WHERE sincronizado = 'N';`,
+          [],
+          (_: ResultSet, response: ResultSet) => {
+            const files: IFiles[] = [];
+            if (response.rows.length === 0) {
+              resolve(files);
+            }
+            for (let i = 0; i < response.rows.length; i++) {
+              const file: IFiles = response.rows.item(i);
+              files.push(file);
+            }
+            resolve(files);
+          },
+          (error: ResultSet) => {
+            console.error('Error al obtener archivos no sincronizados:', error);
+            reject(new Error('Fallo obtener archivos no sincronizados'));
+          },
+        );
+      });
+    });
+  }
 }
 
 export {FilesRepository};

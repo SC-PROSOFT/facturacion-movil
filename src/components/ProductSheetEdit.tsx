@@ -89,6 +89,7 @@ const ProductSheetEdit: React.FC<ProductSheetProps> = ({}) => {
   //Hacer un test a esta funcion jejej si o fokin si // no lo hice equisde :c
   const toggleEditProduct = () => {
     const {saldo} = objProduct;
+    console.log('objProduct', objProduct);
     const {facturarSinExistencias} = ObjGeneralConfig;
 
     let valorBase =
@@ -99,9 +100,12 @@ const ProductSheetEdit: React.FC<ProductSheetProps> = ({}) => {
     let valorIva = productAdded.valorIva; // en desarrollo.
 
     let valorTotal = valorBase - valorDescuento + valorIva;
-
+    console.log('add pr =>', productAdded);
+    console.log('saldo number =>', Number(saldo));
+    console.log(productAdded.cantidad);
     if (
-      !facturarSinExistencias && // aqui debe ser !facturarSinExistencias
+      // aqui debe ser !facturarSinExistencias
+      !facturarSinExistencias &&
       (Number(saldo) == 0 || productAdded.cantidad > Number(saldo))
     ) {
       Toast.show({

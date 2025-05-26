@@ -55,6 +55,12 @@ interface Pedidos {
   pedidosPendientesDeActualizacion: number;
   pedidosElaborados: number;
 }
+
+interface Files {
+  filesActualizados: number;
+  filesPendientesDeActualizacion: number;
+  filesElaborados: number;
+}
 interface RecordProps {
   records: {
     quantityTerceros: string;
@@ -66,6 +72,9 @@ interface RecordProps {
     pedidosActualizados: number;
     pedidosPendientesDeActualizacion: number;
     pedidosElaborados: number;
+    filesActualizados: number;
+    filesPendientesDeActualizacion: number;
+    filesElaborados: number;
   };
   toggleTerceros: () => void;
 }
@@ -80,6 +89,9 @@ interface Records {
   pedidosActualizados: number;
   pedidosPendientesDeActualizacion: number;
   pedidosElaborados: number;
+  filesActualizados: number;
+  filesPendientesDeActualizacion: number;
+  filesElaborados: number;
 }
 
 const ProgressWindow = ({
@@ -137,6 +149,9 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
     pedidosElaborados,
     pedidosPendientesDeActualizacion,
     pedidosActualizados,
+    filesActualizados,
+    filesPendientesDeActualizacion,
+    filesElaborados,
   } = records;
 
   const styles = StyleSheet.create({
@@ -185,7 +200,7 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
                 backgroundColor: '#0B2863',
                 fontWeight: 'bold',
                 fontSize: 14,
-                marginRight: 4, // Espaciado entre el Badge y el texto
+                marginRight: 4,
               }}>
               {quantityTerceros}
             </Badge>
@@ -201,7 +216,7 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
                 backgroundColor: 'green',
                 fontWeight: 'bold',
                 fontSize: 14,
-                marginRight: 4, // Espaciado entre el Badge y el texto
+                marginRight: 4,
               }}>
               {createdTerceros}
             </Badge>
@@ -284,12 +299,66 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
               {pedidosActualizados == 1 ? 'Actualizado' : 'Actualizados'}
             </Text>
           </View>
+        </View>
+      </TouchableOpacity>
+      <Divider style={styles.divider} />
+      <TouchableOpacity style={styles.itemContainer}>
+        <View
+          style={[
+            styles.itemLeft,
+            {flexDirection: 'column', alignItems: 'flex-start'},
+          ]}>
+          <Text allowFontScaling={false} style={styles.itemLeftSuperiorText}>
+            Archivos
+          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: '#0B2863',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4, // Espaciado entre el Badge y el texto
+              }}>
+              {filesElaborados}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              Archivos totales
+            </Text>
+          </View>
           <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginTop: 2,
-            }}></View>
+            style={{flexDirection: 'row', alignItems: 'center', marginTop: 2}}>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: 'orange',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4, // Espaciado entre el Badge y el texto
+              }}>
+              {filesPendientesDeActualizacion}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              {filesPendientesDeActualizacion == 1
+                ? 'Pendiente '
+                : 'Pendientes '}
+              ,
+            </Text>
+            <Badge
+              size={20}
+              style={{
+                backgroundColor: 'green',
+                fontWeight: 'bold',
+                fontSize: 14,
+                marginRight: 4,
+                marginLeft: 8, // Espaciado entre el Badge y el texto
+              }}>
+              {filesActualizados}
+            </Badge>
+            <Text allowFontScaling={false} style={styles.itemLeftInferiorText}>
+              {filesActualizados == 1 ? 'Actualizado' : 'Actualizados'}
+            </Text>
+          </View>
         </View>
       </TouchableOpacity>
     </View>
@@ -317,6 +386,12 @@ const SyncDispositivo = () => {
     pedidosPendientesDeActualizacion: 0,
     pedidosElaborados: 0,
   });
+
+  const [file, setFiles] = useState<Files>({
+    filesActualizados: 0,
+    filesPendientesDeActualizacion: 0,
+    filesElaborados: 0,
+  });
   const [loading, setLoading] = useState<boolean>(false);
 
   const [screenHeight, setScreenHeight] = useState(
@@ -336,6 +411,9 @@ const SyncDispositivo = () => {
     pedidosActualizados: 0,
     pedidosPendientesDeActualizacion: 0,
     pedidosElaborados: 0,
+    filesActualizados: 0,
+    filesPendientesDeActualizacion: 0,
+    filesElaborados: 0,
   });
 
   useFocusEffect(
@@ -343,6 +421,7 @@ const SyncDispositivo = () => {
       loadRecord();
       loadFacturasValues();
       loadPedidosValues();
+      loadFiles();
     }, []),
   );
 
@@ -379,6 +458,40 @@ const SyncDispositivo = () => {
           visible: true,
           type: 'error',
           description: 'Fallo cargar valores de facturas',
+        }),
+      );
+    }
+  };
+
+  const loadFiles = async () => {
+    try {
+      const files = await filesService.getAllFiles();
+      const filesValues = {
+        filesActualizados: 0,
+        filesPendientesDeActualizacion: 0,
+        filesElaborados: 0,
+      };
+      for (let file of files) {
+        file.sincronizado == 'S'
+          ? (filesValues.filesActualizados += 1)
+          : (filesValues.filesPendientesDeActualizacion += 1);
+
+        filesValues.filesElaborados++;
+      }
+      setFiles(filesValues);
+      setRecords(prevRecords => ({
+        ...prevRecords,
+        filesActualizados: filesValues.filesActualizados,
+        filesPendientesDeActualizacion:
+          filesValues.filesPendientesDeActualizacion,
+        filesElaborados: filesValues.filesElaborados,
+      }));
+    } catch (error) {
+      dispatch(
+        setObjInfoAlert({
+          visible: true,
+          type: 'error',
+          description: 'Fallo cargar valores de archivos',
         }),
       );
     }
@@ -477,6 +590,7 @@ const SyncDispositivo = () => {
   // Ejecutar la carga de pedidos al cargar la vista
   useEffect(() => {
     // Cargar los valores de pedidos al cargar la vista
+    loadFiles();
     loadPedidosValues();
   }, []);
   const updatePedidos: () => void = async () => {

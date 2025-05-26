@@ -2,6 +2,7 @@ import {IOperadores, ITerceros} from '.';
 import {IProductAdded} from '../../types';
 
 export interface IOperation {
+  id: number;
   tipo_operacion: 'factura' | 'pedido';
   fecha: string;
   hora: string;
@@ -25,6 +26,7 @@ export interface IOperation {
 }
 
 export interface IOperationDb {
+  id: number;
   tipo_operacion: 'factura' | 'pedido';
   almacen: string;
   fecha: string;

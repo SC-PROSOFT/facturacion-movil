@@ -129,27 +129,28 @@ export const getCurrentOperator = async (codigoOperador: string) => {
     throw new Error(error);
   }
 };
-export const getInitialsOfClient = (client: string): string => {
-  const clientScope = client.split(' ');
+// En tu archivo de utils donde tienes getInitialsOfClient
+export const getInitialsOfClient = (clientName?: string): string => {
+  // Si clientName es undefined, null, o una cadena vacía, devuelve '..'
+  if (
+    !clientName ||
+    typeof clientName !== 'string' ||
+    clientName.trim() === ''
+  ) {
+    return '..';
+  }
 
-  let clientInitials = '';
-  clientScope.forEach(client => {
-    if (clientScope.length <= 1 && client == '') {
-      return (clientInitials = '..');
-    }
+  const words = clientName
+    .trim()
+    .split(' ')
+    .filter(word => word.length > 0);
 
-    if (clientScope.length <= 1) {
-      return (clientInitials = client.slice(0, 2).toUpperCase());
-    }
-
-    if (clientScope.length <= 2) {
-      return (clientInitials += client.slice(0, 1).toUpperCase());
-    }
-
-    if (clientScope.length > 2) {
-      return (clientInitials += client.slice(0, 1).toUpperCase());
-    }
-  });
-
-  return clientInitials.slice(0, 2);
+  if (words.length === 0) {
+    return '..';
+  } else if (words.length === 1) {
+    return words[0].substring(0, 2).toUpperCase();
+  } else {
+    // Toma la primera letra de las primeras dos palabras
+    return (words[0].substring(0, 1) + words[1].substring(0, 1)).toUpperCase();
+  }
 };

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {Text} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
-import {recalculateVisitsIfNeeded} from '../utils';
+import {recalculateAndSaveVisitsIfNeeded} from '../utils';
 import Geolocation from '@react-native-community/geolocation';
 /* components */
 import {
@@ -85,7 +85,7 @@ const Visitas: React.FC = () => {
   const [dataReady, setDataReady] = useState<boolean>(false);
   const objOperador = useAppSelector(store => store.operator.objOperator);
   const [loadRecalcVisitas, setLoadRecalcVisitas] = useState<string>('');
-
+  const [loaderMessage, setLoaderMessage] = useState<string>('');
   const currentDate = getLocalDateString();
   const tomorrow = addOneDay(currentDate);
 
@@ -116,23 +116,12 @@ const Visitas: React.FC = () => {
       loadVisitas();
     }, []),
   );
-  const getUserLocation = async () => {
-    try {
-      const location = await GetLocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 60000,
-      });
-      return location;
-    } catch (error) {
-      console.warn(error);
-      return null;
-    }
-  };
+  
   const recalculateVisitas = async () => {
     try {
       setLoadRecalcVisitas('Cargando visitas...');
-      const result = await recalculateVisitsIfNeeded();
-      
+      const result = await recalculateAndSaveVisitsIfNeeded();
+
       if (result && result.length > 0) {
         console.log('Recalculando visitas...');
         await visitaService.fillVisitas(result);
@@ -246,6 +235,7 @@ const Visitas: React.FC = () => {
   };
 
   const toggleVisita = async (visita: IVisita) => {
+    console.log('visita =>>>>', visita);
     try {
       const tercero = await tercerosService.getByAttribute(
         'codigo',
@@ -363,7 +353,7 @@ const Visitas: React.FC = () => {
         />
       </SafeAreaView>
       <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
-      <Loader visible={loading} />
+      <Loader visible={loading} message={loaderMessage} />
     </View>
   );
 };

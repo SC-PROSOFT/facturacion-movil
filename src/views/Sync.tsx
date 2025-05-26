@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 
 import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
-import {generateVisits} from '../utils';
+import {generatePotentialVisits} from '../utils';
 import {
   Divider,
   Dialog,
@@ -320,7 +320,7 @@ const Sync = () => {
       const resGetTerceros = await syncQueries._getTerceros();
 
       setDialogContent('Generando visitas - 7/9');
-      const resVisitas = await generateVisits(resGetTerceros);
+      const resVisitas = await generatePotentialVisits(resGetTerceros);
 
       setDialogContent('Trayendo zonas - 8/9');
       const resGetZonas = await syncQueries._getZonas();

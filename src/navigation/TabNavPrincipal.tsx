@@ -10,7 +10,7 @@ import {
   Visitas,
   Sync,
   ActualizarFacturas,
-  ActualizarPedidos,
+  EditarPedidos,
   SyncDispositivo,
   Estadisticas,
 } from '../views';

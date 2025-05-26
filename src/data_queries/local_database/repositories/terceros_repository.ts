@@ -673,6 +673,7 @@ class TercerosRepository implements IRepository<ITerceros> {
             if (result) {
               resolve(result);
             } else {
+            console.log("Atribute =>",atributeName, "Value =>",attributeValue);
               reject(
                 new Error(
                   'No se encontró el registro con el código proporcionado',

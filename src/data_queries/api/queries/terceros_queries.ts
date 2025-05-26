@@ -17,13 +17,54 @@ class TercerosApiServices {
     TercerosApiServices.objConfig = config;
   }
 
-  _constructTercero = (tercero: ITerceros, novedad: string) => {
+  _constructTercero = (tercero: ITerceros, novedad: string): string => {
+    // Added return type
     console.log(TercerosApiServices.objConfig);
 
-    let directorio = TercerosApiServices.objConfig
-      ? TercerosApiServices.objConfig.directorioContabilidad
-      : 'COMER25';
-    let datos = `00000086005264920250220112018|${directorio}|CONTROL|${novedad}|${tercero.codigo}|${tercero.nombre}|${tercero.direcc}|${tercero.tipo}|${tercero.zona}|${tercero.ruta}|${tercero.plazo}|${tercero.tel}|${tercero.vendedor}|${tercero.f_pago}|${tercero.ex_iva}|${tercero.clasificacion}|${tercero.departamento}|${tercero.ciudad}|${tercero.barrio}|${tercero.email}|${tercero.reteica}|${tercero.frecuencia}|${tercero.frecuencia2}|${tercero.frecuencia3}|${tercero.latitude}|${tercero.longitude}|${tercero.rut_pdf}|${tercero.camcom_pdf}`;
+    const directorio =
+      TercerosApiServices.objConfig?.directorioContabilidad || 'COMER25';
+
+    // Destructure tercero for easier access and readability
+    const {
+      codigo,
+      nombre,
+      dv,
+      direcc,
+      tipo,
+      zona,
+      ruta,
+      plazo,
+      tel,
+      vendedor,
+      f_pago,
+      ex_iva,
+      clasificacion,
+      departamento,
+      ciudad,
+      barrio,
+      email,
+      reteica,
+      frecuencia,
+      frecuencia2,
+      frecuencia3,
+      latitude,
+      longitude,
+      rut_pdf,
+      camcom_pdf,
+    } = tercero;
+    // Use a template literal for cleaner string construction
+    const datos = `00000086005264920250220112018|${directorio}|CONTROL|${novedad}|${
+      codigo || ''
+    }|${nombre || ''}|${direcc || ''}|${dv || ''}|${zona || ''}|${ruta || ''}|${
+      plazo || ''
+    }|${tel || ''}|${vendedor || ''}|${f_pago || ''}|${ex_iva || ''}|${
+      clasificacion || ''
+    }|${''}|${''}|${''}|${frecuencia || ''}|${frecuencia2 || ''}|${
+      frecuencia3 || ''
+    }|${latitude || ''}|${longitude || ''}|${rut_pdf || ''}|${
+      camcom_pdf || ''
+    }`;
+
     return datos;
   };
 
@@ -55,6 +96,7 @@ class TercerosApiServices {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
         body,
       );
+      console.log('response save tercero =>', response.data.data);
       if (response.data.data.STATUS == '00') {
         return true;
       } else if (response.data.data.STATUS == '35') {
@@ -67,35 +109,6 @@ class TercerosApiServices {
     }
   };
   _updateTercero = async (tercero: ITerceros): Promise<boolean> => {
-    const innerFormatTercero = (tercero: ITerceros) => {
-      return [
-        tercero.codigo,
-        tercero.nombre,
-        tercero.direcc,
-        tercero.tel,
-        tercero.vendedor,
-        tercero.plazo,
-        tercero.f_pago,
-        tercero.ex_iva,
-        tercero.clasificacion,
-        tercero.tipo,
-        tercero.departamento,
-        tercero.ciudad,
-        tercero.barrio,
-        tercero.email,
-        tercero.reteica,
-        tercero.frecuencia,
-        tercero.frecuencia2,
-        tercero.frecuencia3,
-        tercero.zona,
-        tercero.ruta,
-        tercero.latitude,
-        tercero.longitude,
-        tercero.rut_pdf,
-        tercero.camcom_pdf,
-      ].join('|');
-    };
-
     try {
       const innerFormatTercero = this._constructTercero(tercero, '8');
 

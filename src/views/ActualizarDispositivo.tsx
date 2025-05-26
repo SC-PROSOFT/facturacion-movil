@@ -50,7 +50,7 @@ import {
 import {showAlert} from '../utils/showAlert';
 /* slices */
 import {setObjInfoAlert} from '../redux/slices';
-import {generateVisits} from '../utils';
+import {generatePotentialVisits} from '../utils';
 /* local types */
 interface ProgressWindowProps {
   visible: boolean;
@@ -356,7 +356,7 @@ const ActualizarDispositivo = () => {
       const resGetTerceros = await syncQueries._getTerceros();
 
       setDialogContent('Generando visitas - 7/9');
-      const resVisitas = await generateVisits(resGetTerceros);
+      const resVisitas = await generatePotentialVisits(resGetTerceros);
 
       setDialogContent('Trayendo zonas - 8/9');
       const resGetZonas = await syncQueries._getZonas();

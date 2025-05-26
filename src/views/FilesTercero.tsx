@@ -343,16 +343,17 @@ const FilesTercero = () => {
         }
         console.log('response', response);
         if (response) {
+          console.log(validFiles);
           // Actualizar objTercero y los estados de los archivos
           const terceroModificado: ITerceros = {
             ...objTercero,
-            rut_pdf: validFiles.some(file => file.name.includes('RUT'))
+            rut_pdf: arrayFiles.some(file => file.name.includes('RUT'))
               ? 'S'
               : 'N',
-            camcom_pdf: validFiles.some(file => file.name.includes('CAMCOM'))
+            camcom_pdf: arrayFiles.some(file => file.name.includes('CAMCOM'))
               ? 'S'
               : 'N',
-            di_pdf: validFiles.some(file => file.name.includes('DI'))
+            di_pdf: arrayFiles.some(file => file.name.includes('DI'))
               ? 'S'
               : 'N',
           };

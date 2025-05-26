@@ -1,5 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
-
+import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
   View,
   StyleSheet,
@@ -78,12 +77,10 @@ import {useNavigation} from '@react-navigation/native';
 /* local types */
 interface State {
   fechaPedido: string;
-
   sucursal: string;
   consecutivo: number;
   cod_vendedor: string;
   almacen: string;
-
   identificacion: string;
   descripcionCliente: string;
   direccion: string;
@@ -92,7 +89,6 @@ interface State {
   plazo: string;
   formaPago: '01' | '02';
   saldoCartera: string;
-
   titulo: string;
   codigo: string;
   descripcionPedido: string;
@@ -102,20 +98,22 @@ interface State {
   valorIva: string;
   valorTotal: string;
   total: string;
-
   articulosAdded: IProductAdded[];
   observaciones: string;
 }
+
 interface InfoGeneralProps {
   state: State;
   handleInputChange: Function;
   arrAlmacenes: IAlmacen[];
   selectAlmacen: (almacen: string) => void;
 }
+
 interface InfoClienteProps {
   handleInputChange: Function;
   toggleValidateCartera: () => void;
 }
+
 interface InfoPedidoProps {
   detalleProducto: {
     titulo: string;
@@ -133,6 +131,7 @@ interface InfoPedidoProps {
   validateBeforeSaving: Function;
   toggleAddArticulos: () => void;
 }
+
 interface detalleProductoState {
   titulo: string;
   valorTitulo: string;
@@ -571,11 +570,9 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
 
   const calculateTotalOrder = () => {
     let totalOrder = 0;
-
     arrProductAdded.forEach(article => {
       totalOrder = totalOrder + article.valorTotal;
     });
-
     return formatToMoney(totalOrder);
   };
 
@@ -616,7 +613,6 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
       fontSize: 18,
     },
     containerTitulo: {
-      // color: 'black',
       marginHorizontal: 5,
       marginTop: 15,
       fontSize: 18,
@@ -641,7 +637,6 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
       width: '100%',
       marginBottom: 20,
     },
-
     iconButton: {
       marginRight: 40,
       width: '20%',
@@ -741,11 +736,9 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
           Informacion de productos
         </Text>
       </View>
-
       <View>
         <ProductTable />
       </View>
-
       <View style={[styles.switchRow, {alignItems: 'center'}]}>
         <View style={{width: '45%', marginTop: 5}}>
           <CoolButton
@@ -758,7 +751,6 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
             pressCoolButton={toggleAddArticulos}
           />
         </View>
-
         <View style={styles.totalPedido}>
           <Text allowFontScaling={false} style={styles.labelTotal}>
             {'Total Pedido:'}
@@ -770,7 +762,6 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
           </View>
         </View>
       </View>
-
       <View style={styles.switchRow}>
         <View style={styles.inputObservaciones}>
           <StandardInput
@@ -790,9 +781,7 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
 const ElaborarPedido: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation: any = useNavigation(); // Obtener el objeto de navegación
-
-  const {showDecisionAlert} = decisionAlertContext();
-
+  // const {showDecisionAlert} = decisionAlertContext();
   const ArrAlmacenes = useAppSelector(store => store.sync.arrAlmacenes);
   const objOperador = useAppSelector(store => store.operator.objOperator);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
@@ -809,12 +798,10 @@ const ElaborarPedido: React.FC = () => {
 
   const [state, setState] = useState<State>({
     fechaPedido: '',
-
     sucursal: '',
     consecutivo: 0,
     cod_vendedor: '',
     almacen: 'ALM01', // valor por defecto
-
     identificacion: '',
     descripcionCliente: '',
     direccion: '',
@@ -823,7 +810,6 @@ const ElaborarPedido: React.FC = () => {
     plazo: '',
     formaPago: objTercero.f_pago,
     saldoCartera: '',
-
     titulo: '',
     codigo: '',
     descripcionPedido: '',
@@ -833,17 +819,16 @@ const ElaborarPedido: React.FC = () => {
     valorIva: '',
     valorTotal: '',
     total: '',
-
     articulosAdded: [],
     observaciones: '',
   });
   const [isLoadingSave, setIsLoadingSave] = useState(false);
-
   const [detalleProducto, setDetalleProducto] = useState<
     detalleProductoState[]
   >([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [noMoreAwayUbication, setNoMoreAwayUbication] = useState(false);
+
   useEffect(() => {
     const initialize = async () => {
       const ubi = await checkUbication();
@@ -852,9 +837,9 @@ const ElaborarPedido: React.FC = () => {
         loadCartera();
       }
     };
-
     initialize();
   }, [objOperador]);
+
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -878,6 +863,26 @@ const ElaborarPedido: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    setState(prevState => ({
+      ...prevState,
+      sucursal: objOperador?.sucursal || '',
+      consecutivo: objOperador?.nro_pedido || 0,
+      cod_vendedor: objOperador?.cod_vendedor || '',
+      almacen: state.almacen || ArrAlmacenes?.[0]?.codigo || 'ALM01', // Mantener selección si ya existe
+      identificacion: objTercero?.codigo || '',
+      descripcionCliente: objTercero?.nombre || '',
+      direccion: objTercero?.direcc || '',
+      telefono: objTercero?.tel || '',
+      clasificacion: objTercero?.clasificacion || '',
+      plazo: objTercero?.plazo?.toString() || '',
+      formaPago: objTercero?.f_pago || prevState.formaPago || '01', // Mantener selección o default de tercero
+      saldoCartera: formatToMoney(intCartera || 0),
+      // No es necesario sincronizar state.articulosAdded con arrProductAdded aquí
+      // si estructurarPedido y validateBeforeSaving usan directamente arrProductAdded de Redux.
+    }));
+  }, [objOperador, objTercero, intCartera, ArrAlmacenes]);
+
   const checkUbication = async () => {
     setIsModalVisible(true);
     try {
@@ -900,6 +905,7 @@ const ElaborarPedido: React.FC = () => {
       return false;
     }
   };
+
   const loadCartera = async () => {
     try {
       const cartera = await carteraService.getCarteraByAttribute(
@@ -908,7 +914,6 @@ const ElaborarPedido: React.FC = () => {
       );
       const carteraSumada = sumarCartera(cartera);
       dispatch(setIntCartera(carteraSumada));
-      //🟦
     } catch (error: any) {
       console.log('Error al cargar la cartera', error);
       if (error === 'no hay cartera pendiente') {
@@ -924,9 +929,9 @@ const ElaborarPedido: React.FC = () => {
       }
     }
   };
+
   const loadOperator = () => {
     const {sucursal, nro_pedido} = objOperador;
-
     const currentDate = new Date();
     const day = String(currentDate.getDate()).padStart(2, '0');
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -941,9 +946,11 @@ const ElaborarPedido: React.FC = () => {
       fechaPedido: formattedDate,
     }));
   };
+
   const selectAlmacen = (almacen: string) => {
     setState(prevState => ({...prevState, almacen}));
   };
+
   const handleInputChange = (input: string, text: string) => {
     setState(prevState => ({...prevState, [input]: text}));
   };
@@ -962,6 +969,7 @@ const ElaborarPedido: React.FC = () => {
 
     // 3. Ejecuta la lógica de navegación CONDICIONALMENTE basada en data.status
     if (data.status === false) {
+      console.log('Modal observation data,' + data.observacion);
       // Solo navega si el modal indicó un flujo que NO era el de "guardar observación por estar fuera de zona"
       // (Es decir, para los casos donde locationStatus fue 0, 1, 2, o 99 en el modal)
       requestAnimationFrame(() => {
@@ -985,123 +993,220 @@ const ElaborarPedido: React.FC = () => {
 
   const toggleSaveOrder = async () => {
     setIsLoadingSave(true);
-    const pedidosApiService = new PedidosApiService(
-      objConfig.direccionIp,
-      objConfig.puerto,
-    );
+    let pedidoGuardadoConExitoEnAlgunLado = false; // Para controlar el flujo final
 
     try {
-      validateBeforeSaving();
-      const {latitude, longitude} = await getUbication();
-      const pedido = estructurarPedido({latitude, longitude});
-      await pedidosApiService._savePedido(pedido, 'post');
-      await pedidosService.savePedido({
-        ...pedido,
-        sincronizado: 'S',
-        guardadoEnServer: 'S',
-      });
-      dispatch(
-        setObjOperator({
-          ...pedido.operador,
-          nro_pedido: Number(pedido.operador.nro_pedido) + 1,
-        }),
-      );
-      dispatch(setArrProductAdded([]));
-      dispatch(setArrPedido([...arrPedidos, pedido]));
-      resetState();
-      // await generarPDF(pedido, objConfig, 'pedido');
-      Toast.show({
-        type: 'success',
-        text1: 'Pedido guardado en el servidor correctamente',
-      });
-      setNoMoreAwayUbication(true); // Evitar que el modal vuelva a aparecer
+      console.log('[SAVE_ORDER] Iniciando validaciones...');
+      validateBeforeSaving(); // Puede lanzar ValidationsBeforeSavingError
+      console.log('[SAVE_ORDER] Validaciones OK.');
 
-      setIsLoadingSave(false);
+      console.log('[SAVE_ORDER] Obteniendo ubicación...');
+      const {latitude, longitude} = await getUbication(); // Puede lanzar error si falla la ubicación
+      console.log(`[SAVE_ORDER] Ubicación: ${latitude},${longitude}`);
+
+      const pedidoBase = estructurarPedido({latitude, longitude});
+      console.log('[SAVE_ORDER] Pedido base estructurado.');
+
+      const pedidosApiService = new PedidosApiService(
+        objConfig.direccionIp,
+        objConfig.puerto,
+      );
+
+      try {
+        console.log('[SAVE_ORDER] Intentando guardar en API...');
+        await pedidosApiService._savePedido(pedidoBase as IOperation, 'post'); // El 'as IOperation' es por si pedidoBase es Omit<IOperation, 'id'>
+        console.log('[SAVE_ORDER] Guardado en API exitoso.');
+
+        // Si API tiene éxito, guarda localmente como sincronizado
+        const pedidoConIdDesdeBD = await pedidosService.savePedido({
+          ...pedidoBase,
+          sincronizado: 'S',
+          guardadoEnServer: 'S',
+        } as IOperation); // Asumimos que savePedido espera IOperation
+
+        if (!pedidoConIdDesdeBD || pedidoConIdDesdeBD.id === undefined) {
+          throw new Error(
+            'Fallo al guardar en BD local (después de API) o no se obtuvo ID.',
+          );
+        }
+
+        dispatch(setArrPedido([...arrPedidos, pedidoConIdDesdeBD])); // Usar el objeto con ID
+        Toast.show({type: 'success', text1: 'Pedido guardado y sincronizado!'});
+        pedidoGuardadoConExitoEnAlgunLado = true;
+      } catch (apiError: any) {
+        console.warn(
+          '[SAVE_ORDER] Fallo el guardado en API. Revisando error...',
+        );
+        console.warn(
+          `[SAVE_ORDER] API Error Details: Name: ${apiError.name}, Message: ${apiError.message}`,
+        );
+        // Para ver más detalles del error de red:
+        // console.warn('[SAVE_ORDER] API Error Completo:', JSON.stringify(apiError, Object.getOwnPropertyNames(apiError)));
+
+        // Comprobación más robusta para errores de red/offline
+        const esErrorDeRed =
+          apiError instanceof ApiSaveOrderError || // Tu error personalizado
+          (apiError.message &&
+            (apiError.message
+              .toLowerCase()
+              .includes('network request failed') ||
+              apiError.message.toLowerCase().includes('failed to fetch') ||
+              apiError.message.toLowerCase().includes('offline') ||
+              apiError.message.toLowerCase().includes('timeout') || // Podría ser timeout de red
+              apiError.name === 'TypeError')); // A veces 'TypeError: Network request failed'
+
+        if (esErrorDeRed) {
+          Toast.show({
+            type: 'info',
+            text1: 'Sin conexión o fallo de API.',
+            text2: 'Guardando pedido localmente...',
+          });
+          await saveOrderInLocalDatabaseOnly(pedidoBase); // Pasar pedidoBase para no recalcular
+          pedidoGuardadoConExitoEnAlgunLado = true; // Guardado local exitoso
+        } else {
+          // Otro tipo de error de la API (ej. 4xx, 5xx que no son puramente de red)
+          // o un error inesperado durante el proceso de guardado en API.
+          throw apiError; // Re-lanzar para que lo capture el catch principal
+        }
+      }
+
+      // Si se guardó exitosamente (en API y local, o solo local como fallback)
+      if (pedidoGuardadoConExitoEnAlgunLado) {
+        console.log('[SAVE_ORDER] Actualizando operador y UI...');
+        dispatch(
+          setObjOperator({
+            ...objOperador,
+            nro_pedido: (Number(objOperador.nro_pedido) || 0) + 1,
+          }),
+        );
+        // Limpiar productos añadidos para el próximo pedido
+        visitaRealizada(pedidoBase.valorPedido); // Marcar visita como realizada con el valor del pedido
+        resetStateAndNavigate(); // Resetear el formulario y navegar
+      }
     } catch (error: any) {
+      // Catch para ValidationsBeforeSavingError, error de getUbication, o errores de API no manejados por el catch anidado
+      console.error('[SAVE_ORDER] Error general en el proceso:', error);
       if (error instanceof ValidationsBeforeSavingError) {
-        Toast.show({
-          type: error.details.type,
-          text1: error.details.text1,
-        });
-        setIsLoadingSave(false);
-      } else if (error instanceof ApiSaveOrderError) {
-        saveOrderInLocalDatabaseOnly();
+        Toast.show({type: error.details.type, text1: error.details.text1});
       } else {
-        console.log('Save err' + error);
         dispatch(
           setObjInfoAlert({
             visible: true,
             type: 'error',
-            description: error.message,
+            description:
+              error.message || 'Error desconocido al procesar el pedido.',
           }),
         );
-        setIsLoadingSave(false);
       }
     } finally {
-      visitaRealizada();
+      setIsLoadingSave(false);
+      console.log('[SAVE_ORDER] Proceso de guardado finalizado.');
     }
   };
 
-  const visitaRealizada = async () => {
-    const today = new Date().toISOString().split('T')[0]; // Obtener la fecha de hoy en formato YYYY-MM-DD
-    const saleValue = state.articulosAdded.reduce(
-      (acumulator, articulo) => acumulator + articulo.valorTotal,
-      0,
-    );
+  // Modificar saveOrderInLocalDatabaseOnly para aceptar el pedido base y no repetir lógica de UI
+  const saveOrderInLocalDatabaseOnly = async (
+    pedidoBase: Omit<IOperation, 'id'>,
+  ): Promise<void> => {
+    console.log('[SAVE_LOCAL_ONLY] Iniciando guardado local...');
+    try {
+      // Ya tenemos pedidoBase, no necesitamos getUbication ni estructurarPedido de nuevo
+      const pedidoConId = await pedidosService.savePedido({
+        ...pedidoBase,
+        sincronizado: 'N',
+        guardadoEnServer: 'N',
+      } as IOperation); // Asumimos que savePedido espera IOperation
+
+      if (!pedidoConId || pedidoConId.id === undefined) {
+        // Este error debería ser capturado por el catch de toggleSaveOrder si se re-lanza
+        throw new Error(
+          'Fallo al guardar localmente (saveOrderInLocalDatabaseOnly) o no se obtuvo ID.',
+        );
+      }
+
+      // Las actualizaciones de Redux (arrPedido) y UI (Toast, reset) se manejarán
+      // en el flujo principal de toggleSaveOrder si pedidoGuardadoConExitoEnAlgunLado es true.
+      // Solo logueamos aquí o mostramos un Toast específico si es necesario.
+      dispatch(setArrPedido([...arrPedidos, pedidoConId])); // Es importante añadirlo a Redux
+      console.log(
+        '[SAVE_LOCAL_ONLY] Pedido guardado localmente con ID:',
+        pedidoConId.id,
+      );
+      Toast.show({type: 'success', text1: 'Pedido guardado localmente.'}); // Mensaje específico para este caso
+    } catch (error: any) {
+      console.error('[SAVE_LOCAL_ONLY] Error:', error);
+      // El error será capturado por el catch de toggleSaveOrder si se re-lanza,
+      // o podemos manejar un Toast específico aquí si no se re-lanza.
+      // Por ahora, el error se propagará si esta función es llamada desde el try/catch anidado
+      // y falla después de que la API falló.
+      throw error; // Re-lanzar para que el catch principal de toggleSaveOrder pueda manejarlo
+    }
+    // No hay setIsLoadingSave(false) aquí, lo maneja el finally de toggleSaveOrder
+  };
+  const visitaRealizada = async (saleValue?: number) => {
+    // saleValue ahora es opcional
+    if (!objVisita || !objVisita.id_visita) return; // No hacer nada si no hay objVisita
+
+    const valorVenta =
+      saleValue !== undefined
+        ? saleValue
+        : arrProductAdded.reduce(
+            // Recalcular si no se pasa
+            (acumulator, articulo) => acumulator + articulo.valorTotal,
+            0,
+          );
+
     const modifiedVisita: IVisita = {
       ...objVisita,
-      status: '1', // Cambiar el estado a "visitado"
-      observation: state.observaciones, // Agregar la observación
-      saleValue: saleValue,
+      status: '1', // Visitado
+      observation: state.observaciones,
+      saleValue: valorVenta,
     };
-    console.log(modifiedVisita, objVisita.id_visita);
     try {
-      // Actualizar la visita
-      await visitaService.updateVisita(modifiedVisita, objVisita.id_visita);
+      await visitaService.updateVisita(
+        modifiedVisita,
+        objVisita.id_visita.toString(),
+      );
+      dispatch(setObjVisita(modifiedVisita)); // Actualizar visita en Redux
     } catch (error) {
       console.error('Error al actualizar la visita:', error);
     }
   };
 
-  const saveOrderInLocalDatabaseOnly = async (): Promise<void> => {
-    try {
-      const {latitude, longitude} = await getUbication();
-      const order = estructurarPedido({latitude, longitude});
-
-      await pedidosService.savePedido({
-        ...order,
-        sincronizado: 'N',
-        guardadoEnServer: 'N',
-      });
-      dispatch(
-        setObjOperator({
-          ...order.operador,
-          nro_pedido: Number(order.operador.nro_pedido) + 1,
-        }),
-      );
-      dispatch(setArrProductAdded([]));
-      dispatch(setArrPedido([...arrPedidos, order]));
-      resetState();
-      Toast.show({
-        type: 'success',
-        text1: 'Pedido guardado correctamente',
-      });
-      setIsLoadingSave(false);
-    } catch (error: any) {
-      console.log('Save Order' + error);
-      setIsLoadingSave(false);
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error.message,
-        }),
-      );
-    }
+  const resetStateAndNavigate = () => {
+    // Lógica de resetState
+    setState({
+      fechaPedido: moment().format('DD-MM-YYYY'),
+      sucursal: objOperador.sucursal || '',
+      consecutivo: Number(objOperador.nro_pedido || 0) + 1, // Ya incrementado en Redux, pero re-sincroniza
+      cod_vendedor: objOperador.cod_vendedor || '',
+      almacen: ArrAlmacenes?.[0]?.codigo || 'ALM01',
+      identificacion: '',
+      descripcionCliente: '',
+      direccion: '',
+      telefono: '',
+      clasificacion: '',
+      plazo: '',
+      formaPago: '01',
+      saldoCartera: '$0',
+      titulo: '',
+      codigo: '',
+      descripcionPedido: '',
+      cantidad: '',
+      valorBase: '',
+      valorDcto: '',
+      valorIva: '',
+      valorTotal: '',
+      total: '',
+      articulosAdded: [],
+      observaciones: '',
+    });
+    setNoMoreAwayUbication(true); // Para que no vuelva a saltar el modal de ubicación al navegar
+    dispatch(setArrProductAdded([])); // Limpiar productos añadidos en Redux
   };
+
   const validateBeforeSaving = (): boolean => {
     const geoLocalizacion = false; // En desarrollo 07/09/2023
-
     const {almacen, identificacion} = state;
 
     if (objConfig.seleccionarAlmacen && almacen == '') {
@@ -1140,47 +1245,73 @@ const ElaborarPedido: React.FC = () => {
       return true;
     }
   };
-  const estructurarPedido = ({
-    latitude,
-    longitude,
-  }: {
-    latitude: string;
-    longitude: string;
-  }): IOperation => {
-    return {
-      tipo_operacion: 'pedido',
-      //fecha: new Date().toISOString().slice(0, 10).replaceAll('-', '/'),
-      fecha: new Date().toISOString().slice(0, 10),
-      hora: `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
-      fechaTimestampUnix: new Date().getTime(),
-      almacen: state.almacen,
 
-      operador: objOperador,
-      tercero: objTercero,
-      articulosAdded: arrProductAdded,
-
-      formaPago: state.formaPago,
-      fechaVencimiento: moment().add(1, 'days').format('YYYYMMDD'),
-      valorPedido: state.articulosAdded.reduce(
+  const estructurarPedido = useCallback(
+    ({
+      latitude,
+      longitude,
+    }: {
+      latitude: string;
+      longitude: string;
+    }): Omit<IOperation, 'id'> => {
+      // Devuelve el objeto sin 'id'
+      const totalValorPedido = arrProductAdded.reduce(
+        // Usar arrProductAdded de Redux
         (acumulator, articulo) => acumulator + articulo.valorTotal,
         0,
-      ),
-      observaciones: state.observaciones,
-      ubicacion: {
-        latitud: latitude,
-        longitud: longitude,
-      },
-      guardadoEnServer: 'N', // solo estoy inicializando
-      sincronizado: 'N', // solo estoy inicializando
-    };
-  };
+      );
+
+      return {
+        // id: undefined, // No se define aquí
+        tipo_operacion: 'pedido',
+        fecha: moment(state.fechaPedido, 'DD-MM-YYYY')
+          .toISOString()
+          .slice(0, 10), // Convertir a YYYY-MM-DD
+        hora: `${new Date().getHours().toString().padStart(2, '0')}:${new Date()
+          .getMinutes()
+          .toString()
+          .padStart(2, '0')}:${new Date()
+          .getSeconds()
+          .toString()
+          .padStart(2, '0')}`,
+        fechaTimestampUnix: new Date().getTime(),
+        almacen: state.almacen,
+        operador: objOperador, // Usar el de Redux
+        tercero: objTercero, // Usar el de Redux
+        articulosAdded: arrProductAdded, // Usar el de Redux
+        formaPago: state.formaPago,
+        // Asegúrate que fechaVencimiento se calcule correctamente
+        fechaVencimiento:
+          state.formaPago === '02' && objTercero.plazo
+            ? moment(state.fechaPedido, 'DD-MM-YYYY')
+                .add(objTercero.plazo, 'days')
+                .format('YYYY-MM-DD')
+            : moment(state.fechaPedido, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+        valorPedido: totalValorPedido,
+        observaciones: state.observaciones,
+        ubicacion: {latitud: latitude, longitud: longitude},
+        guardadoEnServer: 'N',
+        sincronizado: 'N',
+      };
+    },
+    [
+      state.fechaPedido,
+      state.almacen,
+      state.formaPago,
+      state.observaciones,
+      objOperador,
+      objTercero,
+      arrProductAdded,
+    ],
+  );
+
   const toggleProduct = (product: IProduct) => {
     dispatch(setIsShowProductSheet(true));
     dispatch(setObjProduct(product));
   };
+
   const toggleTercero = async (tercero: ITerceros) => {
     const {codigo, nombre, direcc, tel, clasificacion, plazo} = tercero;
-
     try {
       const cartera = await carteraService.getCarteraByAttribute('nit', codigo);
       const carteraSumada = sumarCartera(cartera);
@@ -1192,8 +1323,8 @@ const ElaborarPedido: React.FC = () => {
         direccion: direcc,
         telefono: tel,
         clasificacion: clasificacion,
-        plazo: plazo.toString(),
-        saldoCartera: carteraSumada.toString(),
+        plazo: plazo?.toString(),
+        saldoCartera: carteraSumada?.toString(),
       }));
     } catch (error) {
       if (error == 'no hay cartera pendiente') {
@@ -1204,20 +1335,19 @@ const ElaborarPedido: React.FC = () => {
           direccion: direcc,
           telefono: tel,
           clasificacion: clasificacion,
-          plazo: plazo.toString(),
+          plazo: plazo?.toString(),
           saldoCartera: '0',
         }));
       }
     }
-
     dispatch(setObjTercero(tercero));
   };
+
   const toggleValidateCartera = () => {
     if (intCartera > 0) {
       const carteraFilter = arrCartera.filter(
         cartera => cartera.nit == objTercero.codigo,
       );
-
       dispatch(setArrCarteraPopup(carteraFilter));
       dispatch(setIsShowCarteraPopup(true));
     } else {
@@ -1227,6 +1357,7 @@ const ElaborarPedido: React.FC = () => {
       });
     }
   };
+
   const toggleAddArticulos = () => {
     if (objTercero.codigo == '') {
       Toast.show({
@@ -1237,12 +1368,11 @@ const ElaborarPedido: React.FC = () => {
       dispatch(setIsShowProductFinder(true));
     }
   };
+
   const resetState = () => {
     setState(state => ({
       ...state,
-
       almacen: 'ALM01', // valor por defecto
-
       identificacion: '',
       descripcionCliente: '',
       direccion: '',
@@ -1251,7 +1381,6 @@ const ElaborarPedido: React.FC = () => {
       plazo: '',
       formaPago: objTercero.f_pago,
       saldoCartera: '',
-
       titulo: '',
       codigo: '',
       descripcionPedido: '',
@@ -1261,12 +1390,12 @@ const ElaborarPedido: React.FC = () => {
       valorIva: '',
       valorTotal: '',
       total: '',
-
       observaciones: '',
       articulosAdded: [],
     }));
     setIsModalVisible(false);
   };
+
   const styles = StyleSheet.create({
     container: {
       marginBottom: 23,
@@ -1287,7 +1416,6 @@ const ElaborarPedido: React.FC = () => {
           <HeaderActionButtons />
         </Header>
       </View>
-
       <ScrollView
         style={styles.container}
         ref={scrollViewRef}
@@ -1315,7 +1443,6 @@ const ElaborarPedido: React.FC = () => {
             handleInputChange={handleInputChange}
           />
         </View>
-
         <View style={{marginTop: 10, paddingBottom: 120}}>
           <CoolButton
             value={isLoadingSave ? '' : 'Guardar Pedido'}
@@ -1328,18 +1455,16 @@ const ElaborarPedido: React.FC = () => {
           />
         </View>
       </ScrollView>
-
       <TercerosFinder toggleTercero={toggleTercero} searchTable="terceros" />
       <ProductFinder toggleProduct={toggleProduct} />
       <CarteraPopup />
       <ProductSheet />
       <ProductSheetEdit />
-
       <AwayFromUbication
         visible={isModalVisible && !noMoreAwayUbication}
         onClose={() => setIsModalVisible(false)}
         tercero={objTercero}
-        onSubmit={handleModalSubmit}
+        onSubmit={data => handleModalSubmit(data)}
       />
     </View>
   );

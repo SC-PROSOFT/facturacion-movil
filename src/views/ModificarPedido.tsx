@@ -1,6 +1,6 @@
 // Ya no se usa y deberia borrarse este archivo = 12/09/2024 "El viejo cachi"
 
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
 
 import {
   View,
@@ -45,6 +45,8 @@ import {
   setIsShowProductSheetEdit,
   setArrPedido,
   setIntCartera,
+  setArrProductAdded,
+  setObjOperator,
 } from '../redux/slices';
 /* local db */
 import {
@@ -64,6 +66,8 @@ import {IProductAdded} from '../common/types';
 import {sumarCartera, formatToMoney, redefineOrders} from '../utils';
 import {generarPDF} from '../prints/generarPdf';
 import {getUbication} from '../utils/getUbication';
+import {setObjVisita} from '../redux/slices';
+import {IVisita} from '../common/types';
 /* errors */
 import {
   ValidationsBeforeSavingError,
@@ -787,14 +791,13 @@ const InfoPedido: React.FC<InfoPedidoProps> = ({
 
 const ModificarPedido: React.FC = () => {
   const dispatch = useAppDispatch();
-
-  const {showDecisionAlert} = decisionAlertContext();
-
   const ArrAlmacenes = useAppSelector(store => store.sync.arrAlmacenes);
   const objOperador = useAppSelector(store => store.operator.objOperator);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const arrCartera = useAppSelector(store => store.sync.arrCartera);
   const objConfig = useAppSelector(store => store.config.objConfig);
+  const objOperation = useAppSelector(store => store.operation.objOperation);
+  const objVisita = useAppSelector(store => store.visitas.objVisita);
   const arrProductAdded = useAppSelector(
     state => state.product.arrProductAdded,
   );
@@ -841,9 +844,10 @@ const ModificarPedido: React.FC = () => {
   >([]);
 
   useEffect(() => {
+    console.log('Si esto aparece completo soy una puta hueva: ', objOperation);
     loadOperator();
     loadCartera();
-  }, [objOperador]);
+  }, [objOperador, objTercero, objOperation]);
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -888,7 +892,7 @@ const ModificarPedido: React.FC = () => {
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
     const year = currentDate.getFullYear();
     const formattedDate = `${day}-${month}-${year}`;
-
+    console.log(objOperador);
     setState(prevState => ({
       ...prevState,
       cod_vendedor: objOperador.cod_vendedor,
@@ -905,81 +909,173 @@ const ModificarPedido: React.FC = () => {
   };
   const toggleUpdateOrder = async () => {
     setIsLoadingSave(true);
-
-    const pedidosApiService = new PedidosApiService(
-      objConfig.direccionIp,
-      objConfig.puerto,
-    );
-
+    // variable para saber si el pedido se actualizo en el servidor o no
+    let pedidoActualizadoConExtioEnAlgunLado = false;
+    const pedidoBase = estructurarPedido();
+    console.log('[UPDATE_ORDER] Estructurando pedido base:', pedidoBase);
     try {
+      const pedidosApiService = new PedidosApiService(
+        objConfig.direccionIp,
+        objConfig.puerto,
+      );
       validateBeforeSaving();
-      const {latitude, longitude} = await getUbication();
-      const pedido = estructurarPedido({latitude, longitude});
-      await pedidosApiService._savePedido(pedido, 'put');
-      await pedidosService.updatePedido(objOperador.nro_pedido.toString(), {
-        ...pedido,
-        sincronizado: 'S',
-        guardadoEnServer: 'S',
-      });
+      try {
+        await pedidosApiService._savePedido(pedidoBase as IOperation, 'put');
 
-      const redefinedOrders = redefineOrders(arrPedidos, pedido);
-      dispatch(setArrPedido(redefinedOrders));
-      // await generarPDF(pedido, objConfig, 'pedido');
-      Toast.show({
-        type: 'success',
-        text1: 'Pedido modificado en el servidor correctamente',
-      });
+        const pedidoInDb = await pedidosService.updatePedido(
+          pedidoBase.id.toString(), // Asumimos que el ID del pedido es el mismo que el de la operación
+          {
+            ...pedidoBase,
+            sincronizado: 'S',
+            guardadoEnServer: 'S',
+          },
+        );
 
-      setIsLoadingSave(false);
-    } catch (error: any) {
-      if (error instanceof ValidationsBeforeSavingError) {
+        const pedidoDataInDb = await pedidosService.getPedidoById(
+          pedidoBase.id.toString(),
+        );
+
+        if (!pedidoInDb || !pedidoDataInDb) {
+          Toast.show({
+            type: 'error',
+            text1: 'Error al guardar el pedido en el servidor',
+          });
+        }
+        console.log('[SAVE_LOCAL_ONLY] Pedido guardado localmente:', pedidoDataInDb);
+        const redefinedOrders = redefineOrders(arrPedidos, pedidoDataInDb);
+        console.log('[SAVE_LOCAL_ONLY] Pedido guardado localmente:', pedidoDataInDb);
+        console.log('redefinedOrders: ', redefinedOrders);
+
+        dispatch(setArrPedido(redefinedOrders));
         Toast.show({
-          type: error.details.type,
-          text1: error.details.text1,
+          type: 'success',
+          text1: 'Pedido modificado y sincronizado! 🥳',
         });
-        setIsLoadingSave(false);
-      } else if (error instanceof ApiSaveOrderError) {
-        saveOrderInLocalDatabaseOnly();
+        pedidoActualizadoConExtioEnAlgunLado = true;
+      } catch (apiError: any) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error al guardar el pedido en el servidor',
+        });
+        console.warn(
+          `[UPDATE_ORDER] API Error Details: Name: ${apiError.name}, Message: ${apiError.message}`,
+        );
+
+        const esErrorDeRed =
+          apiError instanceof ApiSaveOrderError || // Tu error personalizado
+          (apiError.message &&
+            (apiError.message
+              .toLowerCase()
+              .includes('network request failed') ||
+              apiError.message.toLowerCase().includes('failed to fetch') ||
+              apiError.message.toLowerCase().includes('offline') ||
+              apiError.message.toLowerCase().includes('timeout') || // Podría ser timeout de red
+              apiError.name === 'TypeError')); // A veces 'TypeError: Network request failed'
+
+        if (esErrorDeRed) {
+          Toast.show({
+            type: 'info',
+            text1: 'Sin conexión o fallo de API.',
+            text2: 'Guardando pedido localmente...',
+          });
+          await updateOrderInLocalDatabaseOnly(pedidoBase); // Pasar pedidoBase para no recalcular
+          pedidoActualizadoConExtioEnAlgunLado = true; // Guardado local exitoso
+        } else {
+          // Otro tipo de error de la API (ej. 4xx, 5xx que no son puramente de red)
+          // o un error inesperado durante el proceso de guardado en API.
+          throw apiError; // Re-lanzar para que lo capture el catch principal
+        }
+      }
+
+      // Si se guardó exitosamente (en API y local, o solo local como fallback)
+      if (pedidoActualizadoConExtioEnAlgunLado) {
+        console.log('[UPDATE_ORDER] Actualizando operador y UI...');
+        // Limpiar productos añadidos para el próximo pedido
+        dispatch(setObjOperator(objOperador)); // Actualizar operador en Redux
+        visitaRealizada(pedidoBase.valorPedido); // Marcar visita como realizada con el valor del pedido
+        // Resetear el formulario y navegar
+      }
+    } catch (error: any) {
+      console.error('[UPDATE_ORDER] Error general en el proceso:', error);
+      if (error instanceof ValidationsBeforeSavingError) {
+        Toast.show({type: error.details.type, text1: error.details.text1});
       } else {
         dispatch(
           setObjInfoAlert({
             visible: true,
             type: 'error',
-            description: error.message,
+            description:
+              error.message || 'Error desconocido al procesar el pedido.',
           }),
         );
-        setIsLoadingSave(false);
       }
+    } finally {
+      setIsLoadingSave(false);
+      console.log('[UPDATE_ORDER] Proceso de guardado finalizado.');
     }
   };
-  const saveOrderInLocalDatabaseOnly = async (): Promise<void> => {
-    try {
-      const {latitude, longitude} = await getUbication();
-      const order = estructurarPedido({latitude, longitude});
 
-      await pedidosService.savePedido({
-        ...order,
-        sincronizado: 'N',
-        guardadoEnServer: 'N',
-      });
-      const redefinedOrders = redefineOrders(arrPedidos, order);
-      dispatch(setArrPedido(redefinedOrders));
-      resetState();
-      Toast.show({
-        type: 'success',
-        text1: 'Pedido modificado correctamente',
-      });
-      setIsLoadingSave(false);
-    } catch (error: any) {
-      setIsLoadingSave(false);
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error.message,
-        }),
+  const updateOrderInLocalDatabaseOnly = async (
+    pedidoBase: IOperation, // Usar el pedidoBase ya estructurado
+  ): Promise<void> => {
+    console.log('[SAVE_LOCAL_ONLY] Iniciando guardado local...');
+    try {
+      // Ya tenemos pedidoBase, no necesitamos getUbication ni estructurarPedido de nuevo
+      const pedidoInDb = await pedidosService.updatePedido(
+        objOperador.nro_pedido.toString(),
+        {
+          ...pedidoBase,
+          sincronizado: 'S',
+          guardadoEnServer: 'S',
+        } as IOperation,
+      ); // Asumimos que savePedido espera IOperation
+      const pedidoDataInDb = await pedidosService.getPedidoById(
+        pedidoBase.id.toString(),
       );
+      console.log('[SAVE_LOCAL_ONLY] Pedido guardado localmente:', pedidoDataInDb);
+      if (!pedidoInDb || pedidoInDb === undefined || !pedidoDataInDb) {
+        // Este error debería ser capturado por el catch de toggleSaveOrder si se re-lanza
+        throw new Error(
+          'Fallo al guardar localmente (updateOrderInLocalDatabaseOnly) o no se obtuvo ID.',
+        );
+      }
+
+      // Las actualizaciones de Redux (arrPedido) y UI (Toast, reset) se manejarán
+      // en el flujo principal de toggleSaveOrder si pedidoGuardadoConExitoEnAlgunLado es true.
+      // Solo logueamos aquí o mostramos un Toast específico si es necesario.
+      const redefinedOrders = redefineOrders(arrPedidos, pedidoDataInDb);
+      dispatch(setArrPedido(redefinedOrders)); // Es importante añadirlo a Redux
+
+      Toast.show({type: 'success', text1: 'Pedido guardado localmente.'}); // Mensaje específico para este caso
+    } catch (error: any) {
+      console.error('[SAVE_LOCAL_ONLY] Error:', error);
+      // El error será capturado por el catch de toggleSaveOrder si se re-lanza,
+      // o podemos manejar un Toast específico aquí si no se re-lanza.
+      // Por ahora, el error se propagará si esta función es llamada desde el try/catch anidado
+      // y falla después de que la API falló.
+      throw error; // Re-lanzar para que el catch principal de toggleSaveOrder pueda manejarlo
     }
+    // No hay setIsLoadingSave(false) aquí, lo maneja el finally de toggleSaveOrder
+  };
+  const visitaRealizada = async (saleValue?: number) => {
+    // saleValue ahora es opcional
+    if (!objVisita || !objVisita.id_visita) return; // No hacer nada si no hay objVisita
+
+    const valorVenta =
+      saleValue !== undefined
+        ? saleValue
+        : arrProductAdded.reduce(
+            // Recalcular si no se pasa
+            (acumulator, articulo) => acumulator + articulo.valorTotal,
+            0,
+          );
+
+    const modifiedVisita: IVisita = {
+      ...objVisita,
+      status: '1', // Visitado
+      observation: state.observaciones,
+      saleValue: valorVenta,
+    };
   };
   const validateBeforeSaving = (): boolean => {
     const geoLocalizacion = false; // En desarrollo 07/09/2023
@@ -1022,40 +1118,46 @@ const ModificarPedido: React.FC = () => {
       return true;
     }
   };
-  const estructurarPedido = ({
-    latitude,
-    longitude,
-  }: {
-    latitude: string;
-    longitude: string;
-  }): IOperation => {
+
+  const estructurarPedido = (): IOperation => {
+    // Devuelve el objeto sin 'id'
+    const totalValorPedido = arrProductAdded.reduce(
+      // Usar arrProductAdded de Redux
+      (acumulator, articulo) => acumulator + articulo.valorTotal,
+      0,
+    );
+
     return {
+      // id: undefined, // No se define aquí
+      id: objOperation.id,
       tipo_operacion: 'pedido',
-      fecha: new Date().toISOString().slice(0, 10),
-      hora: `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
+      fecha: objOperation.fecha, // Convertir a YYYY-MM-DD
+      hora: objOperation.hora, // Convertir a HH:mm:ss
       fechaTimestampUnix: new Date().getTime(),
       almacen: state.almacen,
-
-      operador: objOperador,
-      tercero: objTercero,
-      articulosAdded: arrProductAdded,
-
+      operador: objOperador, // Usar el de Redux
+      tercero: objTercero, // Usar el de Redux
+      articulosAdded: arrProductAdded, // Usar el de Redux
       formaPago: state.formaPago,
-      fechaVencimiento: moment().add(1, 'days').format('YYYYMMDD'),
-      valorPedido: state.articulosAdded.reduce(
-        (acumulator, articulo) => acumulator + articulo.valorTotal,
-        0,
-      ),
+      // Asegúrate que fechaVencimiento se calcule correctamente
+      fechaVencimiento:
+        state.formaPago === '02' && objTercero.plazo
+          ? moment(state.fechaPedido, 'DD-MM-YYYY')
+              .add(objTercero.plazo, 'days')
+              .format('YYYY-MM-DD')
+          : moment(state.fechaPedido, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+      valorPedido: totalValorPedido,
       observaciones: state.observaciones,
       ubicacion: {
-        latitud: latitude,
-        longitud: longitude,
+        latitud: objTercero.latitude,
+        longitud: objTercero.longitude,
       },
-      guardadoEnServer: 'N', // solo estoy inicializando
-      sincronizado: 'N', // solo estoy inicializando
+      guardadoEnServer: 'N',
+      sincronizado: 'N',
     };
   };
   const toggleArticulo = (articulo: IProduct) => {
+    console.log('articulo: ', articulo);
     dispatch(setIsShowProductSheet(true));
     dispatch(setObjProduct(articulo));
   };

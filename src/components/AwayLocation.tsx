@@ -251,7 +251,7 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
             text1: 'Ubicación verificada',
             text2: 'Estás en la zona del cliente.',
           });
-          onSubmit({observacion: 'En zona', status: false}); // status: false porque no se está guardando una "excepción"
+          onSubmit({observacion: '', status: true}); // status: false porque no se está guardando una "excepción"
           onClose(); // Cierra si está en zona
         }
       } catch (error) {
@@ -426,7 +426,7 @@ export const AwayFromUbication: React.FC<IModalProps> = ({
                 style={styles.inputForCustomReason}
                 placeholder="Especifique el otro motivo (máx. 150)"
                 placeholderTextColor="#888"
-                value={customReason}
+                // value={customReason}
                 onChangeText={setCustomReason}
                 multiline={true}
                 numberOfLines={3}

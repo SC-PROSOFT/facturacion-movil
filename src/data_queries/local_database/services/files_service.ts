@@ -19,6 +19,10 @@ class FilesService {
     return this.filesRepository.get();
   }
 
+  async getAllUnsyncedFiles(): Promise<IFiles[]> {
+    return this.filesRepository.getAllUnsynced();
+  }
+
   async addFile(file: IFiles): Promise<boolean> {
     return this.filesRepository.add(file);
   }

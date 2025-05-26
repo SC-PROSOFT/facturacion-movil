@@ -1,201 +1,235 @@
-import React from 'react';
-import {StyleSheet, View, TouchableOpacity} from 'react-native';
+// Movimiento.tsx
+import React, {useMemo} from 'react';
+import {StyleSheet, View, TouchableOpacity, Alert} from 'react-native';
 import {Shadow} from 'react-native-shadow-2';
-import {Text, Avatar} from 'react-native-paper';
+import {Text, Avatar, IconButton} from 'react-native-paper';
 
-/* types */
-import {IOperation, IProductAdded} from '../common/types';
-/* utils */
+import {IOperation} from '../common/types'; // Renombrar si hay conflicto
 import {formatToMoney} from '../utils';
+import {
+  formatName,
+  formatAddress,
+  formatObservation,
+  calculateTotalOperationValue,
+} from '../utils/displayFormatters';
 
+// Renombrar la interfaz de props importada si es necesario para evitar colisión
+// o asegurarse que MovimientoProps definida aquí es la que se usa.
+// Usaremos la interfaz definida aquí por ahora.
 interface MovimientoProps {
   document: IOperation;
-  disabled: boolean;
-  toggleVisita: () => void;
+  disabled?: boolean;
+  onPressItem: (document: IOperation) => void; // CAMBIADO: Espera el objeto completo
+  onDeletePedido?: (pedidoId: string) => void;
 }
+
+interface OperationDisplayInfo {
+  icon: 'check' | 'file-document-outline' | 'sync-off' | 'alert-circle-outline';
+  color: string;
+  statusText: string;
+}
+
+const getOperationDisplayInfo = (doc: IOperation): OperationDisplayInfo => {
+  if (doc.tipo_operacion === 'factura') {
+    return {icon: 'check', color: '#51B654', statusText: 'Facturado'};
+  }
+  if (doc.sincronizado === 'S') {
+    return {
+      icon: 'file-document-outline',
+      color: '#0B2863',
+      statusText: 'Pedido Sincronizado',
+    };
+  }
+  return {icon: 'sync-off', color: '#FF8C00', statusText: 'Pedido Pendiente'};
+};
 
 const Movimiento: React.FC<MovimientoProps> = ({
   document,
-  disabled,
-  toggleVisita,
+  disabled = false,
+  onPressItem, // Ahora esta prop espera el objeto 'document' completo
+  onDeletePedido,
 }) => {
-  const getIconOfStatus = (
-    status: '1' | '2' | '3',
-  ): 'check' | 'dots-horizontal' | 'close' => {
-    switch (status) {
-      case '1':
-        return 'check';
-      case '2':
-        return 'dots-horizontal';
-      case '3':
-        return 'close';
-    }
-  };
-  const getColorOfStatus = (
-    status: '1' | '2' | '3',
-  ): '#51B654' | '#51B654' | '#D0392C' => {
-    switch (status) {
-      case '1':
-        return '#51B654';
-      case '2':
-        return '#51B654';
-      case '3':
-        return '#D0392C';
-    }
-  };
-  const getNameClient = (client: string) => {
-    if (client == '') {
-      return '***** ***** ***** *****';
-    } else {
-      return client;
-    }
-  };
-  const getAddressClient = (client: string) => {
-    if (client == '') {
-      return '***** ***** ***** *****';
-    } else {
-      return client;
-    }
-  };
-  const getObservationClient = (observation: string) => {
-    if (observation == '') {
-      return '';
-    } else {
-      return observation.length > 15
-        ? observation.slice(0, 26).trim() + '..'
-        : observation;
-    }
-  };
-  const sumarTotales = (articulosAdded: IProductAdded[]): number => {
-    let valorTotal = 0;
+  const displayInfo = useMemo(
+    () => getOperationDisplayInfo(document),
+    [document],
+  );
+  const totalValue = useMemo(
+    () => calculateTotalOperationValue(document.articulosAdded),
+    [document.articulosAdded],
+  );
 
-    articulosAdded.forEach(articulo => {
-      valorTotal += articulo.valorTotal;
-    });
-    return valorTotal;
+  const documentNumber = useMemo(() => {
+    return document.tipo_operacion === 'factura'
+      ? document.operador.nro_factura
+      : document.operador.nro_pedido;
+  }, [document.tipo_operacion, document.operador]);
+
+  const canDeletePedido =
+    document.tipo_operacion === 'pedido' && document.sincronizado === 'N';
+
+  const handlePress = () => {
+    onPressItem(document); // Llama con el objeto 'document' completo
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      width: '100%',
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#fff',
-      borderRadius: 7,
-      paddingVertical: 5,
-      maxHeight: 90,
-      opacity: disabled ? 0.5 : 1,
-    },
-    shadow: {
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 15,
-    },
-    iconContainer: {
-      width: '20%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    infoContainer: {
-      width: '52%',
-      justifyContent: 'center',
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-    },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexWrap: 'nowrap',
-    },
-    infoText: {
-      color: '#504D54',
-      fontSize: 14,
-      lineHeight: 16,
-      flexShrink: 1,
-    },
-    infoTextClient: {
-      color: '#3D3D3D',
-      fontSize: 16,
-    },
-    actionsContainer: {
-      justifyContent: 'space-evenly',
-      width: '28%',
-      height: '100%',
-      alignItems: 'center',
-    },
-    saleValue: {
-      fontSize: 18,
-      color: '#0B2863',
-    },
-    facturado: {
-      color: document.tipo_operacion == 'factura' ? '#51B654' : '#0B2863',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-  });
+  const handleDelete = () => {
+    if (canDeletePedido && document.id) {
+      Alert.alert(
+        'Confirmar Eliminación',
+        `¿Está seguro de que desea eliminar el pedido N° ${document.id}? Esta acción no se puede deshacer.`,
+        [
+          {text: 'Cancelar', style: 'cancel'},
+          {
+            text: 'Eliminar',
+            style: 'destructive',
+            onPress: () => onDeletePedido?.(document.id.toString()!),
+          },
+        ],
+      );
+    }
+  };
 
   return (
-    <Shadow distance={6} offset={[1, 5]} style={styles.shadow}>
+    // Para un gap de MÁXIMO 2px, incluyendo la sombra:
+    // offset y distance pequeños, y marginBottom pequeño o 0.
+    <Shadow distance={2} offset={[0, 1]} style={styles.shadow}>
       <TouchableOpacity
-        style={styles.container}
+        style={[styles.container, disabled && styles.disabledContainer]}
         disabled={disabled}
-        onPress={toggleVisita}>
+        onPress={handlePress}
+        activeOpacity={0.7}>
         <View style={styles.iconContainer}>
           <Avatar.Icon
-            icon={getIconOfStatus(
-              document.tipo_operacion == 'factura' ? '1' : '2',
-            )}
-            style={{
-              backgroundColor: getColorOfStatus(
-                document.tipo_operacion == 'factura' ? '1' : '2',
-              ),
-            }}
+            icon={displayInfo.icon}
+            style={{backgroundColor: displayInfo.color}}
             color="#fff"
-            size={50}
+            size={48} // Ligeramente más pequeño para ahorrar espacio vertical
           />
         </View>
 
         <View style={styles.infoContainer}>
           <View style={[styles.row, {justifyContent: 'space-between'}]}>
-            <Text
-              style={[styles.infoTextClient, {fontWeight: 'bold', flex: 1}]}
-              numberOfLines={1}>
-              {getNameClient(document.tercero.nombre)}
+            <Text style={styles.clientName} numberOfLines={1}>
+              {formatName(document.tercero.nombre)}
             </Text>
-            <Text
-              style={[
-                styles.infoTextClient,
-                {fontWeight: 'bold', marginLeft: 10},
-              ]}>
-              N°{' '}
-              {document.tipo_operacion == 'factura'
-                ? document.operador.nro_factura
-                : document.operador.nro_pedido}
+            <Text style={styles.documentNumber}>
+              N° {documentNumber || 'N/A'}
             </Text>
           </View>
-          <Text style={styles.infoText}>
-            {getAddressClient(document.fecha)}
+          <Text style={styles.infoText} numberOfLines={1}>
+            {formatAddress(document.tercero.direcc)}
           </Text>
-          <Text style={styles.infoText}>
-            {getObservationClient(document.observaciones)}
+          <Text style={styles.infoText} numberOfLines={1}>
+            {formatObservation(document.observaciones) ||
+              `Fecha: ${document.fecha}`}
           </Text>
         </View>
 
         <View style={styles.actionsContainer}>
-          <Text style={styles.saleValue}>
-            {formatToMoney(sumarTotales(document.articulosAdded))}
+          <Text style={styles.saleValue} numberOfLines={1}>
+            {formatToMoney(totalValue)}
           </Text>
-          <Text style={styles.facturado}>
-            {document.tipo_operacion == 'factura'
-              ? 'Facturado'
-              : 'Sin facturar'}
-          </Text>
+          <View style={styles.row}>
+            <Text style={[styles.statusText, {color: displayInfo.color}]}>
+              {displayInfo.statusText}
+            </Text>
+            {canDeletePedido && document.operador.nro_pedido && (
+              <IconButton
+                icon="delete-outline"
+                iconColor="#ffff"
+                size={22} // Ligeramente más pequeño
+                onPress={handleDelete}
+                style={styles.deleteButton}
+              />
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     </Shadow>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 6, // Reducido
+    paddingHorizontal: 6, // Reducido
+    minHeight: 75, // Reducido, ajusta al contenido real
+  },
+  disabledContainer: {
+    opacity: 0.5,
+  },
+  shadow: {
+    width: '100%',
+    // El offset [0,1] de la sombra ya crea 1px de espacio visual debajo.
+    // Si quieres un gap TOTAL (incluyendo sombra) de MÁXIMO 2px,
+    // marginBottom: 1 sería 1px (offset) + 1px (margin) = 2px.
+    // marginBottom: 0 sería 1px (offset) + 0px (margin) = 1px.
+    marginBottom: 20, // <--- AJUSTA ESTE VALOR (0, 1, o 2)
+  },
+  iconContainer: {
+    width: '18%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 8, // Ajustado
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2, // Pequeño espacio entre filas de texto
+  },
+  clientName: {
+    color: '#303134',
+    fontSize: 14, // Reducido
+    fontWeight: '600',
+    flexShrink: 1,
+    marginRight: 4,
+  },
+  documentNumber: {
+    color: '#52575C',
+    fontSize: 13, // Reducido
+    marginLeft: 'auto',
+    textAlign: 'right',
+  },
+  infoText: {
+    color: '#52575C',
+    fontSize: 12, // Reducido
+    lineHeight: 16, // Reducido
+  },
+  actionsContainer: {
+    width: '26%', // Ajustado
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingLeft: 4,
+  },
+  saleValue: {
+    fontSize: 14, // Reducido
+    fontWeight: '600',
+    color: '#0B2863',
+    marginBottom: 2,
+  },
+  statusText: {
+    fontSize: 11, // Reducido
+    fontWeight: '600',
+    textAlign: 'right',
+  },
+  deleteButton: {
+    marginLeft: 8,
+    backgroundColor: '#D0392C',
+    borderRadius: 8,
+    margin: 0,
+    padding: 0,
+    height: 28, // Contener el icono
+    width: 28, // Contener el icono
+    marginTop: 2,
+  },
+});
 
 export {Movimiento};

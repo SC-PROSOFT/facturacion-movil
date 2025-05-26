@@ -34,16 +34,16 @@ const Header: React.FC<HeaderProps> = ({children}) => {
     } else if (navigation.canGoBack('TabNavPrincipal')) {
       navigation.navigate('TabNavPrincipal');
     }
-     
   };
-
+  const nombreCliente = objTercero?.nombre; // getInitialsOfClient ya maneja undefined
+  const direccionVisita = objVisita?.adress || 'Dirección no disponible';
   return (
     <View style={styles.container}>
       <View style={styles.container1}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <Avatar.Text
             size={40}
-            label={getInitialsOfClient(objTercero.nombre)}
+            label={getInitialsOfClient(nombreCliente)} 
             style={{borderRadius: 10}}
           />
           <View style={{marginLeft: 10}}>

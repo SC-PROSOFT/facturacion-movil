@@ -39,7 +39,7 @@ export interface IRepository<T> {
    * @returns Una promesa que resuelve en `true` si la creación fue exitosa, o `false` si no se pudo crear.
    * @template T El tipo de entidad que se almacena en el repositorio.
    */
-  create?(item: T): Promise<boolean>;
+  create?(item: T): Promise<{success: boolean; id?: number} | number | null>;
 
   /**
    * Actualiza un elemento en el repositorio por su ID.
@@ -48,8 +48,7 @@ export interface IRepository<T> {
    * @returns Una promesa que resuelve en `true` si la actualización fue exitosa, o `false` si no se pudo actualizar.
    * @template T El tipo de entidad que se almacena en el repositorio.
    */
-  update(id: string, item: T): Promise<boolean>;
-
+  update(id: string | number, item: T): Promise<boolean>;
 
   /**
    * Elimina un elemento en el repositorio por su ID.
@@ -57,7 +56,7 @@ export interface IRepository<T> {
    * @returns Una promesa que resuelve en `true` si la eliminación fue exitosa, o `false` si no se pudo eliminar.
    * @template T El tipo de entidad que se almacena en el repositorio.
    */
-  delete?(id: string): Promise<boolean>;
+  delete?(id: string | number): Promise<boolean>;
 
   /**
    * Crea una tabla o estructura de datos en el repositorio (si es aplicable).

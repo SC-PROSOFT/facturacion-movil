@@ -1,4 +1,5 @@
 export interface IMovimiento {
+  id: number;
   nroInvoice: number;
   client: string;
   adress: string;

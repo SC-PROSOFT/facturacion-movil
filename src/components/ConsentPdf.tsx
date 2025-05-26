@@ -138,7 +138,7 @@ export default function ConsentPdfView({
         firstPage.drawImage(pngImage, {
           x: 120,
           y: 91,
-          width: pngDims.width ,
+          width: pngDims.width,
           height: pngDims.height * 0.6,
         });
       }
@@ -200,6 +200,8 @@ export default function ConsentPdfView({
 
   const handleGuardar = async () => {
     try {
+      setIsLoading(true);
+      setLoaderMessage('Guardando consentimiento 💿');
       const destinationPath = `${
         RNFS.TemporaryDirectoryPath
       }/consentimiento_guardado_${Date.now()}.pdf`;
@@ -212,10 +214,10 @@ export default function ConsentPdfView({
 
       // Llama al método `onGuardar` con la nueva ruta
       onGuardar(`file://${destinationPath}`); // Asegúrate de incluir el esquema `file://`
-     
     } catch (e) {
       console.error('Error al guardar el archivo:', e);
-     
+    } finally {
+      setIsLoading(false);
     }
   };
   const styles = StyleSheet.create({

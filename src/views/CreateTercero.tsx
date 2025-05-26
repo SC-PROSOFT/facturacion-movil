@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   ScrollView,
@@ -38,7 +38,7 @@ import {
 } from '../utils';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
-import {generateVisits} from '../utils';
+import {generatePotentialVisits} from '../utils';
 import {
   setObjInfoAlert,
   setObjTercero,
@@ -110,7 +110,6 @@ const CreateTercero = () => {
   const [isCodigoValid, setIsCodigoValid] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isModalVisiblePdf, setIsModalVisiblePdf] = useState(false);
-  const [isAlreadyValidate, setIsAlreadyValidate] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [codeTemp, setCodeTemp] = useState('');
@@ -128,16 +127,20 @@ const CreateTercero = () => {
   const [loaderMessage, setLoaderMessage] = useState<string>('');
   const objConfig = useAppSelector(store => store.config.objConfig);
   const objOperador = useAppSelector(store => store.operator.objOperator);
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     const areInputsValid = validateFields();
     const canEnableSave = isConsentSigned && isCodigoValid;
     const canEnableSign = isCodigoValid && areInputsValid;
-    console.log(isConsentSigned, isCodigoValid);
     setIsDisabled(!canEnableSave);
     setDisabledConsent(!canEnableSign);
-    console.log('CanEnable =>', canEnableSave);
-    console.log(isDisabled); // Actualiza el estado isDisabled
   }, [isConsentSigned, tercero, isCodigoValid]);
+
   const validateFields = () => {
     const newErrors = {
       codigo: '',
@@ -160,8 +163,6 @@ const CreateTercero = () => {
       newErrors.frecuencia = 'La frecuencia es requerida';
     if (!tercero.tel) newErrors.tel = 'El telefono es requerido';
 
-    setErrors(newErrors);
-
     return !Object.values(newErrors).some(error => error);
   };
 
@@ -182,10 +183,10 @@ const CreateTercero = () => {
     try {
       calculateDV(tercero.codigo);
       setIsLoading(true);
-
+      const padTenDigit = padLeftCodigo(tercero.codigo);
       const existingTercero = await tercerosService.getByAttribute(
         'codigo',
-        tercero.codigo,
+        padTenDigit,
       );
       if (existingTercero) {
         dispatch(
@@ -277,7 +278,7 @@ const CreateTercero = () => {
 
       if (response) {
         try {
-          const visitas = await generateVisits([updatedTercero]);
+          const visitas = await generatePotentialVisits([updatedTercero]);
           if (visitas.length > 0) {
             setLoaderMessage('Calculando visitas...');
             await visitaService.fillVisitas(visitas);
@@ -454,8 +455,7 @@ const CreateTercero = () => {
       } else {
         Toast.show({
           type: 'info',
-          text1:
-            'Algunos archivos no se subieron correctamente y se guardaron localmente.',
+          text1: 'Se guardaron los archivos localmente.',
         });
       }
 
