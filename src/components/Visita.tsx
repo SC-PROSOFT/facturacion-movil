@@ -107,13 +107,24 @@ const Visita: React.FC<VisitaProps> = ({visita, disabled, toggleVisita}) => {
           <Text style={[styles.infoText, {fontWeight: 'bold', fontSize: 12}]}>
             {getStatusDescription(visita.status)}
           </Text>
-          {visita.observation && renderObservation(visita.observation)}
+          {visita.observation && (
+            <Text style={styles.observationText}>
+              {renderObservation(visita.observation)}
+            </Text>
+          )}
         </View>
 
         <View style={styles.rightContainer}>
           {/* <Text style={styles.saleValueText}>
             {formatToMoney(visita.saleValue)}
           </Text> */}
+          {visita.saleValue && (
+            <View>
+              <Text style={styles.saleValueText}>
+                {formatToMoney(visita.saleValue)?.toString()}
+              </Text>
+            </View>
+          )}
 
           <GoogleMap
             latitude={parseFloat(visita.location?.latitude)}
@@ -173,7 +184,9 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   saleValueText: {
-    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: -5,
+    fontSize: 14,
     color: '#0B2863',
     textAlign: 'center',
   },

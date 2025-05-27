@@ -680,7 +680,7 @@ const CreateTercero = () => {
           <View style={{flexDirection: 'row', gap: 8}}>
             <View style={{flex: 1}}>
               <_Input
-                label="Telefono"
+                label="Telefono*"
                 name="tel"
                 maxLength={10}
                 keyboardType="numeric"
@@ -751,7 +751,7 @@ const CreateTercero = () => {
             disabled={!isCodigoValid}
           />
           <_Input
-            label="Correo electronico"
+            label="Correo electronico*"
             name="email"
             onChangeText={(text: string) =>
               setTercero(prevState => ({...prevState, email: text}))

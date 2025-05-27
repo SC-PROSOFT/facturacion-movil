@@ -24,6 +24,7 @@ import {
   Header,
   SearchLocation,
   CancelarVisita,
+  CarteraPopup,
 } from '../components';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
@@ -46,6 +47,9 @@ import {
   setObjVisita,
   setObjTercero,
   setIntCartera,
+  setArrCartera,
+  setArrCarteraPopup,
+  setIsShowCarteraPopup,
 } from '../redux/slices';
 import {all} from 'axios';
 import Toast from 'react-native-toast-message';
@@ -57,6 +61,8 @@ const Tercero = () => {
   const arrPedido = useAppSelector(store => store.tercerosFinder.arrPedido);
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const objVisita = useAppSelector(store => store.visitas.objVisita);
+  const intCartera = useAppSelector(store => store.tercerosFinder.intCartera);
+  const arrCartera = useAppSelector(store => store.sync.arrCartera);
 
   const [cartera, setCartera] = useState<string>('$0');
   const [showMissingFilesAlert, setShowMissingFilesAlert] =
@@ -131,6 +137,7 @@ const Tercero = () => {
         'nit',
         objTercero.codigo,
       );
+      setArrCartera(carteraData);
       const carteraSumada = sumarCartera(carteraData);
       dispatch(setIntCartera(carteraSumada));
       setCartera(formatToMoney(carteraSumada));
@@ -148,6 +155,21 @@ const Tercero = () => {
       }
     }
   }, [dispatch, objTercero]);
+
+  const toggleValidateCartera = () => {
+    if (intCartera > 0) {
+      const carteraFilter = arrCartera.filter(
+        cartera => cartera.nit == objTercero.codigo,
+      );
+      dispatch(setArrCarteraPopup(carteraFilter));
+      dispatch(setIsShowCarteraPopup(true));
+    } else {
+      Toast.show({
+        type: 'info',
+        text1: 'No hay cartera pendiente',
+      });
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -341,7 +363,14 @@ const Tercero = () => {
         <Text style={styles.originalTotalCount_fromUser}>
           {formatToMoney(totalCuenta)}
         </Text>
-        <Text style={styles.originalSaldo_fromUser}>Saldo: {cartera}</Text>
+        <View style={styles.saldoContainer}>
+          <Text style={styles.originalSaldo_fromUser}>Saldo: {cartera} </Text>
+          <TouchableOpacity
+            onPress={() => toggleValidateCartera()}
+            style={styles.saldoButton}>
+            <Icon name="text-box-search-outline" size={20} color={'#0B2863'} />
+          </TouchableOpacity>
+        </View>
       </View>
       {/* --- Fin Sección Superior Original --- */}
 
@@ -421,6 +450,7 @@ const Tercero = () => {
         onClose={handleCloseCancelarVisitaModal}
         onSubmit={handleConfirmCancelarVisita}
       />
+      <CarteraPopup />
     </View>
   );
 };
@@ -433,7 +463,7 @@ const styles = StyleSheet.create({
   // --- Estilos de tu diseño original para la parte superior ---
   originalBoxLight_fromUser: {
     position: 'absolute',
-    zIndex: 1,
+    
     width: 600,
     height: 260,
     marginLeft: -190,
@@ -446,7 +476,7 @@ const styles = StyleSheet.create({
   },
   originalBoxDark_fromUser: {
     position: 'absolute',
-    zIndex: 2, // Encima del light box
+     // Encima del light box
     width: 2000,
     height: 2000,
     marginTop: -2040,
@@ -459,14 +489,14 @@ const styles = StyleSheet.create({
   },
   headerWrapper_fromUser: {
     // Contenedor para el Header
-    zIndex: 3, // Encima de los boxes
+    // Encima de los boxes
     // El componente Header usualmente se posiciona o tiene altura propia
     // Si es un header flotante, necesitará position: 'absolute', top, left, right
     // Si es parte del flujo, el siguiente elemento (totalCountContainer) necesitará un marginTop
     paddingTop: Platform.OS === 'android' ? 10 : 40, // Espacio para la barra de estado
   },
   originalTotalCountContainer_fromUser: {
-    zIndex: 3, // Encima de los boxes
+    // Encima de los boxes
     height: 180, // Altura fija como en tu original
     alignItems: 'center',
     justifyContent: 'center',
@@ -481,14 +511,19 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: 'bold',
   },
-  originalSaldo_fromUser: {fontSize: 16, color: '#FFF', marginTop: 10},
+  originalSaldo_fromUser: {
+    fontSize: 16,
+    color: '#FFF',
+    textAlign: 'center', // Centra el texto dentro de su propio espacio
+    marginRight: 4, // Espacio entre el texto y el botón
+  },
 
   // --- Estilos para los Botones Flotantes (Nuevo Diseño) ---
   newFloatingActionsContainer: {
     position: 'absolute',
     top: 80, // Ajusta este valor para que quede bien debajo de tu Header
     right: 15,
-    zIndex: 4, // Encima de la sección de total, pero debajo de modales
+    // Encima de la sección de total, pero debajo de modales
     gap: 8,
   },
   newActionButton: {
@@ -508,6 +543,18 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 
+  saldoContainer: {
+    flexDirection: 'row', // Coloca el texto y el botón en una fila
+    alignItems: 'center', // Centra verticalmente el contenido
+    justifyContent: 'center', // Centra horizontalmente el contenido
+    width: '100%',
+  },
+
+  saldoButton: {
+    backgroundColor: '#ffff',
+    padding: 4,
+    borderRadius: 5,
+  },
   // --- Estilos para la Sección de Lista de Movimientos (Nuevo Diseño) ---
   newMovimientosListSection: {
     flex: 1, // Clave para que la lista ocupe el espacio restante y permita scroll

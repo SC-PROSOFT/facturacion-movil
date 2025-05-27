@@ -100,14 +100,12 @@ class TercerosApiServices {
       if (response.data.data.STATUS == '00') {
         return true;
       } else if (response.data.data.STATUS == '35') {
-        throw new Error('La configuracion no es correcta');
+        return false;
       } else if (response.data.data.STATUS == '99') {
-        throw new Error('Hubo un error al guardar el tercero');
+        return false;
       } else {
         console.error('Error al guardar el tercero:', response.data.data);
-        throw new Error(
-          `Error al guardar el tercero: ${response.data.data.STATUS}`,
-        );
+        return false;
       }
     } catch (error) {
       throw error;
@@ -129,14 +127,12 @@ class TercerosApiServices {
       if (response.data.data.STATUS == '00') {
         return true;
       } else if (response.data.data.STATUS == '35') {
-        throw new Error('La configuracion no es correcta');
+        return false;
       } else if (response.data.data.STATUS == '99') {
-        throw new Error('Hubo un error al guardar el tercero');
+        return false;
       } else {
         console.error('Error al guardar el tercero:', response.data.data);
-        throw new Error(
-          `Error al guardar el tercero: ${response.data.data.STATUS}`,
-        );
+        return false;
       }
     } catch (error) {
       console.log('error =>', error);

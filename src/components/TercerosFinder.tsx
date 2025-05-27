@@ -84,6 +84,7 @@ export const TercerosFinder = React.memo(
 
       const attribute = /^[0-9]/.test(text) ? 'codigo' : 'nombre';
       try {
+        setIsLoading(true);
         const filtered = await tercerosService.getByLikeAttribute(
           attribute,
           text,
@@ -94,6 +95,8 @@ export const TercerosFinder = React.memo(
         console.log('Filtered Terceros:', filtered);
       } catch (error) {
         console.error('Error al filtrar terceros:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -124,6 +127,11 @@ export const TercerosFinder = React.memo(
         );
 
         if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
+          console.log(cod_vendedor)
+          const testFilter = allTerceros.filter(
+            tercero => tercero.codigo === "0079627091"
+          );
+          console.log('Test Filter:', testFilter);
           const filteredTerceros = allTerceros.filter(
             tercero => tercero.vendedor === cod_vendedor,
           );
@@ -307,7 +315,7 @@ export const TercerosFinder = React.memo(
         </View>
 
         <SafeAreaView style={{paddingHorizontal: 10, paddingBottom: 120}}>
-          {isLoading && isFirstLoad ? (
+          {isLoading ? (
             <View style={styles.loaderContainer}>
               <ActivityIndicator size="large" color="#0000ff" />
             </View>

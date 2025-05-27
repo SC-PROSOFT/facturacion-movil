@@ -25,6 +25,7 @@ const SignatureModal = ({visible, onClose, onOK, onEmpty}) => {
   // Si necesitas hacer algo adicional aquí antes de llamar a onOK/onEmpty prop:
   const handleSignatureOK = signature => {
     // setSignature(signature); // Solo si necesitas el estado localmente
+    Orientation.lockToPortrait(); // Vuelve a modo retrato al guardar la firma
     onOK(signature); // Llama al callback del padre
   };
 

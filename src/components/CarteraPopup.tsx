@@ -49,8 +49,10 @@ export const CarteraPopup = React.memo(() => {
       flex: 1,
       marginBottom: 115,
       justifyContent: 'flex-end',
+     
     },
     modal: {
+     
       backgroundColor: '#fff',
       height: '70%',
       justifyContent: 'flex-start',

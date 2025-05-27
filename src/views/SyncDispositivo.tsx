@@ -453,13 +453,10 @@ const SyncDispositivo = () => {
         facturasElaborados: facturasValues.facturasElaborados,
       }));
     } catch (error) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: 'Fallo cargar valores de facturas',
-        }),
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Fallo cargar valores de facturas ❌',
+      });
     }
   };
 
@@ -487,13 +484,10 @@ const SyncDispositivo = () => {
         filesElaborados: filesValues.filesElaborados,
       }));
     } catch (error) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: 'Fallo cargar valores de archivos',
-        }),
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Fallo cargar valores de archivos ❌',
+      });
     }
   };
 
@@ -534,13 +528,10 @@ const SyncDispositivo = () => {
         setLoading(false);
       } catch (error: any) {
         setLoading(false);
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'error',
-            description: error.message,
-          }),
-        );
+        Toast.show({
+          type: 'error',
+          text1: error.message || 'Error al actualizar facturas ❌',
+        });
       }
     }
   };
@@ -577,13 +568,10 @@ const SyncDispositivo = () => {
         pedidosElaborados: pedidosValues.pedidosElaborados,
       }));
     } catch (error) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: 'Fallo cargar valores de pedidos',
-        }),
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Fallo cargar valores de pedidos ❌',
+      });
     }
   };
 
@@ -599,13 +587,12 @@ const SyncDispositivo = () => {
       objConfig.descargasIp,
       objConfig.puerto,
     );
-
+    console.log('Entre a updates PEDIDOSS!!!!!!!');
     const pedidos = await pedidosService.getAllPedidos();
 
     const pedidosPendientesDeActualizacion = pedidos.filter(
       pedido => pedido.sincronizado == 'N' || !pedido.sincronizado,
     );
-
     for (
       let index = 0;
       index < pedidosPendientesDeActualizacion.length;
@@ -619,10 +606,18 @@ const SyncDispositivo = () => {
           'Verificacion de pedido',
           pedido.guardadoEnServer == 'S' ? 'put' : 'post',
         );
-        await pedidosApiService._savePedido(
+        const response = await pedidosApiService._savePedido(
           pedido,
           pedido.guardadoEnServer == 'S' ? 'put' : 'post',
         );
+
+        if (response) {
+          await pedidosService.updatePedido(pedido.id.toString(), {
+            ...pedido,
+            sincronizado: 'S',
+            guardadoEnServer: 'S',
+          });
+        }
 
         if (index === pedidos.length - 1) {
           Toast.show({
@@ -635,13 +630,10 @@ const SyncDispositivo = () => {
         setLoading(false);
       } catch (error: any) {
         setLoading(false);
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'error',
-            description: error.message,
-          }),
-        );
+        Toast.show({
+          type: 'error',
+          text1: error.message || 'Error al actualizar pedidos ❌',
+        });
       }
     }
   };
@@ -708,13 +700,11 @@ const SyncDispositivo = () => {
 
       // Mostrar mensajes al usuario
       if (successfulCreated > 0 || successfulEdited > 0) {
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'success',
-            description: `${successfulCreated} terceros creados y ${successfulEdited} terceros editados subidos correctamente`,
-          }),
-        );
+        Toast.show({
+          type: 'success',
+          text1: `Terceros sincronizados 🥳`,
+          text2: `${successfulCreated} creados y ${successfulEdited} editados`,
+        });
       }
 
       if (failedCreated === 0 && failedEdited === 0) {
@@ -733,13 +723,10 @@ const SyncDispositivo = () => {
       setLoading(false);
     } catch (error: any) {
       setLoading(false);
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error.message || 'Error al subir terceros',
-        }),
-      );
+      Toast.show({
+        type: 'error',
+        text1: error.message || 'Error al actualizar terceros ❌',
+      });
     }
   };
 
@@ -783,34 +770,27 @@ const SyncDispositivo = () => {
       );
 
       if (successfulUpdates > 0) {
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'success',
-            description: `${successfulUpdates} encuestas actualizadas correctamente`,
-          }),
-        );
+        Toast.show({
+          type: 'success',
+          text1: `${successfulUpdates} encuestas actualizadas 🥳`,
+        });
       }
 
       if (failedUpdates.length > 0) {
         failedUpdates.forEach(failure => {
-          dispatch(
-            setObjInfoAlert({
-              visible: true,
-              type: 'error',
-              description: failure.reason.message || 'Error desconocido',
-            }),
-          );
+          Toast.show({
+            type: 'error',
+            text1:
+              failure.reason?.message ||
+              'Error desconocido al actualizar encuesta ❌',
+          });
         });
       }
     } catch (error: any) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error.message || 'Error al obtener encuestas',
-        }),
-      );
+      Toast.show({
+        type: 'error',
+        text1: error.message || 'Error al actualizar encuestas ❌',
+      });
     } finally {
       setLoading(false);
     }
@@ -832,13 +812,10 @@ const SyncDispositivo = () => {
       );
 
       if (filesToSync.length === 0) {
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'info',
-            description: 'No hay archivos pendientes de sincronización',
-          }),
-        );
+        Toast.show({
+          type: 'info',
+          text1: 'No hay archivos pendientes de sincronización',
+        });
         setLoading(false);
         return;
       }
@@ -904,35 +881,29 @@ const SyncDispositivo = () => {
       );
 
       if (successfulUploads > 0) {
-        dispatch(
-          setObjInfoAlert({
-            visible: true,
-            type: 'success',
-            description: `${successfulUploads} archivos subidos correctamente`,
-          }),
-        );
+        Toast.show({
+          type: 'success',
+          text1: `Archivos sincronizados 🥳`,
+          text2: `${successfulUploads} archivos subidos correctamente`,
+        });
       }
 
       if (failedUploads.length > 0) {
         failedUploads.forEach(failure => {
-          dispatch(
-            setObjInfoAlert({
-              visible: true,
-              type: 'error',
-              description:
-                failure.reason?.message || 'Error desconocido al subir archivo',
-            }),
-          );
+          Toast.show({
+            type: 'error',
+            text1:
+              failure.reason?.message ||
+              'Error desconocido al subir archivos ❌',
+          });
         });
       }
     } catch (error: any) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error.message || 'Error al subir archivos',
-        }),
-      );
+      Toast.show({
+        type: 'error',
+        text1: error.message || 'Error al subir archivos ❌',
+      });
+      console.error('Error al subir archivos:', error);
     } finally {
       setLoading(false); // Ocultar indicador de carga
     }
@@ -962,13 +933,10 @@ const SyncDispositivo = () => {
       // dispatch(showAlert('05'));
     } catch (error: any) {
       setShowProgressWindow(false);
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: error.message,
-        }),
-      );
+      Toast.show({
+        type: 'error',
+        text1: error.message || 'Error al sincronizar datos ❌',
+      });
     }
   };
 
