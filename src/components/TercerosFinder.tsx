@@ -122,16 +122,11 @@ export const TercerosFinder = React.memo(
 
         const allTerceros = await tercerosService.getPaginatedByTable(
           searchTable,
-          1, // Reset page to 1
+          1,
           pageSize,
         );
 
         if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
-          console.log(cod_vendedor)
-          const testFilter = allTerceros.filter(
-            tercero => tercero.codigo === "0079627091"
-          );
-          console.log('Test Filter:', testFilter);
           const filteredTerceros = allTerceros.filter(
             tercero => tercero.vendedor === cod_vendedor,
           );

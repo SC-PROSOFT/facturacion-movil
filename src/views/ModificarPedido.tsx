@@ -941,9 +941,15 @@ const ModificarPedido: React.FC = () => {
             text1: 'Error al guardar el pedido en el servidor',
           });
         }
-        console.log('[SAVE_LOCAL_ONLY] Pedido guardado localmente:', pedidoDataInDb);
+        console.log(
+          '[SAVE_LOCAL_ONLY] Pedido guardado localmente:',
+          pedidoDataInDb,
+        );
         const redefinedOrders = redefineOrders(arrPedidos, pedidoDataInDb);
-        console.log('[SAVE_LOCAL_ONLY] Pedido guardado localmente:', pedidoDataInDb);
+        console.log(
+          '[SAVE_LOCAL_ONLY] Pedido guardado localmente:',
+          pedidoDataInDb,
+        );
         console.log('redefinedOrders: ', redefinedOrders);
 
         dispatch(setArrPedido(redefinedOrders));
@@ -1022,7 +1028,7 @@ const ModificarPedido: React.FC = () => {
     try {
       // Ya tenemos pedidoBase, no necesitamos getUbication ni estructurarPedido de nuevo
       const pedidoInDb = await pedidosService.updatePedido(
-        objOperador.nro_pedido.toString(),
+        pedidoBase.id.toString(),
         {
           ...pedidoBase,
           sincronizado: 'S',
@@ -1032,7 +1038,10 @@ const ModificarPedido: React.FC = () => {
       const pedidoDataInDb = await pedidosService.getPedidoById(
         pedidoBase.id.toString(),
       );
-      console.log('[SAVE_LOCAL_ONLY] Pedido guardado localmente:', pedidoDataInDb);
+      console.log(
+        '[SAVE_LOCAL_ONLY] Pedido guardado localmente:',
+        pedidoDataInDb,
+      );
       if (!pedidoInDb || pedidoInDb === undefined || !pedidoDataInDb) {
         // Este error debería ser capturado por el catch de toggleSaveOrder si se re-lanza
         throw new Error(
