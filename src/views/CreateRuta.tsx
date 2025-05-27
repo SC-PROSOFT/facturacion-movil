@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {View, ScrollView, StyleSheet, ActivityIndicator} from 'react-native';
 import {Button, Text} from 'react-native-paper';
 import {generatePotentialVisits} from '../utils';
+import {useNavigation} from '@react-navigation/native';
 
 /* components */
 import {
@@ -15,6 +16,7 @@ import {
   RutaFinder,
   ZonaFinder,
   FrecuenciaFinder,
+  Loader,
 } from '../components';
 /* types */
 import {ITerceros} from '../common/types';
@@ -34,8 +36,10 @@ import {
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import AxiosInstance from 'axios';
 import {TercerosApiServices} from '../data_queries/api/queries/terceros_queries';
+import Toast from 'react-native-toast-message';
 
 const CreateRuta = () => {
+  const navigation: any = useNavigation();
   const dispatch = useAppDispatch();
   const objTercero = useAppSelector(store => store.tercerosFinder.objTercero);
   const objConfig = useAppSelector(store => store.config.objConfig);
@@ -116,13 +120,11 @@ const CreateRuta = () => {
       console.log('Error al guardar tercero', error);
     } finally {
       setIsLoading(false);
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'success',
-          description: 'Ruta extra creada correctamente 🥳',
-        }),
-      );
+      Toast.show({
+        type: 'success',
+        text1: 'Ruta creada 🥳✅',
+      });
+      navigation.goBack();
     }
   };
 
@@ -208,8 +210,6 @@ const CreateRuta = () => {
               />
             </View>
           </View>
-
-          
         </View>
 
         <Text
@@ -230,10 +230,8 @@ const CreateRuta = () => {
             padding: 10,
             backgroundColor: '#fff',
             borderRadius: 10,
-           
           }}>
           {/* Zona y Ruta */}
-         
 
           {/* Frecuencias */}
           <View style={{flexDirection: 'row', gap: 8, marginBottom: 15}}>
@@ -275,7 +273,7 @@ const CreateRuta = () => {
                   }
                 />
               </View>
-              <View style={{flex: 1.1 , marginLeft: 6}}>
+              <View style={{flex: 1.1, marginLeft: 6}}>
                 <IconButton
                   iconName="calendar-refresh"
                   iconColor="#FFF"
@@ -338,21 +336,7 @@ const CreateRuta = () => {
           setTercero(prevState => ({...prevState, ruta: ruta.zona}))
         }
       />
-      {isLoading && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo oscuro con opacidad
-          }}>
-          <ActivityIndicator size="large" color="#092254" />
-        </View>
-      )}
+      <Loader visible={isLoading} message='Creando ruta nueva'/>
     </View>
   );
 };

@@ -688,6 +688,7 @@ const SyncDispositivo = () => {
         }),
       );
 
+      console.log('createdResults', createdResults);
       // Contar resultados exitosos y fallidos
       const successfulCreated = createdResults.filter(
         result => result.status === 'fulfilled' && result.value === true,
@@ -1092,7 +1093,7 @@ const SyncDispositivo = () => {
         disabledCancel={disabledCancel}
       />
 
-      <TercerosFinder searchTable="terceros_nuevos" />
+      <TercerosFinder searchTable="terceros_creados" />
     </View>
   );
 };

@@ -125,6 +125,12 @@ const CreateTercero = () => {
   const [disabledConsent, setDisabledConsent] = useState(true);
   const [isConsentSigned, setIsConsentSigned] = useState(false);
   const [loaderMessage, setLoaderMessage] = useState<string>('');
+  const [nameLabel, setNameLabel] = useState<string>('Nombre');
+  const [isNitState, setIsNitState] = useState<boolean>(false);
+  const [representanteLegal, setRepresentanteLegal] = useState<string>('');
+  const [documento_representante, setDocumentoRepresentante] =
+    useState<string>('');
+
   const objConfig = useAppSelector(store => store.config.objConfig);
   const objOperador = useAppSelector(store => store.operator.objOperator);
   const isInitialMount = useRef(true);
@@ -209,6 +215,11 @@ const CreateTercero = () => {
     }
   };
 
+  useEffect(() => {
+    tercero.tipo === 'NIT'
+      ? setNameLabel('Razon social')
+      : setNameLabel('Nombre');
+  }, [tercero.tipo]);
   const handleCloseModal = () => {
     setIsModalVisible(false); // Cierra el modal
   };
@@ -222,6 +233,10 @@ const CreateTercero = () => {
       latitude: location.latitude.toString(),
       longitude: location.longitude.toString(),
     }));
+    Toast.show({
+      type: 'success',
+      text1: 'Ubicación guardada correctamente 🥳.',
+    })
     setIsModalVisible(false); // Cierra el modal
   };
 
@@ -587,7 +602,7 @@ const CreateTercero = () => {
             gap: 8,
           }}>
           <_Input
-            label="Nombre *"
+            label={nameLabel}
             name="nombre"
             onChangeText={(text: string) =>
               setTercero(prevState => ({...prevState, nombre: text}))
@@ -638,6 +653,30 @@ const CreateTercero = () => {
               />
             </View>
           </View>
+          {tercero.tipo === 'NIT' && (
+            <View style={{flexDirection: 'column', gap: 8}}>
+              <View style={{flex: 1}}>
+                <_Input
+                  label="Representante legal"
+                  name="representante_legal"
+                  onChangeText={(text: string) => setRepresentanteLegal(text)}
+                  disabled={!isCodigoValid}
+                />
+              </View>
+              <View style={{flex: 1}}>
+                <_Input
+                  label="Documento representante legal"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  name="representante_legal"
+                  onChangeText={(text: string) =>
+                    setDocumentoRepresentante(text)
+                  }
+                  disabled={!isCodigoValid}
+                />
+              </View>
+            </View>
+          )}
           <View style={{flexDirection: 'row', gap: 8}}>
             <View style={{flex: 1}}>
               <_Input
@@ -891,14 +930,14 @@ const CreateTercero = () => {
 
             <TouchableOpacity
               style={{
-                backgroundColor: '#485E8A',
+                backgroundColor: !isCodigoValid ? '#485E8A70' : '#485E8A',
                 padding: 3,
                 borderRadius: 5,
               }}
               onPress={() => {
                 toggleGetGeolocation();
               }}
-              disabled={isDisabled}>
+              disabled={!isCodigoValid}>
               <Icon name="map-marker-radius" size={36} color={'#FFF'} />
             </TouchableOpacity>
             <TouchableOpacity
@@ -987,6 +1026,8 @@ const CreateTercero = () => {
         celular={tercero.tel}
         email={tercero.email}
         ciudad={tercero.ciudad}
+        representanteLegal={representanteLegal}
+        documentoRepresentante={documento_representante}
       />
       <Loader visible={isLoading} message={loaderMessage} />
     </View>

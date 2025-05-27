@@ -595,13 +595,13 @@ class TercerosRepository implements IRepository<ITerceros> {
   }
 
   async getPaginatedByTable(
-    table: 'terceros' | 'terceros_nuevos',
+    table: 'terceros' | 'terceros_creados',
     page: number,
     pageSize: number,
   ): Promise<ITerceros[]> {
     const offset = (page - 1) * pageSize;
 
-    if (table === 'terceros_nuevos') {
+    if (table === 'terceros_creados') {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
           tx.executeSql(
@@ -673,7 +673,12 @@ class TercerosRepository implements IRepository<ITerceros> {
             if (result) {
               resolve(result);
             } else {
-            console.log("Atribute =>",atributeName, "Value =>",attributeValue);
+              console.log(
+                'Atribute =>',
+                atributeName,
+                'Value =>',
+                attributeValue,
+              );
               reject(
                 new Error(
                   'No se encontró el registro con el código proporcionado',
@@ -689,9 +694,9 @@ class TercerosRepository implements IRepository<ITerceros> {
     });
   }
   async getAllByTable(
-    table: 'terceros' | 'terceros_nuevos',
+    table: 'terceros' | 'terceros_creados',
   ): Promise<ITerceros[]> {
-    if (table === 'terceros_nuevos') {
+    if (table === 'terceros_creados') {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
           tx.executeSql(
@@ -749,9 +754,9 @@ class TercerosRepository implements IRepository<ITerceros> {
   }
 
   async getQuantityByTable(
-    table: 'terceros' | 'terceros_nuevos',
+    table: 'terceros' | 'terceros_creados',
   ): Promise<string> {
-    if (table === 'terceros_nuevos') {
+    if (table === 'terceros_creados') {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
           tx.executeSql(
@@ -813,7 +818,7 @@ class TercerosRepository implements IRepository<ITerceros> {
   async getByLikeAttribute(
     atributeName: string,
     attributeValue: any,
-    table: 'terceros' | 'terceros_nuevos',
+    table: 'terceros' | 'terceros_creados',
   ): Promise<ITerceros[]> {
     console.log('atribute search like', atributeName);
     console.log('value', attributeValue);
@@ -822,7 +827,7 @@ class TercerosRepository implements IRepository<ITerceros> {
       return this.getAllByTable(table);
     }
 
-    if (table === 'terceros_nuevos') {
+    if (table === 'terceros_creados') {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
           tx.executeSql(
@@ -1071,6 +1076,8 @@ class TercerosRepository implements IRepository<ITerceros> {
   }
 
   async deleteFromTable(tableName: string, codigo: string): Promise<boolean> {
+    console.log('Borrando tercero con código:', codigo);
+    console.log('Tabla:', tableName);
     const sqlSelectStatement = `DELETE FROM ${tableName} WHERE codigo = ?`;
 
     return new Promise((resolve, reject) => {
@@ -1082,6 +1089,7 @@ class TercerosRepository implements IRepository<ITerceros> {
             resolve(true);
           },
           (error: ResultSet) => {
+            console.log('Error al borrar tercero:', error);
             reject(new Error('Fallo borrar tercero'));
           },
         );

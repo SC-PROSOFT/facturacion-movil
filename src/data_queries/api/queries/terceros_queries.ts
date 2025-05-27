@@ -96,14 +96,19 @@ class TercerosApiServices {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
         body,
       );
-      console.log('response save tercero =>', response.data.data);
+
       if (response.data.data.STATUS == '00') {
         return true;
       } else if (response.data.data.STATUS == '35') {
         throw new Error('La configuracion no es correcta');
+      } else if (response.data.data.STATUS == '99') {
+        throw new Error('Hubo un error al guardar el tercero');
+      } else {
+        console.error('Error al guardar el tercero:', response.data.data);
+        throw new Error(
+          `Error al guardar el tercero: ${response.data.data.STATUS}`,
+        );
       }
-
-      return false;
     } catch (error) {
       throw error;
     }
@@ -111,9 +116,8 @@ class TercerosApiServices {
   _updateTercero = async (tercero: ITerceros): Promise<boolean> => {
     try {
       const innerFormatTercero = this._constructTercero(tercero, '8');
-
       const datosh = innerFormatTercero;
-
+      console.log('update datosh =>', datosh);
       let body = {
         datosh: datosh,
       };
@@ -126,9 +130,14 @@ class TercerosApiServices {
         return true;
       } else if (response.data.data.STATUS == '35') {
         throw new Error('La configuracion no es correcta');
+      } else if (response.data.data.STATUS == '99') {
+        throw new Error('Hubo un error al guardar el tercero');
+      } else {
+        console.error('Error al guardar el tercero:', response.data.data);
+        throw new Error(
+          `Error al guardar el tercero: ${response.data.data.STATUS}`,
+        );
       }
-
-      return false;
     } catch (error) {
       console.log('error =>', error);
       throw error;

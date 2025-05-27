@@ -26,6 +26,8 @@ export default function ConsentPdfView({
   celular,
   email,
   ciudad,
+  representanteLegal,
+  documentoRepresentante,
 }) {
   const originalPdf = 'consentimiento.pdf';
   const [signature, setSignature] = useState(null);
@@ -78,7 +80,7 @@ export default function ConsentPdfView({
         font,
         color: rgb(0, 0, 0),
       });
-      firstPage.drawText(`${nombre || ''}`, {
+      firstPage.drawText(`${representanteLegal || nombre || ''}`, {
         // ESTO CAMBIA POR REPRESENTANTE LEGAL
         x: 200,
         y: 147,
@@ -124,7 +126,7 @@ export default function ConsentPdfView({
         font,
         color: rgb(0, 0, 0),
       });
-      firstPage.drawText(`${codigo || ''}`, {
+      firstPage.drawText(`${documentoRepresentante || codigo || ''}`, {
         x: 108,
         y: 75,
         size: fontSize,

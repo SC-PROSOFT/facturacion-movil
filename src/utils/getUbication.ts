@@ -22,7 +22,7 @@ import Geolocation, {
  * o rechaza con un error si no se pudo obtener la ubicación.
  */
 const getUbication = async (
-  enableHighAccuracy: boolean = true, // Priorizar GPS por defecto para capacidad offline
+  enableHighAccuracy: boolean = false, // Priorizar GPS por defecto para capacidad offline
   timeout: number = 15000, // Aumentar un poco el timeout para el GPS
   maximumAge: number = 1000, // Obtener una ubicación razonablemente fresca
 ): Promise<{latitude: string; longitude: string}> => {

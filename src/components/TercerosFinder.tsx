@@ -20,7 +20,7 @@ import debounce from 'lodash/debounce';
 
 interface TercerosFinderProps {
   toggleTercero?: (tercero: ITerceros) => void;
-  searchTable: 'terceros' | 'terceros_nuevos';
+  searchTable: 'terceros' | 'terceros_creados';
 }
 
 export const TercerosFinder = React.memo(

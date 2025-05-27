@@ -49,7 +49,7 @@ class TercerosService {
   }
 
   async getPaginatedByTable(
-    tableSearch: 'terceros' | 'terceros_nuevos',
+    tableSearch: 'terceros' | 'terceros_creados',
     page: number,
     pageSize: number,
   ): Promise<ITerceros[]> {
@@ -73,7 +73,7 @@ class TercerosService {
   async getByLikeAttribute(
     attributeName: string,
     attributeValue: any,
-    tableSearch: 'terceros' | 'terceros_nuevos',
+    tableSearch: 'terceros' | 'terceros_creados',
   ): Promise<ITerceros[]> {
     return this.tercerosRepository.getByLikeAttribute(
       attributeName,
@@ -83,13 +83,13 @@ class TercerosService {
   }
 
   async getAllByTable(
-    tableSearch: 'terceros' | 'terceros_nuevos',
+    tableSearch: 'terceros' | 'terceros_creados',
   ): Promise<ITerceros[]> {
     return this.tercerosRepository.getAllByTable(tableSearch);
   }
 
   async getQuantityByTable(
-    tableSearch: 'terceros' | 'terceros_nuevos',
+    tableSearch: 'terceros' | 'terceros_creados',
   ): Promise<string> {
     return this.tercerosRepository.getQuantityByTable(tableSearch);
   }
@@ -103,7 +103,7 @@ class TercerosService {
   }
 
   async deleteTerceroFromCreated(codigo: string): Promise<boolean> {
-    return this.tercerosRepository.deleteFromTable('terceros_nuevos', codigo);
+    return this.tercerosRepository.deleteFromTable('terceros_creados', codigo);
   }
 
   async deleteTerceroFromEdited(codigo: string): Promise<boolean> {
