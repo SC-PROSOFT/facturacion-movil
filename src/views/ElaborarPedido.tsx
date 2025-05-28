@@ -993,7 +993,8 @@ const ElaborarPedido: React.FC = () => {
 
   const toggleSaveOrder = async () => {
     setIsLoadingSave(true);
-    let pedidoGuardadoConExitoEnAlgunLado = false; // Para controlar el flujo final
+    let pedidoGuardadoConExitoEnServidorYDb = false;
+    let pedidoGuardadoConExitoEnDbOnly; // Para controlar el flujo final
 
     try {
       console.log('[SAVE_ORDER] Iniciando validaciones...');
@@ -1032,7 +1033,7 @@ const ElaborarPedido: React.FC = () => {
 
         dispatch(setArrPedido([...arrPedidos, pedidoConIdDesdeBD])); // Usar el objeto con ID
         Toast.show({type: 'success', text1: 'Pedido guardado y sincronizado!'});
-        pedidoGuardadoConExitoEnAlgunLado = true;
+        pedidoGuardadoConExitoEnServidorYDb = true;
       } catch (apiError: any) {
         console.warn(
           '[SAVE_ORDER] Fallo el guardado en API. Revisando error...',
@@ -1062,7 +1063,7 @@ const ElaborarPedido: React.FC = () => {
             text2: 'Guardando pedido localmente...',
           });
           await saveOrderInLocalDatabaseOnly(pedidoBase); // Pasar pedidoBase para no recalcular
-          pedidoGuardadoConExitoEnAlgunLado = true; // Guardado local exitoso
+          pedidoGuardadoConExitoEnDbOnly = true; // Guardado local exitoso
         } else {
           // Otro tipo de error de la API (ej. 4xx, 5xx que no son puramente de red)
           // o un error inesperado durante el proceso de guardado en API.
@@ -1071,7 +1072,7 @@ const ElaborarPedido: React.FC = () => {
       }
 
       // Si se guardó exitosamente (en API y local, o solo local como fallback)
-      if (pedidoGuardadoConExitoEnAlgunLado) {
+      if (pedidoGuardadoConExitoEnServidorYDb) {
         console.log('[SAVE_ORDER] Actualizando operador y UI...');
         dispatch(
           setObjOperator({
@@ -1081,6 +1082,11 @@ const ElaborarPedido: React.FC = () => {
         );
         // Limpiar productos añadidos para el próximo pedido
         visitaRealizada(pedidoBase.valorPedido); // Marcar visita como realizada con el valor del pedido
+        resetStateAndNavigate(); // Resetear el formulario y navegar
+      } else if (pedidoGuardadoConExitoEnDbOnly) {
+        // Si solo se guardó localmente
+        console.log('[SAVE_ORDER] Pedido guardado localmente, pero no en API.');
+        visitaRealizada(pedidoBase.valorPedido);
         resetStateAndNavigate(); // Resetear el formulario y navegar
       }
     } catch (error: any) {
@@ -1113,8 +1119,13 @@ const ElaborarPedido: React.FC = () => {
       // Ya tenemos pedidoBase, no necesitamos getUbication ni estructurarPedido de nuevo
       const pedidoConId = await pedidosService.savePedido({
         ...pedidoBase,
+
         sincronizado: 'N',
         guardadoEnServer: 'N',
+        operador: {
+          ...pedidoBase.operador,
+          nro_pedido: 0,
+        },
       } as IOperation); // Asumimos que savePedido espera IOperation
 
       if (!pedidoConId || pedidoConId.id === undefined) {
