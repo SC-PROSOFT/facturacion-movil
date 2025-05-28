@@ -1,37 +1,52 @@
-import React, {useRef, useState, useEffect} from 'react';
-import {StyleSheet, View, Modal, Button} from 'react-native'; // Removido Image y Dimensions si no se usan directamente aquí
+import React, {useRef, useEffect} from 'react';
+import {StyleSheet, View, Modal, Button} from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
-// import {CoolButton} from './CoolButton'; // Asumo que Button de react-native es suficiente o CoolButton se integra similar
 import Orientation from 'react-native-orientation-locker';
 
 const SignatureModal = ({visible, onClose, onOK, onEmpty}) => {
-  // signature state no es necesario aquí si onOK lo maneja el componente padre directamente
-  // const [signature, setSignature] = useState(null);
   const signatureRef = useRef(null);
 
   useEffect(() => {
     if (visible) {
       Orientation.lockToLandscape();
     } else {
+      // No es estrictamente necesario aquí si el padre lo gestiona al cerrar,
+      // pero es una buena práctica para asegurar el estado deseado al desmontar o esconder.
       Orientation.lockToPortrait();
     }
 
-    return () => {
-      Orientation.lockToPortrait();
-    };
+    // Opcional: Al desmontar el componente, asegurar portrait.
+    // return () => {
+    //   Orientation.lockToPortrait();
+    // };
   }, [visible]);
 
-  // handleOK y handleEmpty son pasados directamente desde las props al SignatureCanvas
-  // Si necesitas hacer algo adicional aquí antes de llamar a onOK/onEmpty prop:
-  const handleSignatureOK = signature => {
-    // setSignature(signature); // Solo si necesitas el estado localmente
-    Orientation.lockToPortrait(); // Vuelve a modo retrato al guardar la firma
-    onOK(signature); // Llama al callback del padre
+  const handleOK = signature => {
+    // Aquí no es necesario volver a portrait, el padre (ConsentPdfView) lo hará
+    // después de que este modal se cierre y antes de procesar la firma.
+    onOK(signature);
+    // onClose(); // El padre (ConsentPdfView) se encarga de cerrar este modal (setIsSignatureModalVisible(false))
+    // lo cual disparará el useEffect de este modal para volver a portrait si es necesario.
   };
 
-  const handleSignatureEmpty = () => {
-    // setSignature(null); // Solo si necesitas el estado localmente
-    onEmpty(); // Llama al callback del padre
+  const handleEmpty = () => {
+    // Similar a handleOK, el padre gestionará la orientación.
+    onEmpty();
+    // onClose(); // El padre se encarga.
+  };
+
+  const handleClear = () => {
+    signatureRef.current?.clearSignature();
+  };
+
+  const handleConfirm = () => {
+    signatureRef.current?.readSignature();
+  };
+
+  const handleClose = () => {
+    // Asegurar portrait al cerrar manualmente
+    Orientation.lockToPortrait();
+    onClose();
   };
 
   // CSS para el contenido del WebView
@@ -119,37 +134,33 @@ const SignatureModal = ({visible, onClose, onOK, onEmpty}) => {
     <Modal
       visible={visible}
       animationType="slide"
-      onRequestClose={onClose}
-      style={{zIndex: 1000}} // zIndex en Modal style puede no ser necesario o efectivo
-      supportedOrientations={['landscape']}>
+      onRequestClose={handleClose} // Manejar el botón "atrás" de Android
+      supportedOrientations={['landscape']} // Importante
+      hardwareAccelerated // Puede ayudar un poco en Android
+    >
       <View style={styles.modalContainer}>
         <View style={styles.contentContainer}>
           <SignatureCanvas
             ref={signatureRef}
-            onOK={handleSignatureOK} // Usar el wrapper o directamente onOK de props
-            onEmpty={handleSignatureEmpty} // Usar el wrapper o directamente onEmpty de props
-            autoClear={false} // Si es true, se limpia después de onOK
-            descriptionText="" // Puedes quitar el texto por defecto si no lo necesitas
-            clearText="Limpiar" // Texto para el botón de limpiar interno (si se usara)
-            confirmText="Guardar" // Texto para el botón de confirmar interno (si se usara)
+            onOK={handleOK} // Pasa la firma al padre
+            onEmpty={handleEmpty} // Notifica al padre que está vacío
+            autoClear={false} // Para que la firma no se borre automáticamente
+            descriptionText=""
+            clearText="Limpiar" // Puedes ocultar los botones por defecto si usas los tuyos
+            confirmText="Guardar" // Puedes ocultar los botones por defecto si usas los tuyos
             backgroundColor="white"
             penColor="black"
             minWidth={2}
             maxWidth={4}
             style={styles.signatureCanvas}
-            webStyle={webStyle} // Aplicar el CSS interno
+            webStyle={webStyle}
           />
-
           <View style={styles.buttonContainer}>
-            <Button title="Cerrar" onPress={onClose} color="red" />
+            <Button title="Cerrar" onPress={handleClose} color="red" />
+            <Button title="Limpiar" onPress={handleClear} color="blue" />
             <Button
-              title="Limpiar"
-              onPress={() => signatureRef.current?.clearSignature()}
-              color="blue"
-            />
-            <Button
-              title="Guardar"
-              onPress={() => signatureRef.current?.readSignature()}
+              title="Guardar Firma"
+              onPress={handleConfirm}
               color="green"
             />
           </View>
