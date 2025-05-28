@@ -236,7 +236,7 @@ const CreateTercero = () => {
     Toast.show({
       type: 'success',
       text1: 'Ubicación guardada correctamente 🥳.',
-    })
+    });
     setIsModalVisible(false); // Cierra el modal
   };
 
@@ -271,17 +271,7 @@ const CreateTercero = () => {
     try {
       // Calcular el tipo de tercero (NIT o CC)
       setLoaderMessage('Creando tercero...');
-      const type =
-        /^\d{9,10}$/.test(tercero.codigo) &&
-        tercero.codigo.slice(-1) ===
-          calcularDigitoVerificacion(tercero.codigo.slice(0, -1)).toString()
-          ? 'NIT'
-          : 'CC';
 
-      // Construir la ruta base
-      const basePath = `D:\\psc\\prog\\DATOS\\ANEXOS\\${type}-${padLeftCodigo(
-        tercero.codigo,
-      )}`;
       const updatedTercero: ITerceros = {
         ...tercero,
         vendedor: objOperador.cod_vendedor,
@@ -506,6 +496,8 @@ const CreateTercero = () => {
     }
   };
   const saveConsentPdf = async (pdfPath: string) => {
+    setIsLoading(true);
+    setLoaderMessage('Subiendo archivo PDF...');
     const type =
       /^\d{9,10}$/.test(tercero.codigo) &&
       tercero.codigo.slice(-1) ===
@@ -550,6 +542,8 @@ const CreateTercero = () => {
       });
     } finally {
       setIsConsentSigned(pdfPath ? true : false);
+      setIsLoading(false);
+      
     }
   };
   const numericOnly = (text: string) => {
