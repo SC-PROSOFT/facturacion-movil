@@ -21,6 +21,7 @@ import {ConfigQueriesService} from '../data_queries/api/queries';
 import {api_saveConfig} from '../data_queries/api/queries/config_queries';
 /* utils */
 import {showAlert} from '../utils/showAlert';
+import {IConfig} from '../common/types';
 /* local types */
 interface GeneralConfigProps {
   handleInputchange: (input: string, value: string | boolean) => void;
@@ -34,6 +35,7 @@ interface CompanyConfigProps {
 interface ModalLoadConfigProps {
   showModalLoadConfig: boolean;
   toggleShowModalLoadConfig: (visible: boolean) => void;
+  saveInLocalDb: (configData: IConfig) => Promise<void>;
 }
 
 const GeneralConfig: React.FC<GeneralConfigProps> = ({handleInputchange}) => {
@@ -296,6 +298,7 @@ const CompanyConfig: React.FC<CompanyConfigProps> = ({handleInputchange}) => {
 const ModalLoadConfig: React.FC<ModalLoadConfigProps> = ({
   showModalLoadConfig,
   toggleShowModalLoadConfig,
+  saveInLocalDb,
 }) => {
   const dispatch = useAppDispatch();
 
@@ -339,7 +342,7 @@ const ModalLoadConfig: React.FC<ModalLoadConfigProps> = ({
           tarifaIva3: serverConfig.tarifaIva3,
         }),
       );
-
+      await saveInLocalDb(serverConfig);
       toggleShowModalLoadConfig(false);
       setIsLoadingSave(false);
     } catch (error) {
@@ -408,7 +411,7 @@ const Config: React.FC = () => {
   const [isLoadingSave, setIsLoadingSave] = useState(false);
 
   useEffect(() => {
-    loadConfig();
+    loadInitialConfigFromLocalDB();
   }, []);
 
   const handleInputChange = (input: string, value: string | boolean) => {
@@ -461,30 +464,31 @@ const Config: React.FC = () => {
       dispatch(showAlert('02'));
     }
   };
-  const saveInLocalDb = async () => {
+  const saveInLocalDb = async (configData?: IConfig) => {
     try {
+      const config = configData || objConfig;
       const response = await configService.saveConfig({
-        facturarSinExistencias: objConfig.facturarSinExistencias,
-        seleccionarAlmacen: objConfig.seleccionarAlmacen,
-        localizacionGps: objConfig.localizacionGps,
-        filtrarTercerosPorVendedor: objConfig.filtrarTercerosPorVendedor,
-        modificarPrecio: objConfig.modificarPrecio,
-        direccionIp: objConfig.direccionIp,
-        puerto: objConfig.puerto,
+        facturarSinExistencias: config.facturarSinExistencias,
+        seleccionarAlmacen: config.seleccionarAlmacen,
+        localizacionGps: config.localizacionGps,
+        filtrarTercerosPorVendedor: config.filtrarTercerosPorVendedor,
+        modificarPrecio: config.modificarPrecio,
+        direccionIp: config.direccionIp,
+        puerto: config.puerto,
 
-        descargasIp: objConfig.descargasIp,
-        datosIp: objConfig.datosIp,
+        descargasIp: config.descargasIp,
+        datosIp: config.datosIp,
         directorioContabilidad: cleanDirectorioContabilidad(
-          objConfig.directorioContabilidad,
+          config.directorioContabilidad,
         ),
 
-        empresa: objConfig.empresa,
-        nit: objConfig.nit,
-        direccion: objConfig.direccion,
-        ciudad: objConfig.ciudad,
-        tarifaIva1: objConfig.tarifaIva1,
-        tarifaIva2: objConfig.tarifaIva2,
-        tarifaIva3: objConfig.tarifaIva3,
+        empresa: config.empresa,
+        nit: config.nit,
+        direccion: config.direccion,
+        ciudad: config.ciudad,
+        tarifaIva1: config.tarifaIva1,
+        tarifaIva2: config.tarifaIva2,
+        tarifaIva3: config.tarifaIva3,
       });
       console.log(response);
       dispatch(showAlert('03'));
@@ -492,7 +496,7 @@ const Config: React.FC = () => {
       dispatch(showAlert('04'));
     }
   };
-  const loadConfig = async () => {
+  const loadInitialConfigFromLocalDB = async () => {
     try {
       const config = await configService.getConfig();
       dispatch(
@@ -589,6 +593,7 @@ const Config: React.FC = () => {
       <ModalLoadConfig
         showModalLoadConfig={showModalLoadConfig}
         toggleShowModalLoadConfig={toggleShowModalLoadConfig}
+        saveInLocalDb={saveInLocalDb}
       />
     </View>
   );
