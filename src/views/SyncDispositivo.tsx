@@ -16,6 +16,7 @@ import {
   setIsSignedIn,
   setStrTouchedButton,
   setIsShowTercerosFinder,
+  setObjOperator,
 } from '../redux/slices';
 import {CoolButton, PrincipalHeader, TercerosFinder} from '../components';
 import {SyncQueries} from '../data_queries/api/queries';
@@ -25,8 +26,9 @@ import {
   tercerosService,
   encuestaService,
   filesService,
+  operadoresService,
 } from '../data_queries/local_database/services';
-import {ITerceros} from '../common/types';
+import {IOperadores, ITerceros} from '../common/types';
 import {
   FacturasApiService,
   PedidosApiService,
@@ -37,6 +39,7 @@ import {
 import Toast from 'react-native-toast-message';
 import {useFocusEffect} from '@react-navigation/native';
 import {TercerosRepository} from '../data_queries/local_database/repositories';
+import {getLastNroPedido, checkInternetConnection} from '../utils';
 
 interface ProgressWindowProps {
   visible: boolean;
@@ -368,6 +371,7 @@ const Record = ({records, toggleTerceros}: RecordProps) => {
 const SyncDispositivo = () => {
   const dispatch = useAppDispatch();
   const objConfig = useAppSelector(store => store.config.objConfig);
+  const objOperador = useAppSelector(store => store.operator.objOperator);
   const tercerosCreados = useAppSelector(
     store => store.tercerosFinder.tercerosCreados,
   );
@@ -401,6 +405,7 @@ const SyncDispositivo = () => {
   const [showProgressWindow, setShowProgressWindow] = useState<boolean>(false);
   const [dialogContent, setDialogContent] = useState('');
   const [disabledCancel, setDisabledCancel] = useState<boolean>(false);
+  const [isConnectToInternet, setIsConnectToInternet] = useState<boolean>(true);
   const [records, setRecords] = useState<Records>({
     quantityTerceros: '0',
     createdTerceros: 0,
@@ -418,6 +423,7 @@ const SyncDispositivo = () => {
 
   useFocusEffect(
     useCallback(() => {
+      checkConnection();
       loadRecord();
       loadFacturasValues();
       loadPedidosValues();
@@ -425,6 +431,11 @@ const SyncDispositivo = () => {
     }, []),
   );
 
+  const checkConnection = async () => {
+    const isConnected = await checkInternetConnection();
+    console.log(isConnected); // Esperar el resultado booleano
+    setIsConnectToInternet(isConnected); // Actualizar el estado con el resultado real
+  };
   const loadFacturasValues: () => void = async () => {
     try {
       const facturas = await facturasService.getAllFacturas();
@@ -578,63 +589,98 @@ const SyncDispositivo = () => {
   // Ejecutar la carga de pedidos al cargar la vista
   useEffect(() => {
     // Cargar los valores de pedidos al cargar la vista
+    checkConnection();
     loadFiles();
     loadPedidosValues();
   }, []);
   const updatePedidos: () => void = async () => {
     setLoading(true);
-    const pedidosApiService = new PedidosApiService(
-      objConfig.descargasIp,
-      objConfig.puerto,
-    );
-    console.log('Entre a updates PEDIDOSS!!!!!!!');
-    const pedidos = await pedidosService.getAllPedidos();
+    try {
+      const pedidosApiService = new PedidosApiService(
+        objConfig.descargasIp,
+        objConfig.puerto,
+      );
+      const numeroPedido = await getLastNroPedido(
+        objOperador,
+        objConfig,
+        dispatch,
+      );
+      let nroPedido = Number(numeroPedido || objOperador.nro_pedido);
+      const pedidos = await pedidosService.getAllPedidos();
+      console.log(pedidos);
+      const pedidosPendientesDeActualizacion = pedidos.filter(
+        pedido => pedido.sincronizado == 'N' || !pedido.sincronizado,
+      );
+      for (
+        let index = 0;
+        index < pedidosPendientesDeActualizacion.length;
+        index++
+      ) {
+        const pedido = pedidosPendientesDeActualizacion[index];
+        try {
+          console.log('pedido save', pedido.guardadoEnServer);
+          console.log(
+            'Verificacion de pedido',
+            pedido.guardadoEnServer == 'S' ? 'put' : 'post',
+          );
+          const putOrpost = pedido.guardadoEnServer == 'S' ? 'put' : 'post';
+          const response = await pedidosApiService._savePedido(
+            pedido,
+            pedido.guardadoEnServer == 'S' ? 'put' : 'post',
+          );
+          console.log(response);
+          if (response && putOrpost == 'post') {
+            const updateOperador: IOperadores = {
+              ...objOperador,
+              nro_pedido: nroPedido + 1,
+            };
+            await pedidosService.updatePedido(pedido.id.toString(), {
+              ...pedido,
+              sincronizado: 'S',
+              guardadoEnServer: 'S',
+              operador: {
+                ...objOperador,
+                nro_pedido: nroPedido,
+              },
+            });
+            await operadoresService.updateOperador(
+              pedido.operador.id,
+              updateOperador,
+            );
+            dispatch(
+              setObjOperator({
+                ...objOperador,
+                nro_pedido: nroPedido,
+              }),
+            );
+            nroPedido++;
+          } else if (response) {
+            await pedidosService.updatePedido(pedido.id.toString(), {
+              ...pedido,
+              sincronizado: 'S',
+              guardadoEnServer: 'S',
+            });
+          }
 
-    const pedidosPendientesDeActualizacion = pedidos.filter(
-      pedido => pedido.sincronizado == 'N' || !pedido.sincronizado,
-    );
-    for (
-      let index = 0;
-      index < pedidosPendientesDeActualizacion.length;
-      index++
-    ) {
-      const pedido = pedidosPendientesDeActualizacion[index];
+          if (index === pedidos.length - 1) {
+            Toast.show({
+              type: 'success',
+              text1: 'pedidos actualizados correctamente',
+            });
+          }
 
-      try {
-        console.log('pedido save', pedido.guardadoEnServer);
-        console.log(
-          'Verificacion de pedido',
-          pedido.guardadoEnServer == 'S' ? 'put' : 'post',
-        );
-        const response = await pedidosApiService._savePedido(
-          pedido,
-          pedido.guardadoEnServer == 'S' ? 'put' : 'post',
-        );
-
-        if (response) {
-          await pedidosService.updatePedido(pedido.id.toString(), {
-            ...pedido,
-            sincronizado: 'S',
-            guardadoEnServer: 'S',
-          });
-        }
-
-        if (index === pedidos.length - 1) {
+          loadPedidosValues();
+          setLoading(false);
+        } catch (error: any) {
+          setLoading(false);
           Toast.show({
-            type: 'success',
-            text1: 'pedidos actualizados correctamente',
+            type: 'error',
+            text1: error.message || 'Error al actualizar pedidos ❌',
           });
         }
-
-        loadPedidosValues();
-        setLoading(false);
-      } catch (error: any) {
-        setLoading(false);
-        Toast.show({
-          type: 'error',
-          text1: error.message || 'Error al actualizar pedidos ❌',
-        });
       }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -1013,7 +1059,8 @@ const SyncDispositivo = () => {
       paddingHorizontal: 20,
       paddingVertical: 10,
       borderRadius: 10,
-      height: screenHeight * 0.1,
+      maxHeight: screenHeight * 0.13,
+      minHeight: screenHeight * 0.1,
     },
     recordContainer: {
       backgroundColor: '#fff',
@@ -1039,14 +1086,44 @@ const SyncDispositivo = () => {
       </View>
       <View style={styles.content}>
         <View style={styles.buttonContainer}>
-          <CoolButton
+          {/* <CoolButton
             value="Sincronizar datos"
             iconName="upload"
             colorButton="#365AC3"
             colorText="#fff"
             iconSize={20}
             pressCoolButton={() => toggleUploadData()}
-          />
+            disabled={isConnectToInternet}
+          /> */}
+          <TouchableOpacity
+            disabled={isConnectToInternet}
+            style={{
+              width: 'auto', // Si quieres que el botón ocupe un ancho específico y centrar el contenido en ese espacio, cambia 'auto' por un valor numérico o '100%'
+              backgroundColor: isConnectToInternet ? '#365AC3' : '#365AC37a',
+              alignItems: 'center', // Centra los hijos (Icon y Text) verticalmente en el contenedor
+              justifyContent: 'center', // Centra los hijos (Icon y Text) horizontalmente en el contenedor
+              borderRadius: 8,
+              padding: 8, // Añade un espaciado interno
+              marginVertical: 'auto', // Nota: 'auto' para márgenes verticales no es el método estándar de centrado de componentes en React Native; usualmente se maneja desde el contenedor padre.
+              flexDirection: 'row', // Organiza el Icon y Text en una fila
+            }}>
+            <Icon
+              name="upload"
+              color="#FFFF"
+              size={20}
+              style={{marginRight: 4}}
+            />
+            <Text
+              style={{color: '#ffff', fontSize: 18, fontWeight: 'semibold'}}>
+              Sincronizar datos
+            </Text>
+          </TouchableOpacity>
+          {!isConnectToInternet && (
+            <Text style={{color: 'red', fontSize: 10, textAlign: 'center'}}>
+              Se necesita conexion a internet para sincronizar datos con el
+              servidor 🛜🛜
+            </Text>
+          )}
         </View>
 
         <View style={styles.recordContainer}>
