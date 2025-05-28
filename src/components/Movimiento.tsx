@@ -3,7 +3,7 @@ import React, {useMemo} from 'react';
 import {StyleSheet, View, TouchableOpacity, Alert} from 'react-native';
 import {Shadow} from 'react-native-shadow-2';
 import {Text, Avatar, IconButton} from 'react-native-paper';
-
+import {decisionAlertContext} from '../context';
 import {IOperation} from '../common/types'; // Renombrar si hay conflicto
 import {formatToMoney} from '../utils';
 import {
@@ -20,7 +20,7 @@ interface MovimientoProps {
   document: IOperation;
   disabled?: boolean;
   onPressItem: (document: IOperation) => void; // CAMBIADO: Espera el objeto completo
-  onDeletePedido?: (pedidoId: string) => void;
+  onDeletePedido?: (pedido: IOperation) => void;
 }
 
 interface OperationDisplayInfo {
@@ -59,10 +59,28 @@ const Movimiento: React.FC<MovimientoProps> = ({
   );
 
   const documentNumber = useMemo(() => {
-    return document.tipo_operacion === 'factura'
-      ? document.operador.nro_factura
-      : document.operador.nro_pedido;
-  }, [document.tipo_operacion, document.operador]);
+    const tipo = document.tipo_operacion;
+    const nroFactura = document.operador.nro_factura;
+    const nroPedido = document.operador.nro_pedido;
+
+    if (tipo === 'factura') {
+      return nroFactura === 0 || null ? '---' : nroFactura;
+    } else if (tipo === 'pedido') {
+      // Esta condición maneja explícitamente el caso de 'pedido'
+      return nroPedido === 0 || null ? '---' : nroPedido;
+    } else {
+      // Para cualquier otro tipo_operacion, la lógica original de `documentNumber`
+      // usaría nro_pedido si tipo_operacion no es 'factura'.
+      // La regla de "---" se especificó para los casos 'factura' y 'pedido'.
+      // Por lo tanto, para otros tipos, simplemente devolvemos nro_pedido.
+      // Si nro_pedido es 0 en este caso, se mostrará 0, no "---".
+      return nroPedido;
+    }
+  }, [
+    document.tipo_operacion,
+    document.operador.nro_factura,
+    document.operador.nro_pedido,
+  ]);
 
   const canDeletePedido =
     document.tipo_operacion === 'pedido' && document.sincronizado === 'N';
@@ -70,24 +88,17 @@ const Movimiento: React.FC<MovimientoProps> = ({
   const handlePress = () => {
     onPressItem(document); // Llama con el objeto 'document' completo
   };
-
+  const {showDecisionAlert} = decisionAlertContext();
   const handleDelete = () => {
     if (canDeletePedido && document.id) {
-      Alert.alert(
-        'Confirmar Eliminación',
-        `¿Está seguro de que desea eliminar el pedido N° ${document.id}? Esta acción no se puede deshacer.`,
-        [
-          {text: 'Cancelar', style: 'cancel'},
-          {
-            text: 'Eliminar',
-            style: 'destructive',
-            onPress: () => onDeletePedido?.(document.id.toString()!),
-          },
-        ],
-      );
+      showDecisionAlert({
+        type: 'info',
+        description: `¿Desea eliminar el pedido Nro ${document.operador.nro_pedido}?`,
+        textButton: 'Eliminar',
+        executeFunction: () => onDeletePedido?.(document),
+      });
     }
   };
-
   return (
     // Para un gap de MÁXIMO 2px, incluyendo la sombra:
     // offset y distance pequeños, y marginBottom pequeño o 0.
@@ -132,7 +143,7 @@ const Movimiento: React.FC<MovimientoProps> = ({
             <Text style={[styles.statusText, {color: displayInfo.color}]}>
               {displayInfo.statusText}
             </Text>
-            {canDeletePedido && document.operador.nro_pedido && (
+            {canDeletePedido && document.id && (
               <IconButton
                 icon="delete-outline"
                 iconColor="#ffff"
