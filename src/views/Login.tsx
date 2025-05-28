@@ -43,7 +43,7 @@ import {showAlert} from '../utils/showAlert';
 import {getPermissions} from '../utils/getPermissions';
 /* common types */
 import {IOperadores} from '../common/types';
-import {recalculateAndSaveVisitsIfNeeded} from '../utils';
+import {getLastNroPedido, recalculateAndSaveVisitsIfNeeded} from '../utils';
 /* local types */
 interface userInfo {
   user: string;
@@ -148,6 +148,7 @@ const Login = () => {
   const dispatch = useAppDispatch();
 
   const objOperador = useAppSelector(store => store.operator.objOperator);
+  const objConfig = useAppSelector(store => store.config.objConfig);
   const {width, height} = Dimensions.get('window');
 
   // Función para calcular el tamaño de la fuente basado en el ancho del dispositivo
