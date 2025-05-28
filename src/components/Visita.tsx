@@ -107,23 +107,26 @@ const Visita: React.FC<VisitaProps> = ({visita, disabled, toggleVisita}) => {
           <Text style={[styles.infoText, {fontWeight: 'bold', fontSize: 12}]}>
             {getStatusDescription(visita.status)}
           </Text>
-          {visita.observation && (
-            <Text style={styles.observationText}>
-              {renderObservation(visita.observation)}
-            </Text>
-          )}
+          {visita.observation && renderObservation(visita.observation)}
         </View>
 
         <View style={styles.rightContainer}>
           {/* <Text style={styles.saleValueText}>
             {formatToMoney(visita.saleValue)}
           </Text> */}
-          {visita.saleValue && (
+          {/* {visita.saleValue && (
             <View>
               <Text style={styles.saleValueText}>
-                {formatToMoney(visita.saleValue)?.toString()}
+              {String(formatToMoney(visita.saleValue) || '')}
               </Text>
             </View>
+          )} */}
+          {visita.saleValue ? (
+            <Text style={styles.saleValueText}>
+              {formatToMoney(visita.saleValue)}
+            </Text>
+          ) : (
+            <Text style={styles.saleValueText}>---</Text>
           )}
 
           <GoogleMap
