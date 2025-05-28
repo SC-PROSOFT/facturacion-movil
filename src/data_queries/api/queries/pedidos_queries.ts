@@ -23,6 +23,7 @@ class PedidosApiService {
     saveOrUpdate: 'post' | 'put',
   ): Promise<boolean> => {
     const innerFormatPedido = (pedido: IOperation) => {
+      console.log('entre a save pedido');
       let articulosAdded: any = {};
 
       pedido.articulosAdded.forEach((articulo, index) => {
@@ -74,14 +75,11 @@ class PedidosApiService {
       );
       console.log(response.data.data);
       if (response.data.data.STATUS === '00') {
-        await pedidosService.updatePedido(
-          pedido.operador.nro_pedido.toString(),
-          {
-            ...pedido,
-            sincronizado: 'S',
-            guardadoEnServer: 'S',
-          },
-        );
+        await pedidosService.updatePedido(pedido.id.toString(), {
+          ...pedido,
+          sincronizado: 'S',
+          guardadoEnServer: 'S',
+        });
       } else if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'
