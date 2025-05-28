@@ -114,7 +114,7 @@ const CreateRuta = () => {
       };
       const response = await tercerosService.updateTercero(terceroModificado);
       if (response) {
-        generateVisitas(terceroModificado);
+        await generateVisitas(terceroModificado);
       }
     } catch (error) {
       console.log('Error al guardar tercero', error);
@@ -124,7 +124,7 @@ const CreateRuta = () => {
         type: 'success',
         text1: 'Ruta creada 🥳✅',
       });
-      navigation.goBack();
+      navigation.navigate('TabNavPrincipal');
     }
   };
 
@@ -140,9 +140,6 @@ const CreateRuta = () => {
     }
   };
 
-  const searchTercero = (cod_terce: string) => {
-    console.log('Buscando tercero con codigo =>', cod_terce);
-  };
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'row',
@@ -336,7 +333,7 @@ const CreateRuta = () => {
           setTercero(prevState => ({...prevState, ruta: ruta.zona}))
         }
       />
-      <Loader visible={isLoading} message='Creando ruta nueva'/>
+      <Loader visible={isLoading} message="Creando ruta nueva" />
     </View>
   );
 };
