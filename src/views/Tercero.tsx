@@ -28,6 +28,7 @@ import {
 } from '../components';
 /* redux */
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
+
 // No es necesario importar todos los services aquí si no se usan directamente
 // import { tercerosService, visitaService, carteraService } from '../data_queries/local_database/services';
 import {
@@ -50,6 +51,7 @@ import {
   setArrCartera,
   setArrCarteraPopup,
   setIsShowCarteraPopup,
+  setArrPedido,
 } from '../redux/slices';
 import {all} from 'axios';
 import Toast from 'react-native-toast-message';
@@ -63,6 +65,7 @@ const Tercero = () => {
   const objVisita = useAppSelector(store => store.visitas.objVisita);
   const intCartera = useAppSelector(store => store.tercerosFinder.intCartera);
   const arrCartera = useAppSelector(store => store.sync.arrCartera);
+  const objOperador = useAppSelector(store => store.operator.objOperator);
 
   const [cartera, setCartera] = useState<string>('$0');
   const [showMissingFilesAlert, setShowMissingFilesAlert] =
@@ -227,10 +230,21 @@ const Tercero = () => {
     );
   };
 
-  const handleDeletePedido = async (id: string) => {
+  const handleDeletePedido = async (operation: IOperation) => {
     try {
-      const response = await pedidosService.delete(id);
+      const response = await pedidosService.delete(operation.id.toString());
       if (response) {
+        console.log(objOperador);
+        // dispatch(
+        //   setObjOperator({
+        //     ...objOperador,
+        //     nro_pedido: (Number(objOperador.nro_pedido) || 0) - 1, // Decrementar el número de pedido
+        //   }),
+        // );
+        const nuevoArrPedido = arrPedido.filter(
+          pedido => pedido.id !== operation.id,
+        );
+        dispatch(setArrPedido(nuevoArrPedido));
         Toast.show({
           type: 'success',
           text1: 'Movimiento eliminado correctamente 🥳',
@@ -283,22 +297,16 @@ const Tercero = () => {
           objVisita.id_visita.toString(),
         );
       }
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'success',
-          description: 'Ubicación guardada.',
-        }),
-      );
+      Toast.show({
+        type: 'success',
+        text1: 'Ubicación guardada correctamente 🗺️',
+      });
     } catch (error: any) {
       console.log(error);
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: 'Fallo al guardar ubicación.',
-        }),
-      );
+      Toast.show({
+        type: 'error',
+        text1: `Error al guardar ubicación: ${error.message || error}`,
+      });
     }
     handleCloseLocationModal();
   };
@@ -319,21 +327,16 @@ const Tercero = () => {
         objVisita.id_visita.toString(),
       );
       dispatch(setObjVisita(modifiedVisita));
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'success',
-          description: 'Visita cancelada.',
-        }),
-      );
+      Toast.show({
+        type: 'success',
+        text1: 'Visita cancelada correctamente 📅',
+      });
     } catch (error: any) {
-      dispatch(
-        setObjInfoAlert({
-          visible: true,
-          type: 'error',
-          description: 'Fallo al cancelar visita.',
-        }),
-      );
+      console.log(error);
+      Toast.show({
+        type: 'error',
+        text1: `Error al cancelar visita: ${error.message || error}`,
+      });
     }
     handleCloseCancelarVisitaModal();
   };
@@ -342,7 +345,7 @@ const Tercero = () => {
     <Movimiento
       document={item}
       onPressItem={toggleMovimiento} // toggleMovimiento espera el objeto IOperation
-      onDeletePedido={pedidoId => handleDeletePedido(pedidoId)} // Si necesitas manejar la eliminación
+      onDeletePedido={pedido => handleDeletePedido(pedido)} // Si necesitas manejar la eliminación
     />
   );
 
@@ -463,7 +466,7 @@ const styles = StyleSheet.create({
   // --- Estilos de tu diseño original para la parte superior ---
   originalBoxLight_fromUser: {
     position: 'absolute',
-    
+
     width: 600,
     height: 260,
     marginLeft: -190,
@@ -476,7 +479,7 @@ const styles = StyleSheet.create({
   },
   originalBoxDark_fromUser: {
     position: 'absolute',
-     // Encima del light box
+    // Encima del light box
     width: 2000,
     height: 2000,
     marginTop: -2040,
