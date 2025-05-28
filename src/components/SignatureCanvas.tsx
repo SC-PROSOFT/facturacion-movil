@@ -1,7 +1,9 @@
 import React, {useRef, useEffect} from 'react';
-import {StyleSheet, View, Modal, Button} from 'react-native';
+import {StyleSheet, View, Modal, Button, TouchableOpacity} from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
 import Orientation from 'react-native-orientation-locker';
+import {Text} from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const SignatureModal = ({visible, onClose, onOK, onEmpty}) => {
   const signatureRef = useRef(null);
@@ -106,7 +108,7 @@ const SignatureModal = ({visible, onClose, onOK, onEmpty}) => {
       justifyContent: 'space-around',
       paddingVertical: 10, // Añadido padding vertical
       paddingHorizontal: 5,
-      backgroundColor: '#f0f0f0',
+      backgroundColor: '#0B2863',
       // --- Para Opción B (absoluto) descomentar lo siguiente y comentar lo de arriba ---
       /*
       position: 'absolute',
@@ -127,6 +129,16 @@ const SignatureModal = ({visible, onClose, onOK, onEmpty}) => {
       // Si usas <CoolButton> o quieres estilizar <Button> (limitado)
       flex: 1,
       marginHorizontal: 5,
+    },
+    buttonStyle: {
+      width: 'auto', // Si quieres que el botón ocupe un ancho específico y centrar el contenido en ese espacio, cambia 'auto' por un valor numérico o '100%'
+      backgroundColor: '#FFFF',
+      alignItems: 'center', // Centra los hijos (Icon y Text) verticalmente en el contenedor
+      justifyContent: 'center', // Centra los hijos (Icon y Text) horizontalmente en el contenedor
+      borderRadius: 8,
+      padding: 8, // Añade un espaciado interno
+      marginVertical: 'auto', // Nota: 'auto' para márgenes verticales no es el método estándar de centrado de componentes en React Native; usualmente se maneja desde el contenedor padre.
+      flexDirection: 'row',
     },
   });
 
@@ -156,13 +168,59 @@ const SignatureModal = ({visible, onClose, onOK, onEmpty}) => {
             webStyle={webStyle}
           />
           <View style={styles.buttonContainer}>
-            <Button title="Cerrar" onPress={handleClose} color="red" />
-            <Button title="Limpiar" onPress={handleClear} color="blue" />
-            <Button
-              title="Guardar Firma"
+            {/* <Button title="Cerrar" onPress={handleClose} color="#0B2863" />
+            <Button title="Limpiar" onPress={handleClear} color="#0B2863" />
+            <Button title="Guardar" onPress={handleConfirm} color="#0B2863" /> */}
+            <TouchableOpacity onPress={handleClose} style={styles.buttonStyle}>
+              <Icon
+                name="arrow-left-bold"
+                color="#0B2863"
+                size={16}
+                style={{marginRight: 4}}
+              />
+              <Text
+                style={{
+                  color: '#0B2863',
+                  fontSize: 16,
+                  fontWeight: 'semibold',
+                }}>
+                Volver
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleClear} style={styles.buttonStyle}>
+              <Icon
+                name="eraser"
+                color="#0B2863"
+                size={16}
+                style={{marginRight: 4}}
+              />
+              <Text
+                style={{
+                  color: '#0B2863',
+                  fontSize: 16,
+                  fontWeight: 'semibold',
+                }}>
+                Limpiar
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={handleConfirm}
-              color="green"
-            />
+              style={styles.buttonStyle}>
+              <Icon
+                name="content-save"
+                color="#0B2863"
+                size={16}
+                style={{marginRight: 4}}
+              />
+              <Text
+                style={{
+                  color: '#0B2863',
+                  fontSize: 16,
+                  fontWeight: 'semibold',
+                }}>
+                Guardar
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
