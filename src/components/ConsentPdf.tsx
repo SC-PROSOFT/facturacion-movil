@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   Modal,
   View,
@@ -6,20 +6,23 @@ import {
   Text,
   StyleSheet,
   Alert,
+  InteractionManager, // Importar InteractionManager
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Pdf from 'react-native-pdf';
 import {SignatureModal} from './SignatureCanvas';
-import {embedSignatureInPdfFromAssets} from '../utils/pdfUtils';
+// import {embedSignatureInPdfFromAssets} from '../utils/pdfUtils'; // No se usa directamente
 import RNFS from 'react-native-fs';
-import {PDFDocument, rgb, StandardFonts} from 'pdf-lib'; // Importa pdf-lib
+import {PDFDocument, rgb, StandardFonts} from 'pdf-lib';
 import {Buffer} from 'buffer';
 import {Loader} from './Loader';
 import Toast from 'react-native-toast-message';
+import Orientation from 'react-native-orientation-locker'; // Para controlar la orientación aquí también
+
 export default function ConsentPdfView({
   visible,
   onClose,
-  onFirmar,
+  onFirmar, // Se podría renombrar a onSignatureApplied o similar
   onGuardar,
   nombre,
   codigo,
@@ -33,39 +36,48 @@ export default function ConsentPdfView({
   const [signature, setSignature] = useState(null);
   const [isSignatureModalVisible, setIsSignatureModalVisible] = useState(false);
   const [pdfSource, setPdfSource] = useState({
-    uri: `bundle-assets://${originalPdf}`,
+    uri: `bundle-assets://${originalPdf}`, // Inicialmente puede ser el original
   });
   const [isLoading, setIsLoading] = useState(false);
   const [loaderMessage, setLoaderMessage] = useState('Cargando consentimiento');
-  const [saveDisabled, setSaveDisabled] = useState(false);
-  const [pdfKey, setPdfKey] = useState(0); // Clave para forzar la recarga del PDF
+  // const [saveDisabled, setSaveDisabled] = useState(false); // No se usa, signature controla el botón
+  const [pdfKey, setPdfKey] = useState(0);
+
+  // Almacenar el PDF con los datos de texto ya incrustados (como Uint8Array)
+  const pdfWithDataBytes = useRef(null);
+  const modifiedPdfPathRef = useRef(null); // Para la ruta del PDF modificado
 
   useEffect(() => {
     if (visible) {
-      // Si el modal se vuelve visible, carga el PDF original
-
       setSignature(null);
-      modifyPdf(); // Modifica el PDF con los datos
+      // Forzar retrato al abrir el ConsentPdfView por si acaso
+      Orientation.lockToPortrait();
+      // Modificar el PDF con los datos de texto al hacerse visible
+      addTextDataToPdf();
+    } else {
+      // Limpiar cuando el modal principal se cierra
+      pdfWithDataBytes.current = null;
+      modifiedPdfPathRef.current = null;
+      setPdfSource({uri: `bundle-assets://${originalPdf}`});
+      setPdfKey(prevKey => prevKey + 1);
     }
   }, [visible]);
 
-  const modifyPdf = async (firmaBase64 = null) => {
+  // Función para agregar solo los datos de texto al PDF
+  const addTextDataToPdf = async () => {
     setIsLoading(true);
+    setLoaderMessage('Preparando documento...');
     try {
-      // Carga el PDF original desde los assets
-      const pdfBytes = await RNFS.readFileAssets(originalPdf, 'base64');
-      const pdfDoc = await PDFDocument.load(Buffer.from(pdfBytes, 'base64'));
-
-      // Obtén la primera página del PDF
+      const pdfBytesAsset = await RNFS.readFileAssets(originalPdf, 'base64');
+      const pdfDoc = await PDFDocument.load(
+        Buffer.from(pdfBytesAsset, 'base64'),
+      );
       const pages = pdfDoc.getPages();
       const firstPage = pages[0];
-
-      // Define las posiciones y estilos para los textos
-      const {width, height} = firstPage.getSize();
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const fontSize = 12;
 
-      // Agrega los valores al PDF
+      // Dibujar todos los textos (como ya lo tienes)
       firstPage.drawText(`${nombre || ''}`, {
         x: 220,
         y: 178,
@@ -81,7 +93,6 @@ export default function ConsentPdfView({
         color: rgb(0, 0, 0),
       });
       firstPage.drawText(`${representanteLegal || nombre || ''}`, {
-        // ESTO CAMBIA POR REPRESENTANTE LEGAL
         x: 200,
         y: 147,
         size: fontSize,
@@ -89,7 +100,6 @@ export default function ConsentPdfView({
         color: rgb(0, 0, 0),
       });
       firstPage.drawText(`${celular || ''}`, {
-        // ESTO SE VA A CAMBIAR POR TELEFONO ( TELEFONO Y CELULAR SON DOS CAMPOS DIFERENTES)
         x: 108,
         y: 133,
         size: fontSize,
@@ -103,7 +113,6 @@ export default function ConsentPdfView({
         font,
         color: rgb(0, 0, 0),
       });
-
       firstPage.drawText(`${email || ''}`, {
         x: 398,
         y: 133,
@@ -112,7 +121,6 @@ export default function ConsentPdfView({
         color: rgb(0, 0, 0),
       });
       firstPage.drawText(`${ciudad || ''}`, {
-        // ESTO SE CAMBIA POR CIUDAD
         x: 128,
         y: 118,
         size: fontSize,
@@ -133,28 +141,84 @@ export default function ConsentPdfView({
         font,
         color: rgb(0, 0, 0),
       });
-      if (firmaBase64) {
-        const pngImage = await pdfDoc.embedPng(firmaBase64);
-        const pngDims = pngImage.scale(0.05);
 
-        firstPage.drawImage(pngImage, {
-          x: 120,
-          y: 91,
-          width: pngDims.width,
-          height: pngDims.height * 0.6,
-        });
-      }
-      // Guarda el PDF modificado en un archivo temporal
-      const modifiedPdfBytes = await pdfDoc.save();
-      const base64Pdf = Buffer.from(modifiedPdfBytes).toString('base64'); // Convierte a Base64
-      const modifiedPdfPath = `${RNFS.DocumentDirectoryPath}/consentimiento_modificado.pdf`;
-      await RNFS.writeFile(modifiedPdfPath, base64Pdf, 'base64');
-      // Actualiza la fuente del PDF en el visor
-      setPdfSource({uri: `file://${modifiedPdfPath}`});
-      setPdfKey(prevKey => prevKey + 1); // Cambia la clave para forzar la recarga
+      pdfWithDataBytes.current = await pdfDoc.save(); // Guardar como Uint8Array
+
+      // Guardar este PDF con datos en un archivo temporal para visualización
+      const tempPath = `${
+        RNFS.DocumentDirectoryPath
+      }/consent_with_data_${Date.now()}.pdf`;
+      const base64PdfWithData = Buffer.from(pdfWithDataBytes.current).toString(
+        'base64',
+      );
+      await RNFS.writeFile(tempPath, base64PdfWithData, 'base64');
+
+      modifiedPdfPathRef.current = `file://${tempPath}`;
+      setPdfSource({uri: modifiedPdfPathRef.current});
+      setPdfKey(prevKey => prevKey + 1);
     } catch (e) {
-      console.error('Error al modificar el PDF:', e);
-      Alert.alert('Error', 'No se pudo modificar el PDF.');
+      console.error('Error al modificar PDF con datos:', e);
+      Alert.alert('Error', 'No se pudo modificar el PDF con los datos.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Función para agregar la firma al PDF que ya tiene los datos de texto
+  const addSignatureToPdf = async firmaBase64 => {
+    if (!pdfWithDataBytes.current) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'El PDF base no está listo.',
+      });
+      setIsLoading(false); // Asegúrate de quitar el loader
+      return;
+    }
+    setIsLoading(true); // Ya debería estar true desde handleSignature
+    setLoaderMessage('Insertando firma en el PDF...');
+
+    try {
+      const pdfDoc = await PDFDocument.load(pdfWithDataBytes.current);
+      const pages = pdfDoc.getPages();
+      const firstPage = pages[0];
+
+      const pngImage = await pdfDoc.embedPng(firmaBase64);
+      const pngDims = pngImage.scale(0.05); // Ajusta la escala según sea necesario
+
+      firstPage.drawImage(pngImage, {
+        x: 120, // Ajusta estas coordenadas según tu PDF
+        y: 91, // Ajusta estas coordenadas
+        width: pngDims.width,
+        height: pngDims.height * 0.6, // Ajusta la proporción si es necesario
+      });
+
+      const finalPdfBytes = await pdfDoc.save();
+      const base64FinalPdf = Buffer.from(finalPdfBytes).toString('base64');
+
+      // Sobrescribir o usar nueva ruta. Usar nueva ruta evita problemas de caché.
+      const finalPdfPath = `${
+        RNFS.DocumentDirectoryPath
+      }/consentimiento_firmado_${Date.now()}.pdf`;
+      await RNFS.writeFile(finalPdfPath, base64FinalPdf, 'base64');
+
+      modifiedPdfPathRef.current = `file://${finalPdfPath}`; // Actualizar la referencia a la ruta actual
+      setPdfSource({uri: modifiedPdfPathRef.current});
+      setPdfKey(prevKey => prevKey + 1);
+
+      pdfWithDataBytes.current = finalPdfBytes; // Actualizar los bytes por si se firma de nuevo sin cerrar
+
+      Toast.show({
+        type: 'success',
+        text1: 'Firma registrada correctamente.',
+      });
+      onFirmar(firmaBase64); // Notifica al componente padre que la firma se aplicó
+    } catch (e) {
+      console.error('Error al insertar firma en el PDF:', e);
+      Toast.show({
+        type: 'error',
+        text1: 'No se pudo insertar la firma en el PDF.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -162,65 +226,106 @@ export default function ConsentPdfView({
 
   const handleOpenSignatureModal = () => {
     setIsSignatureModalVisible(true);
+    // La orientación a landscape se maneja dentro de SignatureModal
   };
 
   const handleCloseSignatureModal = () => {
     setIsSignatureModalVisible(false);
+    // La orientación a portrait se maneja dentro de SignatureModal al cerrar
   };
 
-  const handleSignature = async (firmaBase64: string) => {
-    setSignature(firmaBase64);
-    setIsSignatureModalVisible(false);
-    setLoaderMessage('Insertando firma en el PDF...');
-    setIsLoading(true);
-    try {
-      // Modifica el PDF con la firma
-      await modifyPdf(firmaBase64);
-      Toast.show({
-        type: 'success',
-        text1: 'Se registró la firma correctamente.',
-      });
-      onFirmar(firmaBase64);
-      setIsLoading(false);
-    } catch (e) {
-      console.error('Error al insertar firma en el PDF:', e);
-      Toast.show({
-        type: 'error',
-        text1: 'No se pudo insertar la firma en el PDF.',
-      });
-      setIsLoading(false);
-    }
+  const handleSignature = async firmaBase64 => {
+    setSignature(firmaBase64); // Guardar la firma en el estado
+    setIsSignatureModalVisible(false); // Cierra el modal de firma primero
+
+    // Iniciar cambio a portrait y luego procesar el PDF
+    Orientation.lockToPortrait();
+    setIsLoading(true); // Mostrar loader
+    setLoaderMessage('Procesando firma...');
+
+    InteractionManager.runAfterInteractions(async () => {
+      await addSignatureToPdf(firmaBase64); // Llama a la función optimizada
+      // setIsLoading(false) se maneja dentro de addSignatureToPdf
+    });
   };
 
   const handleEmpty = () => {
+    // Cuando se limpia la firma
     setSignature(null);
-    setIsSignatureModalVisible(false);
-    setPdfSource({uri: `bundle-assets://${originalPdf}`});
-    setPdfKey(prevKey => prevKey + 1); // Cambia la clave para forzar la recarga
-    onFirmar(null);
+    setIsSignatureModalVisible(false); // Cierra el modal de firma
+    Orientation.lockToPortrait(); // Asegura portrait
+
+    // Volver a cargar el PDF solo con datos (sin firma)
+    if (modifiedPdfPathRef.current && pdfWithDataBytes.current) {
+      const pathWithDataOnly = `${
+        RNFS.DocumentDirectoryPath
+      }/consent_with_data_temp_for_clear_${Date.now()}.pdf`;
+      const base64PdfWithData = Buffer.from(pdfWithDataBytes.current).toString(
+        'base64',
+      );
+
+      RNFS.writeFile(pathWithDataOnly, base64PdfWithData, 'base64')
+        .then(() => {
+          setPdfSource({uri: `file://${pathWithDataOnly}`});
+          setPdfKey(prevKey => prevKey + 1);
+          // Aquí podrías querer actualizar modifiedPdfPathRef.current a esta nueva ruta temporal
+          // o mejor aún, si addTextDataToPdf guarda su resultado en una ruta estable y la usas aquí.
+          // Por simplicidad, si solo tienes texto y luego texto+firma,
+          // podrías tener una referencia a los bytes del PDF con solo texto.
+          // Para el escenario más simple de "limpiar": recargar el PDF con solo datos.
+          // Lo más robusto sería recargar el `pdfWithDataBytes.current` en el visor.
+          // Re-utilizamos la lógica de `addTextDataToPdf` para asegurar el estado correcto.
+          addTextDataToPdf(); // Esto recargará el PDF con solo los datos.
+        })
+        .catch(e => console.error('Error al limpiar firma y recargar PDF', e));
+    } else {
+      addTextDataToPdf(); // Si no hay nada, prepara el documento base con datos.
+    }
+    onFirmar(null); // Notifica que la firma fue removida
   };
 
   const handleGuardar = async () => {
-    try {
-      setIsLoading(true);
-      setLoaderMessage('Guardando consentimiento 💿');
-      const destinationPath = `${
-        RNFS.TemporaryDirectoryPath
-      }/consentimiento_guardado_${Date.now()}.pdf`;
-
-      // Copia el archivo a la ubicación temporal
-      await RNFS.copyFile(
-        pdfSource.uri.replace('file://', ''), // Asegúrate de eliminar el esquema si ya existe
-        destinationPath,
-      );
-
-      // Llama al método `onGuardar` con la nueva ruta
-      onGuardar(`file://${destinationPath}`); // Asegúrate de incluir el esquema `file://`
-    } catch (e) {
-      console.error('Error al guardar el archivo:', e);
-    } finally {
-      setIsLoading(false);
+    if (!signature || !modifiedPdfPathRef.current) {
+      Toast.show({
+        type: 'info',
+        text1: 'Acción requerida',
+        text2: 'Por favor, firme el documento antes de guardar.',
+      });
+      return;
     }
+    setIsLoading(true);
+    setLoaderMessage('Guardando consentimiento 💿');
+
+    InteractionManager.runAfterInteractions(async () => {
+      try {
+        const destinationPath = `${
+          RNFS.TemporaryDirectoryPath // O DocumentDirectoryPath si prefieres
+        }/consentimiento_firmado_final_${Date.now()}.pdf`;
+
+        // Copia el archivo que ya tiene la firma
+        await RNFS.copyFile(
+          modifiedPdfPathRef.current.replace('file://', ''),
+          destinationPath,
+        );
+
+        onGuardar(`file://${destinationPath}`);
+        Toast.show({
+          type: 'success',
+          text1: 'Guardado',
+          text2: 'Consentimiento guardado con éxito.',
+        });
+        // onClose(); // Opcionalmente cerrar el modal principal después de guardar
+      } catch (e) {
+        console.error('Error al guardar el archivo final:', e);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'No se pudo guardar el consentimiento.',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    });
   };
   const styles = StyleSheet.create({
     container: {flex: 1},
@@ -267,13 +372,29 @@ export default function ConsentPdfView({
   });
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={onClose}>
       <View style={styles.container}>
         <Pdf
-          key={pdfKey} // Cambia la clave para forzar la recarga
+          key={pdfKey}
           source={pdfSource}
           style={styles.pdf}
-          onError={error => console.log('Error al cargar PDF:', error)}
+          onError={error => {
+            console.log('Error al cargar PDF:', error);
+            Alert.alert(
+              'Error PDF',
+              'No se pudo cargar el documento PDF. Intente de nuevo.',
+            );
+            // Podrías intentar recargar el original o el de solo datos
+            setPdfSource({uri: `bundle-assets://${originalPdf}`});
+            setPdfKey(k => k + 1);
+          }}
+          onLoadComplete={(numberOfPages, filePath) => {
+            // console.log(`Number of pages: ${numberOfPages}, Path: ${filePath}`);
+          }}
         />
 
         <TouchableOpacity
@@ -292,12 +413,17 @@ export default function ConsentPdfView({
             style={styles.botonFirmar}
             onPress={handleOpenSignatureModal}>
             <Icon name="signature-freehand" size={36} color={'#FFF'} />
-            <Text style={styles.botonTexto}>Firmar</Text>
+            <Text style={styles.botonTexto}>
+              {signature ? 'Modificar Firma' : 'Firmar'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            disabled={signature ? false : true}
-            style={styles.botonGuardar}
+            disabled={!signature}
+            style={[
+              styles.botonGuardar,
+              {backgroundColor: signature ? 'green' : '#ccc'},
+            ]}
             onPress={handleGuardar}>
             <Icon name="content-save" size={36} color={'#FFF'} />
             <Text style={styles.botonTexto}>Guardar</Text>
@@ -306,9 +432,9 @@ export default function ConsentPdfView({
       </View>
       <SignatureModal
         visible={isSignatureModalVisible}
-        onClose={handleCloseSignatureModal}
+        onClose={handleCloseSignatureModal} // Usa el wrapper para asegurar orientación
         onOK={handleSignature}
-        onEmpty={handleEmpty}
+        onEmpty={handleEmpty} // Usa el wrapper para asegurar orientación y recarga de PDF
       />
       <Loader visible={isLoading} message={loaderMessage} />
     </Modal>
