@@ -197,6 +197,7 @@ class OperadoresRepository implements IRepository<IOperadores> {
   }
 
   async update(id: string, item: IOperadores): Promise<boolean> {
+    console.log('Operador', item);
     const sqlUpdateStatement = `
       UPDATE operadores SET
       codigo='${item.codigo}',
