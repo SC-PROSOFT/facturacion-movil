@@ -1097,6 +1097,7 @@ const SyncDispositivo = () => {
           /> */}
           <TouchableOpacity
             disabled={isConnectToInternet}
+            onPress={toggleUploadData}
             style={{
               width: 'auto', // Si quieres que el botón ocupe un ancho específico y centrar el contenido en ese espacio, cambia 'auto' por un valor numérico o '100%'
               backgroundColor: isConnectToInternet ? '#365AC3' : '#365AC37a',
