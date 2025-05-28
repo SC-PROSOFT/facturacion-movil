@@ -266,10 +266,15 @@ class PedidosRepository implements IRepository<IOperation> {
               nro_pedido: Number(pedido.operador.nro_pedido || 0) + 1,
             };
             try {
-              await operadoresService.updateOperador(
-                operadorUpdate.id,
-                operadorUpdate as IOperadores,
-              );
+              if (
+                pedido.guardadoEnServer == 'S' &&
+                pedido.sincronizado == 'S'
+              ) {
+                await operadoresService.updateOperador(
+                  operadorUpdate.id,
+                  operadorUpdate as IOperadores,
+                );
+              }
               resolve(true);
             } catch (error: any) {
               reject(
@@ -509,8 +514,10 @@ class PedidosRepository implements IRepository<IOperation> {
         new Error('ID inválido para eliminar. Se esperaba un string numérico.'),
       );
     }
+    console.log('Eliminando pedido con ID:', numericId);
     const sqlDeleteStatement = `DELETE FROM pedidos WHERE id = ?`;
     return new Promise((resolve, reject) => {
+      
       db.transaction((tx: Transaction) => {
         tx.executeSql(
           sqlDeleteStatement,
