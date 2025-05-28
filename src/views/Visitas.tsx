@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {Text} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
-import {recalculateAndSaveVisitsIfNeeded} from '../utils';
+import {getLastNroPedido, recalculateAndSaveVisitsIfNeeded} from '../utils';
 import Geolocation from '@react-native-community/geolocation';
 /* components */
 import {
@@ -116,7 +116,7 @@ const Visitas: React.FC = () => {
       loadVisitas();
     }, []),
   );
-  
+
   const recalculateVisitas = async () => {
     try {
       setLoadRecalcVisitas('Cargando visitas...');
@@ -180,6 +180,13 @@ const Visitas: React.FC = () => {
           tarifaIva3: config.tarifaIva3,
         }),
       );
+      console.log(
+        'En Login.tsx, ANTES de llamar a getLastNroPedido. Tipo de dispatch:',
+        typeof dispatch,
+        'Valor de dispatch:',
+        dispatch,
+      );
+      await getLastNroPedido(objOperador, config, dispatch);
     } catch (error) {}
   };
 
