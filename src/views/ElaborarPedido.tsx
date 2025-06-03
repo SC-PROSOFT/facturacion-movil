@@ -1030,7 +1030,6 @@ const ElaborarPedido: React.FC = () => {
             'Fallo al guardar en BD local (después de API) o no se obtuvo ID.',
           );
         }
-
         dispatch(setArrPedido([...arrPedidos, pedidoConIdDesdeBD])); // Usar el objeto con ID
         Toast.show({type: 'success', text1: 'Pedido guardado y sincronizado!'});
         pedidoGuardadoConExitoEnServidorYDb = true;

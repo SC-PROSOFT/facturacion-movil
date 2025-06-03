@@ -517,7 +517,6 @@ class PedidosRepository implements IRepository<IOperation> {
     console.log('Eliminando pedido con ID:', numericId);
     const sqlDeleteStatement = `DELETE FROM pedidos WHERE id = ?`;
     return new Promise((resolve, reject) => {
-      
       db.transaction((tx: Transaction) => {
         tx.executeSql(
           sqlDeleteStatement,
