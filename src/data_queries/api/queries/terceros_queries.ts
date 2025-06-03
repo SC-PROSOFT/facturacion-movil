@@ -82,32 +82,55 @@ class TercerosApiServices {
     }
   };
 
-  _saveTercero = async (tercero: ITerceros): Promise<boolean> => {
+  _saveTercero = async (tercero: ITerceros): Promise<true> => {
+    // Retorna 'true' en éxito, o lanza error en fallo
     const innerFormatTercero = this._constructTercero(tercero, '7');
-
-    const datosh = innerFormatTercero;
-
-    let body = {
-      datosh: datosh,
+    const body = {
+      datosh: innerFormatTercero,
     };
+
     try {
-      console.log('body =>', datosh);
+      console.log('body =>', body.datosh);
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
         body,
       );
 
-      if (response.data.data.STATUS == '00') {
-        return true;
-      } else if (response.data.data.STATUS == '35') {
-        return false;
-      } else if (response.data.data.STATUS == '99') {
-        return false;
+      // Es buena idea verificar la estructura de la respuesta
+      const status = response?.data?.data?.STATUS;
+
+      if (status === '00') {
+        return true; 
+      } else if (status === '35') {
+        throw new Error(
+          'La configuración para guardar el tercero no es correcta (STATUS 35).',
+        );
+      } else if (status === '99') {
+        throw new Error(
+          'Se produjo un error conocido por la API al guardar el tercero (STATUS 99).',
+        );
+      } else if (status === 'SC-1') {
+        throw new Error(
+          'Error específico SC-1 de la API al guardar el tercero.',
+        );
       } else {
-        console.error('Error al guardar el tercero:', response.data.data);
-        return false;
+        console.error(
+          'Error al guardar el tercero - Estado inesperado:',
+          response?.data?.data,
+        );
+        throw new Error(
+          `Respuesta inesperada del servidor al guardar el tercero. STATUS: ${
+            status || 'desconocido'
+          }`,
+        );
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.isAxiosError) {
+        console.error('Error de Axios en _saveTercero:', error.toJSON());
+        throw new Error(
+          `Error de red o del servidor al intentar guardar el tercero: ${error.message}`,
+        );
+      }
       throw error;
     }
   };
@@ -123,19 +146,40 @@ class TercerosApiServices {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON110C_1.dll`,
         body,
       );
-      console.log('response update tercero =>', response.data.data);
-      if (response.data.data.STATUS == '00') {
+      const status = response?.data?.data?.STATUS;
+
+      if (status === '00') {
         return true;
-      } else if (response.data.data.STATUS == '35') {
-        return false;
-      } else if (response.data.data.STATUS == '99') {
-        return false;
+      } else if (status === '35') {
+        throw new Error(
+          'La configuración para guardar el tercero no es correcta (STATUS 35).',
+        );
+      } else if (status === '99') {
+        throw new Error(
+          'Se produjo un error conocido por la API al guardar el tercero (STATUS 99).',
+        );
+      } else if (status === 'SC-1') {
+        throw new Error(
+          'Error específico SC-1 de la API al guardar el tercero.',
+        );
       } else {
-        console.error('Error al guardar el tercero:', response.data.data);
-        return false;
+        console.error(
+          'Error al guardar el tercero - Estado inesperado:',
+          response?.data?.data,
+        );
+        throw new Error(
+          `Respuesta inesperada del servidor al guardar el tercero. STATUS: ${
+            status || 'desconocido'
+          }`,
+        );
       }
-    } catch (error) {
-      console.log('error =>', error);
+    } catch (error: any) {
+      if (error.isAxiosError) {
+        console.error('Error de Axios en _saveTercero:', error.toJSON());
+        throw new Error(
+          `Error de red o del servidor al intentar guardar el tercero: ${error.message}`,
+        );
+      }
       throw error;
     }
   };
