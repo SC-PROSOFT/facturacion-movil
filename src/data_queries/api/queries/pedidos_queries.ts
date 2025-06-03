@@ -73,14 +73,8 @@ class PedidosApiService {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/COMER105.dll`,
         innerFormatPedido(pedido),
       );
-      console.log(response.data.data);
-      if (response.data.data.STATUS === '00') {
-        await pedidosService.updatePedido(pedido.id.toString(), {
-          ...pedido,
-          sincronizado: 'S',
-          guardadoEnServer: 'S',
-        });
-      } else if (
+
+      if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'
       ) {
@@ -91,6 +85,7 @@ class PedidosApiService {
 
       return true;
     } catch (error: any) {
+      console.log(`Error al guardar pedido: ${error}`);
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);
       } else if (error?.message == 'La solicitud fue cancelada') {
