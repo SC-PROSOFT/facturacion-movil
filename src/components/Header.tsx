@@ -43,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({children}) => {
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <Avatar.Text
             size={40}
-            label={getInitialsOfClient(nombreCliente)} 
+            label={getInitialsOfClient(nombreCliente)}
             style={{borderRadius: 10}}
           />
           <View style={{marginLeft: 10}}>
@@ -116,7 +116,9 @@ const HeaderActionButtons = () => {
           Consecutivo{' '}
           {currentRouteName == 'ElaborarPedido' ||
           currentRouteName == 'ModificarPedido'
-            ? Number(objOperador.nro_pedido)
+            ? Number(objOperador.nro_pedido) == 0 || !Number(objOperador.nro_pedido)
+              ? '---'
+              : Number(objOperador.nro_pedido)
             : Number(objOperador.nro_factura)}
         </Text>
       </View>
@@ -127,7 +129,7 @@ const HeaderActionButtons = () => {
           justifyContent: 'space-between',
           width: '12%',
         }}>
-        {currentRouteName == 'ModificarPedido' ||
+        {
         currentRouteName == 'ModificarFactura' ? (
           <TouchableOpacity style={styles.button} onPress={() => togglePrint()}>
             <Icon name="printer" size={38} color={'#FFF'} />

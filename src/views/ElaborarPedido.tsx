@@ -863,25 +863,25 @@ const ElaborarPedido: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    setState(prevState => ({
-      ...prevState,
-      sucursal: objOperador?.sucursal || '',
-      consecutivo: objOperador?.nro_pedido || 0,
-      cod_vendedor: objOperador?.cod_vendedor || '',
-      almacen: state.almacen || ArrAlmacenes?.[0]?.codigo || 'ALM01', // Mantener selección si ya existe
-      identificacion: objTercero?.codigo || '',
-      descripcionCliente: objTercero?.nombre || '',
-      direccion: objTercero?.direcc || '',
-      telefono: objTercero?.tel || '',
-      clasificacion: objTercero?.clasificacion || '',
-      plazo: objTercero?.plazo?.toString() || '',
-      formaPago: objTercero?.f_pago || prevState.formaPago || '01', // Mantener selección o default de tercero
-      saldoCartera: formatToMoney(intCartera || 0),
-      // No es necesario sincronizar state.articulosAdded con arrProductAdded aquí
-      // si estructurarPedido y validateBeforeSaving usan directamente arrProductAdded de Redux.
-    }));
-  }, [objOperador, objTercero, intCartera, ArrAlmacenes]);
+  // useEffect(() => {
+  //   setState(prevState => ({
+  //     ...prevState,
+  //     sucursal: objOperador?.sucursal || '',
+  //     consecutivo: objOperador?.nro_pedido || 0,
+  //     cod_vendedor: objOperador?.cod_vendedor || '',
+  //     almacen: state.almacen || ArrAlmacenes?.[0]?.codigo || 'ALM01', // Mantener selección si ya existe
+  //     identificacion: objTercero?.codigo || '',
+  //     descripcionCliente: objTercero?.nombre || '',
+  //     direccion: objTercero?.direcc || '',
+  //     telefono: objTercero?.tel || '',
+  //     clasificacion: objTercero?.clasificacion || '',
+  //     plazo: objTercero?.plazo?.toString() || '',
+  //     formaPago: objTercero?.f_pago || prevState.formaPago || '01', // Mantener selección o default de tercero
+  //     saldoCartera: formatToMoney(intCartera || 0),
+  //     // No es necesario sincronizar state.articulosAdded con arrProductAdded aquí
+  //     // si estructurarPedido y validateBeforeSaving usan directamente arrProductAdded de Redux.
+  //   }));
+  // }, [objOperador, objTercero, intCartera, ArrAlmacenes]);
 
   const checkUbication = async () => {
     setIsModalVisible(true);
@@ -1085,6 +1085,9 @@ const ElaborarPedido: React.FC = () => {
       } else if (pedidoGuardadoConExitoEnDbOnly) {
         // Si solo se guardó localmente
         console.log('[SAVE_ORDER] Pedido guardado localmente, pero no en API.');
+        setObjOperator({
+          ...objOperador,
+        });
         visitaRealizada(pedidoBase.valorPedido);
         resetStateAndNavigate(); // Resetear el formulario y navegar
       }
@@ -1291,12 +1294,7 @@ const ElaborarPedido: React.FC = () => {
         articulosAdded: arrProductAdded, // Usar el de Redux
         formaPago: state.formaPago,
         // Asegúrate que fechaVencimiento se calcule correctamente
-        fechaVencimiento:
-          state.formaPago === '02' && objTercero.plazo
-            ? moment(state.fechaPedido, 'DD-MM-YYYY')
-                .add(objTercero.plazo, 'days')
-                .format('YYYY-MM-DD')
-            : moment(state.fechaPedido, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+        fechaVencimiento: moment().add(1, 'days').format('YYYYMMDD'),
         valorPedido: totalValorPedido,
         observaciones: state.observaciones,
         ubicacion: {latitud: latitude, longitud: longitude},

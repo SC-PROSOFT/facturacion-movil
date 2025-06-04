@@ -53,6 +53,7 @@ import {
   articulosService,
   carteraService,
   pedidosService,
+  visitaService,
 } from '../data_queries/local_database/services';
 /* queries */
 import {PedidosApiService} from '../data_queries/api/queries';
@@ -886,7 +887,7 @@ const ModificarPedido: React.FC = () => {
   };
   const loadOperator = () => {
     const {sucursal, nro_pedido} = objOperador;
-
+    console.log(nro_pedido);
     const currentDate = new Date();
     const day = String(currentDate.getDate()).padStart(2, '0');
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -907,19 +908,76 @@ const ModificarPedido: React.FC = () => {
   const handleInputChange = (input: string, text: string) => {
     setState(prevState => ({...prevState, [input]: text}));
   };
+  const findLastPedidoWithValidNroPedido = (
+    arrPedidos: IOperation[],
+  ): IOperation | null => {
+    // Filtrar pedidos con un número de pedido válido (mayor que 0)
+    const pedidosValidos = arrPedidos.filter(
+      pedido => pedido.operador.nro_pedido > 0,
+    );
+
+    // Ordenar los pedidos válidos por número de pedido en orden descendente
+    const pedidosOrdenados = pedidosValidos.sort(
+      (a, b) => b.operador.nro_pedido - a.operador.nro_pedido,
+    );
+
+    // Retornar el último pedido válido (el primero en el arreglo ordenado)
+    return pedidosOrdenados.length > 0 ? pedidosOrdenados[0] : null;
+  };
+
+  const saveBeforeModifying = async (pedido: IOperation) => {
+    const pedidosApiService = new PedidosApiService(
+      objConfig.direccionIp,
+      objConfig.puerto,
+    );
+    try {
+      await pedidosApiService._savePedido(pedido, 'post');
+      console.log('[SAVE_BEFORE_MODIFY] Pedido guardado exitosamente.');
+    } catch (error: any) {
+      console.error('[SAVE_BEFORE_MODIFY] Error al guardar el pedido:', error);
+      throw error; // Re-lanzar el error para que lo capture el bloque catch principal
+    }
+  };
+
   const toggleUpdateOrder = async () => {
     setIsLoadingSave(true);
     // variable para saber si el pedido se actualizo en el servidor o no
     let pedidoActualizadoConExtioEnAlgunLado = false;
-    const pedidoBase = estructurarPedido();
-    console.log('[UPDATE_ORDER] Estructurando pedido base:', pedidoBase);
+    const pedidoB = estructurarPedido();
+
+    const nroPedidoBase = pedidoB.operador.nro_pedido || 0;
+    console.log('[UPDATE_ORDER] Nro Pedido Base:', nroPedidoBase);
+    let lastPedidoWithNroPedido: IOperation | null = null;
+    if (!pedidoB.operador.nro_pedido || pedidoB.operador.nro_pedido === 0) {
+      lastPedidoWithNroPedido = findLastPedidoWithValidNroPedido(arrPedidos);
+    }
+    const pedidoBase = {
+      ...pedidoB,
+      operador: {
+        ...pedidoB.operador,
+        nro_pedido:
+          nroPedidoBase === 0
+            ? Number(lastPedidoWithNroPedido?.operador?.nro_pedido || 0) + 1
+            : Number(nroPedidoBase),
+      },
+    };
+    console.log('[UPDATE_ORDER] Pedido base estructurado:', pedidoBase);
     try {
       const pedidosApiService = new PedidosApiService(
         objConfig.direccionIp,
         objConfig.puerto,
       );
+
       validateBeforeSaving();
       try {
+        if (
+          pedidoBase.sincronizado === 'N' &&
+          pedidoBase.guardadoEnServer === 'N'
+        ) {
+          // Si el pedido no ha sido sincronizado ni guardado en el servidor, lo guardamos primero
+
+          await saveBeforeModifying(pedidoBase);
+        }
         await pedidosApiService._savePedido(pedidoBase as IOperation, 'put');
 
         const pedidoInDb = await pedidosService.updatePedido(
@@ -941,16 +999,8 @@ const ModificarPedido: React.FC = () => {
             text1: 'Error al guardar el pedido en el servidor',
           });
         }
-        console.log(
-          '[SAVE_LOCAL_ONLY] Pedido guardado localmente:',
-          pedidoDataInDb,
-        );
+
         const redefinedOrders = redefineOrders(arrPedidos, pedidoDataInDb);
-        console.log(
-          '[SAVE_LOCAL_ONLY] Pedido guardado localmente:',
-          pedidoDataInDb,
-        );
-        console.log('redefinedOrders: ', redefinedOrders);
 
         dispatch(setArrPedido(redefinedOrders));
         Toast.show({
@@ -997,7 +1047,11 @@ const ModificarPedido: React.FC = () => {
       if (pedidoActualizadoConExtioEnAlgunLado) {
         console.log('[UPDATE_ORDER] Actualizando operador y UI...');
         // Limpiar productos añadidos para el próximo pedido
-        dispatch(setObjOperator(objOperador)); // Actualizar operador en Redux
+        dispatch(
+          setObjOperator({
+            ...objOperador,
+          }),
+        ); // Actualizar operador en Redux
         visitaRealizada(pedidoBase.valorPedido); // Marcar visita como realizada con el valor del pedido
         // Resetear el formulario y navegar
       }
@@ -1017,22 +1071,27 @@ const ModificarPedido: React.FC = () => {
       }
     } finally {
       setIsLoadingSave(false);
-      console.log('[UPDATE_ORDER] Proceso de guardado finalizado.');
     }
   };
 
   const updateOrderInLocalDatabaseOnly = async (
     pedidoBase: IOperation, // Usar el pedidoBase ya estructurado
   ): Promise<void> => {
-    console.log('[SAVE_LOCAL_ONLY] Iniciando guardado local...');
     try {
       // Ya tenemos pedidoBase, no necesitamos getUbication ni estructurarPedido de nuevo
       const pedidoInDb = await pedidosService.updatePedido(
         pedidoBase.id.toString(),
         {
           ...pedidoBase,
-          sincronizado: 'S',
-          guardadoEnServer: 'S',
+          operador: {
+            ...pedidoBase.operador,
+            nro_pedido:
+              pedidoBase.sincronizado === 'N' &&
+              pedidoBase.guardadoEnServer === 'N'
+                ? 0
+                : pedidoBase?.operador?.nro_pedido, // Asegurarnos de que nro_pedido esté definido
+          },
+          sincronizado: 'N',
         } as IOperation,
       ); // Asumimos que savePedido espera IOperation
       const pedidoDataInDb = await pedidosService.getPedidoById(
@@ -1053,6 +1112,9 @@ const ModificarPedido: React.FC = () => {
       // en el flujo principal de toggleSaveOrder si pedidoGuardadoConExitoEnAlgunLado es true.
       // Solo logueamos aquí o mostramos un Toast específico si es necesario.
       const redefinedOrders = redefineOrders(arrPedidos, pedidoDataInDb);
+
+      // Eliminar duplicados antes de actualizar Redux
+
       dispatch(setArrPedido(redefinedOrders)); // Es importante añadirlo a Redux
 
       Toast.show({type: 'success', text1: 'Pedido guardado localmente.'}); // Mensaje específico para este caso
@@ -1085,6 +1147,20 @@ const ModificarPedido: React.FC = () => {
       observation: state.observaciones,
       saleValue: valorVenta,
     };
+
+    try {
+      await visitaService.updateVisita(
+        modifiedVisita,
+        modifiedVisita.id_visita.toString(),
+      );
+      console.log('Visita actualizada correctamente');
+      dispatch(setObjVisita(modifiedVisita));
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error al marcar visita como realizada',
+      });
+    }
   };
   const validateBeforeSaving = (): boolean => {
     const geoLocalizacion = false; // En desarrollo 07/09/2023
@@ -1156,8 +1232,8 @@ const ModificarPedido: React.FC = () => {
         latitud: objTercero.latitude,
         longitud: objTercero.longitude,
       },
-      guardadoEnServer: 'N',
-      sincronizado: 'N',
+      guardadoEnServer: objOperation.guardadoEnServer || 'N',
+      sincronizado: objOperation.sincronizado || 'N',
     };
   };
   const toggleArticulo = (articulo: IProduct) => {
@@ -1344,7 +1420,7 @@ const ModificarPedido: React.FC = () => {
 
         <View style={{marginTop: 10, paddingBottom: 120}}>
           <CoolButton
-            value={isLoadingSave ? '' : 'Guardar Pedido'}
+            value={isLoadingSave ? '' : 'Modificar Pedido'}
             pressCoolButton={toggleUpdateOrder}
             colorButton="#19C22A"
             iconName="download"

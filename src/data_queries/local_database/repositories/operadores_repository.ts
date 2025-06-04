@@ -219,6 +219,7 @@ class OperadoresRepository implements IRepository<IOperadores> {
     `;
 
     return new Promise((resolve, reject) => {
+      console.log(item)
       db.transaction((tx: any) => {
         tx.executeSql(
           sqlUpdateStatement,

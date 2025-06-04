@@ -89,9 +89,7 @@ export const redefineOrders = (
   newPedido: IOperation,
 ) => {
   const redefinedOrders = arrPedidos.map(pedido =>
-    pedido.operador.nro_pedido == newPedido.operador.nro_pedido
-      ? newPedido
-      : pedido,
+    pedido.id == newPedido.id ? newPedido : pedido,
   );
 
   return redefinedOrders;

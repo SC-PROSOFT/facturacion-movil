@@ -74,11 +74,15 @@ class PedidosApiService {
         innerFormatPedido(pedido),
       );
 
+      console.log('Response de guardar pedido:', response.data);
+
       if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'
       ) {
         throw new Error('La configuracion no es correcta');
+      } else if (response.data.data.STATUS == '99') {
+        throw new Error('No existe el pedido o la solicitud fue cancelada');
       }
 
       await this.updateSaldoProducts(pedido);

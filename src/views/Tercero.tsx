@@ -236,7 +236,7 @@ const Tercero = () => {
       if (response) {
         console.log(objOperador);
         // dispatch(
-        //   setObjOperator({
+        //   t({
         //     ...objOperador,
         //     nro_pedido: (Number(objOperador.nro_pedido) || 0) - 1, // Decrementar el número de pedido
         //   }),

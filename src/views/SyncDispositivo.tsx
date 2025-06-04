@@ -700,9 +700,10 @@ const SyncDispositivo = () => {
       let nroPedido = Number(numeroPedido || objOperador.nro_pedido);
       const pedidos = await pedidosService.getAllPedidos();
       console.log(pedidos);
-      const pedidosPendientesDeActualizacion = pedidos.filter(
-        pedido => pedido.sincronizado == 'N' || !pedido.sincronizado,
-      );
+      const pedidosPendientesDeActualizacion = pedidos
+        .filter(pedido => pedido.sincronizado == 'N' || !pedido.sincronizado)
+        .reverse();
+
       for (
         let index = 0;
         index < pedidosPendientesDeActualizacion.length;
@@ -752,6 +753,11 @@ const SyncDispositivo = () => {
               sincronizado: 'S',
               guardadoEnServer: 'S',
             });
+            dispatch(
+              setObjOperator({
+                ...objOperador,
+              }),
+            );
           }
 
           if (index === pedidos.length - 1) {
