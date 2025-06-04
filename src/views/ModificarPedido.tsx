@@ -1149,12 +1149,7 @@ const ModificarPedido: React.FC = () => {
       articulosAdded: arrProductAdded, // Usar el de Redux
       formaPago: state.formaPago,
       // Asegúrate que fechaVencimiento se calcule correctamente
-      fechaVencimiento:
-        state.formaPago === '02' && objTercero.plazo
-          ? moment(state.fechaPedido, 'DD-MM-YYYY')
-              .add(objTercero.plazo, 'days')
-              .format('YYYY-MM-DD')
-          : moment(state.fechaPedido, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+      fechaVencimiento: moment().add(1, 'days').format('YYYYMMDD'),
       valorPedido: totalValorPedido,
       observaciones: state.observaciones,
       ubicacion: {

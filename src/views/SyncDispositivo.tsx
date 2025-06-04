@@ -1,5 +1,11 @@
 import React, {useEffect, useState, useCallback} from 'react';
-import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import {
   Divider,
   Dialog,
@@ -81,6 +87,19 @@ interface RecordProps {
   };
   toggleTerceros: () => void;
 }
+interface UploadResultDetail {
+  exitosos: number;
+  fallidos: number;
+  mensajesError?: string[]; // O un array de objetos con más detalle
+}
+
+interface UploadSummary {
+  terceros?: UploadResultDetail;
+  pedidos?: UploadResultDetail;
+  facturas?: UploadResultDetail;
+  archivos?: UploadResultDetail;
+  encuestas?: UploadResultDetail;
+}
 
 interface Records {
   quantityTerceros: string;
@@ -140,7 +159,76 @@ const ProgressWindow = ({
     </Dialog>
   );
 };
+interface ResultsModalProps {
+  visible: boolean;
+  summary: UploadSummary | null;
+  onClose: () => void;
+}
 
+const UploadResultsModal = ({visible, summary, onClose}: ResultsModalProps) => {
+  if (!summary) return null;
+
+  const renderSection = (title: string, data?: UploadResultDetail) => {
+    if (!data) return null;
+
+    return (
+      <View style={{marginBottom: 16}}>
+        <Text variant="titleMedium" style={{marginBottom: 6, color: '#333'}}>
+          {title}
+        </Text>
+        <View style={{paddingLeft: 10}}>
+          <Text style={{fontSize: 14, color: 'green', marginBottom: 2}}>
+            ✅ Exitosos: {data.exitosos}
+          </Text>
+          <Text style={{fontSize: 14, color: 'red', marginBottom: 6}}>
+            ❌ Fallidos: {data.fallidos}
+          </Text>
+        </View>
+        {data.fallidos > 0 &&
+          Array.isArray(data.mensajesError) &&
+          data.mensajesError.length > 0 && (
+            <View style={{paddingLeft: 20}}>
+              <Text style={{fontWeight: '600', marginBottom: 4}}>
+                Detalles de errores:
+              </Text>
+              {data.mensajesError.map((msg, index) => (
+                <Text
+                  key={index}
+                  style={{fontSize: 12, color: '#666', marginBottom: 2}}>
+                  • {msg}
+                </Text>
+              ))}
+            </View>
+          )}
+        <Divider style={{marginTop: 12}} />
+      </View>
+    );
+  };
+
+  return (
+    <Dialog visible={visible} onDismiss={onClose} style={{borderRadius: 16}}>
+      <Dialog.Title style={{textAlign: 'center', fontWeight: 'bold'}}>
+        🛜 Resultados de la Sincronización
+      </Dialog.Title>
+      <Dialog.Content>
+        <ScrollView
+          style={{maxHeight: 400}}
+          showsVerticalScrollIndicator={false}>
+          {renderSection('🧑‍💼 Terceros', summary.terceros)}
+          {renderSection('🧾 Pedidos', summary.pedidos)}
+          {/* {renderSection('📄 Facturas', summary.facturas)} */}
+          {renderSection('📂 Archivos', summary.archivos)}
+          {renderSection('📋 Encuestas', summary.encuestas)}
+        </ScrollView>
+      </Dialog.Content>
+      <Dialog.Actions>
+        <Button mode="contained" onPress={onClose} style={{borderRadius: 8}}>
+          Cerrar
+        </Button>
+      </Dialog.Actions>
+    </Dialog>
+  );
+};
 const Record = ({records, toggleTerceros}: RecordProps) => {
   const {
     quantityTerceros,
@@ -406,6 +494,10 @@ const SyncDispositivo = () => {
   const [dialogContent, setDialogContent] = useState('');
   const [disabledCancel, setDisabledCancel] = useState<boolean>(false);
   const [isConnectToInternet, setIsConnectToInternet] = useState<boolean>(true);
+  const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(
+    null,
+  );
+  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [records, setRecords] = useState<Records>({
     quantityTerceros: '0',
     createdTerceros: 0,
@@ -684,7 +776,7 @@ const SyncDispositivo = () => {
     }
   };
 
-  const updateTerceros: () => void = async () => {
+  const updateTerceros = async (): Promise<UploadResultDetail> => {
     setLoading(true);
 
     const tercerosApiService = new TercerosApiServices(
@@ -733,25 +825,32 @@ const SyncDispositivo = () => {
       ).length;
 
       const failedCreated = createdResults.filter(
+        // Considera que `result.value === false` también es un fallo de lógica de negocio
         result => result.status === 'rejected',
       ).length;
+      const createdErrorMessages = createdResults
+        .filter(result => result.status === 'rejected')
+        .map(
+          result =>
+            (result as PromiseRejectedResult).reason?.message ||
+            'Error desconocido',
+        );
 
       const successfulEdited = editedResults.filter(
         result => result.status === 'fulfilled' && result.value === true,
       ).length;
-
       const failedEdited = editedResults.filter(
         result => result.status === 'rejected',
       ).length;
+      const editedErrorMessages = editedResults
+        .filter(result => result.status === 'rejected')
+        .map(
+          result =>
+            (result as PromiseRejectedResult).reason?.message ||
+            'Error desconocido',
+        );
 
-      // Mostrar mensajes al usuario
-      if (successfulCreated > 0 || successfulEdited > 0) {
-        Toast.show({
-          type: 'success',
-          text1: `Terceros sincronizados 🥳`,
-          text2: `${successfulCreated} creados y ${successfulEdited} editados`,
-        });
-      }
+      // ... lógica para mostrar Toast (puedes mantenerla o moverla) ...
 
       if (failedCreated === 0 && failedEdited === 0) {
         // Si no hay fallos, eliminar las tablas de creados y editados
@@ -767,12 +866,24 @@ const SyncDispositivo = () => {
       }
 
       setLoading(false);
+      return {
+        exitosos: successfulCreated + successfulEdited,
+        fallidos: failedCreated + failedEdited,
+        mensajesError: [...createdErrorMessages, ...editedErrorMessages].filter(
+          Boolean,
+        ), // Filtra mensajes vacíos
+      };
     } catch (error: any) {
       setLoading(false);
       Toast.show({
         type: 'error',
         text1: error.message || 'Error al actualizar terceros ❌',
       });
+      return {
+        exitosos: 0,
+        fallidos: 0,
+        mensajesError: [error.message || 'Error desconocido'],
+      };
     }
   };
 
@@ -957,14 +1068,15 @@ const SyncDispositivo = () => {
 
   const toggleUploadData = async () => {
     setShowProgressWindow(true);
-
+    setDisabledCancel(true); // Deshabilita cancelar mientras se sube
+    const summary: UploadSummary = {};
     // const syncQueries = new SyncQueries(direccionIp, puerto);
     // setSyncQueriesScope(syncQueries);
     // console.log("syncQueries", syncQueries);
 
     try {
       setDialogContent('Subiendo terceros');
-      await updateTerceros();
+      summary.terceros = await updateTerceros();
       // setDialogContent('Subiendo facturas');
       // await updateFacturas();
       setDialogContent('Subiendo pedidos');
@@ -975,6 +1087,8 @@ const SyncDispositivo = () => {
       await updateEncuestas();
       setDisabledCancel(false);
       setShowProgressWindow(false);
+      setUploadSummary(summary); // Guarda el resumen completo
+      setShowSummaryModal(true); // Muestra la ventana de resumen
       loadRecord();
       // dispatch(showAlert('05'));
     } catch (error: any) {
@@ -1096,7 +1210,6 @@ const SyncDispositivo = () => {
             disabled={isConnectToInternet}
           /> */}
           <TouchableOpacity
-            disabled={isConnectToInternet}
             onPress={toggleUploadData}
             style={{
               width: 'auto', // Si quieres que el botón ocupe un ancho específico y centrar el contenido en ese espacio, cambia 'auto' por un valor numérico o '100%'
@@ -1138,7 +1251,14 @@ const SyncDispositivo = () => {
         cancelSyncQueries={cancelSyncQueries}
         disabledCancel={disabledCancel}
       />
-
+      <UploadResultsModal
+        visible={showSummaryModal}
+        summary={uploadSummary}
+        onClose={() => {
+          setShowSummaryModal(false);
+          setUploadSummary(null); // Limpia el resumen
+        }}
+      />
       <TercerosFinder searchTable="terceros_creados" />
     </View>
   );
