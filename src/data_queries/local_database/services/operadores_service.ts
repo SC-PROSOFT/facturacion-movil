@@ -35,6 +35,12 @@ class OperadoresService {
       attributeValue,
     );
   }
+  async deleteAll(): Promise<boolean> {
+    return this.operadoresRepository.deleteAll();
+  }
+  async deleteTableOperadores(): Promise<boolean> {
+    return this.operadoresRepository.deleteTable();
+  }
 }
 
 const operadoresService = new OperadoresService();

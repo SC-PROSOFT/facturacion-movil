@@ -219,7 +219,6 @@ class OperadoresRepository implements IRepository<IOperadores> {
     `;
 
     return new Promise((resolve, reject) => {
-      console.log(item)
       db.transaction((tx: any) => {
         tx.executeSql(
           sqlUpdateStatement,
@@ -263,6 +262,43 @@ class OperadoresRepository implements IRepository<IOperadores> {
                 `Fallo al obtener el operador con el codigo ${attributeValue}`,
               ),
             );
+          },
+        );
+      });
+    });
+  }
+
+  async deleteAll(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `DELETE FROM operadores`,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo borrar todos los operadores'));
+          },
+        );
+      });
+    });
+  }
+  async deleteTable(): Promise<boolean> {
+    const sqlDeleteStatement = `
+      DROP TABLE IF EXISTS operadores
+    `;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlDeleteStatement,
+          null,
+          (_: ResultSet, response: ResultSet) => {
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            reject(new Error('Fallo borrar tabla operadores'));
           },
         );
       });
