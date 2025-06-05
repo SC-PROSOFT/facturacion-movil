@@ -56,7 +56,8 @@ export const getLastNroPedido = async (
           );
           return null;
         }
-
+        console.log('[OPERADOR FIJO]', operador);
+        console.log('[OPERADOR DESDE SERVIDOR]', operEnServidor);
         console.log('Nro Pedido obtenido del servidor:', nroPedidoNum);
 
         // 1. Efecto secundario: Actualiza el nro_pedido en el store de Redux
@@ -68,7 +69,7 @@ export const getLastNroPedido = async (
             }),
           );
           const operadorAct: IOperadores = {
-            ...operador,
+            ...operEnServidor,
             nro_pedido: nroPedidoNum,
           };
           await operadoresService.updateOperador(operador.id, operadorAct);
