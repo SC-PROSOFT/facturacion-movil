@@ -685,8 +685,11 @@ const SyncDispositivo = () => {
     loadFiles();
     loadPedidosValues();
   }, []);
-  const updatePedidos: () => void = async () => {
+  const updatePedidos = async (): Promise<UploadResultDetail> => {
     setLoading(true);
+    let subidos = 0;
+    let fallidos = 0;
+    let mensajesError: string[] = [];
     try {
       const pedidosApiService = new PedidosApiService(
         objConfig.descargasIp,
@@ -711,17 +714,11 @@ const SyncDispositivo = () => {
       ) {
         const pedido = pedidosPendientesDeActualizacion[index];
         try {
-          console.log('pedido save', pedido.guardadoEnServer);
-          console.log(
-            'Verificacion de pedido',
-            pedido.guardadoEnServer == 'S' ? 'put' : 'post',
-          );
           const putOrpost = pedido.guardadoEnServer == 'S' ? 'put' : 'post';
           const response = await pedidosApiService._savePedido(
             pedido,
             pedido.guardadoEnServer == 'S' ? 'put' : 'post',
           );
-          console.log(response);
           if (response && putOrpost == 'post') {
             const updateOperador: IOperadores = {
               ...objOperador,
@@ -736,6 +733,7 @@ const SyncDispositivo = () => {
                 nro_pedido: nroPedido,
               },
             });
+            console.log('[UPDATE OPERADOR SYNC]', updateOperador);
             await operadoresService.updateOperador(
               pedido.operador.id,
               updateOperador,
@@ -759,26 +757,27 @@ const SyncDispositivo = () => {
               }),
             );
           }
-
-          if (index === pedidos.length - 1) {
-            Toast.show({
-              type: 'success',
-              text1: 'pedidos actualizados correctamente',
-            });
-          }
-
+          subidos++;
           loadPedidosValues();
           setLoading(false);
         } catch (error: any) {
+          fallidos++;
+          const errorMessage =
+            error.message ||
+            `Error al actualizar el pedido ${pedido.operador.nro_pedido}`;
+          mensajesError.push(errorMessage);
           setLoading(false);
-          Toast.show({
-            type: 'error',
-            text1: error.message || 'Error al actualizar pedidos ❌',
-          });
         }
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
+      return {
+        exitosos: subidos,
+        fallidos: fallidos,
+        mensajesError: mensajesError,
+      };
     }
   };
 
@@ -893,20 +892,14 @@ const SyncDispositivo = () => {
     }
   };
 
-  const updateEncuestas: () => void = async () => {
+  const updateEncuestas = async (): Promise<UploadResultDetail> => {
     setLoading(true);
-
-    console.log(objConfig.direccionIp, objConfig.puerto);
 
     const encuestaApiService = new EncuestaApiServices(
       objConfig.direccionIp,
       objConfig.puerto,
     );
-
     EncuestaApiServices.setObjConfig(objConfig);
-
-    console.log('updating encuestas');
-
     try {
       // Obtener solo las encuestas con guardado = 'N'
       const encuestas = await encuestaService.getRespEncuestaByGuardado('N');
@@ -949,17 +942,33 @@ const SyncDispositivo = () => {
           });
         });
       }
+      return {
+        exitosos: successfulUpdates,
+        fallidos: failedUpdates.length,
+        mensajesError: failedUpdates.map(
+          failure =>
+            failure.reason?.message ||
+            'Error desconocido al actualizar encuesta ❌',
+        ),
+      };
     } catch (error: any) {
       Toast.show({
         type: 'error',
         text1: error.message || 'Error al actualizar encuestas ❌',
       });
+      return {
+        exitosos: 0,
+        fallidos: 0,
+        mensajesError: [
+          error.message || 'Error desconocido al actualizar encuestas ❌',
+        ],
+      };
     } finally {
       setLoading(false);
     }
   };
 
-  const updateFiles = async () => {
+  const updateFiles = async (): Promise<UploadResultDetail> => {
     setLoading(true);
     const filesApiService = new FilesApiServices(
       objConfig.direccionIp,
@@ -980,7 +989,11 @@ const SyncDispositivo = () => {
           text1: 'No hay archivos pendientes de sincronización',
         });
         setLoading(false);
-        return;
+        return {
+          exitosos: 0,
+          fallidos: 0,
+          mensajesError: ['No hay archivos pendientes de sincronización'],
+        };
       }
 
       const results = await Promise.allSettled(
@@ -1020,7 +1033,7 @@ const SyncDispositivo = () => {
               return response;
             }),
           );
-          console.log('Entro aqui');
+
           await filesService.updateSincronizado(tercero.codigo);
           // Verificar si todos los archivos individuales se subieron correctamente
           const successfulUploads = uploadResults.filter(
@@ -1043,30 +1056,27 @@ const SyncDispositivo = () => {
         result => result.status === 'rejected',
       );
 
-      if (successfulUploads > 0) {
-        Toast.show({
-          type: 'success',
-          text1: `Archivos sincronizados 🥳`,
-          text2: `${successfulUploads} archivos subidos correctamente`,
-        });
-      }
-
-      if (failedUploads.length > 0) {
-        failedUploads.forEach(failure => {
-          Toast.show({
-            type: 'error',
-            text1:
-              failure.reason?.message ||
-              'Error desconocido al subir archivos ❌',
-          });
-        });
-      }
+      return {
+        exitosos: successfulUploads,
+        fallidos: failedUploads.length,
+        mensajesError: failedUploads.map(
+          failure =>
+            failure.reason?.message || 'Error desconocido al subir archivos ❌',
+        ),
+      };
     } catch (error: any) {
       Toast.show({
         type: 'error',
         text1: error.message || 'Error al subir archivos ❌',
       });
       console.error('Error al subir archivos:', error);
+      return {
+        exitosos: 0,
+        fallidos: 0,
+        mensajesError: [
+          error.message || 'Error desconocido al subir archivos ❌',
+        ],
+      };
     } finally {
       setLoading(false); // Ocultar indicador de carga
     }
@@ -1086,11 +1096,11 @@ const SyncDispositivo = () => {
       // setDialogContent('Subiendo facturas');
       // await updateFacturas();
       setDialogContent('Subiendo pedidos');
-      await updatePedidos();
+      summary.pedidos = await updatePedidos();
       setDialogContent('Subiendo archivos');
-      await updateFiles();
+      summary.archivos = await updateFiles();
       setDialogContent('Subiendo respuestas de encuestas');
-      await updateEncuestas();
+      summary.encuestas = await updateEncuestas();
       setDisabledCancel(false);
       setShowProgressWindow(false);
       setUploadSummary(summary); // Guarda el resumen completo
