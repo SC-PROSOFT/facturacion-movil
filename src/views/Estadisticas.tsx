@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { formatToMoney } from '../utils'; // Asumo que esta utilidad existe y funciona
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
+import {formatToMoney} from '../utils'; // Asumo que esta utilidad existe y funciona
 import {
   View,
   StyleSheet,
@@ -10,9 +10,9 @@ import {
   Switch,
   ActivityIndicator, // Para el estado de carga
 } from 'react-native';
-import { BarChart } from 'react-native-gifted-charts';
-import { pedidosService } from '../data_queries/local_database/services';
-import { PrincipalHeader } from '../components';
+import {BarChart} from 'react-native-gifted-charts';
+import {pedidosService} from '../data_queries/local_database/services';
+import {PrincipalHeader} from '../components';
 
 // Tipos (puedes moverlos a un archivo types.ts)
 interface Articulo {
@@ -34,7 +34,7 @@ interface BarChartDataItem {
 }
 
 // Constantes
-const { width: screenWidth } = Dimensions.get('window');
+const {width: screenWidth} = Dimensions.get('window');
 const KG_PER_ARROBA = 11.5;
 const KG_PER_LIBRA = 2.20462;
 const CHART_COLORS = ['#4CAF50', '#FFC107', '#2196F3', '#FF5722', '#9C27B0']; // Añade más si es necesario
@@ -47,14 +47,13 @@ const BAR_CHART_DEFAULT_PROPS = {
   hideRules: true,
   xAxisThickness: 1,
   yAxisThickness: 1,
-  xAxisColor: "#000",
-  yAxisColor: "#000",
-  xAxisLabelTextStyle: { color: '#000', fontSize: 10 },
-  yAxisTextStyle: { color: '#000' },
+  xAxisColor: '#000',
+  yAxisColor: '#000',
+  xAxisLabelTextStyle: {color: '#000', fontSize: 10},
+  yAxisTextStyle: {color: '#000'},
   noOfSections: 5,
   showValuesAsTopLabel: true,
 };
-
 
 // --- Funciones de Cálculo Puras ---
 const calculateTotalPesoKg = (pedidos: Pedido[]): number => {
@@ -92,7 +91,7 @@ const calculateTotalValor = (pedidos: Pedido[]): number => {
 };
 
 const generateArrozData = (pedidos: Pedido[]): BarChartDataItem[] => {
-  const arrozMap: { [key: string]: number } = {};
+  const arrozMap: {[key: string]: number} = {};
   pedidos.forEach(pedido => {
     if (!pedido.articulosAdded || !Array.isArray(pedido.articulosAdded)) return;
     pedido.articulosAdded.forEach(art => {
@@ -127,14 +126,16 @@ export const Estadisticas = () => {
       const fetchedPedidos = isDaily
         ? await pedidosService.getPedidosDeHoy()
         : await pedidosService.getPedidosDeEsteMes();
-      
+
       if (!Array.isArray(fetchedPedidos)) {
-        console.warn("La carga de pedidos no devolvió un array:", fetchedPedidos);
+        console.warn(
+          'La carga de pedidos no devolvió un array:',
+          fetchedPedidos,
+        );
         setPedidosData([]); // Establecer a array vacío si la data no es válida
       } else {
         setPedidosData(fetchedPedidos);
       }
-
     } catch (err: any) {
       console.error('Error al cargar estadísticas:', err);
       setError('No se pudieron cargar las estadísticas. Intente más tarde.');
@@ -147,39 +148,65 @@ export const Estadisticas = () => {
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [fetchData]) // fetchData ya es un useCallback, así que esto es correcto
+    }, [fetchData]), // fetchData ya es un useCallback, así que esto es correcto
   );
 
   // --- Datos Derivados con useMemo ---
-  const totalAcumuladoKg = useMemo(() => calculateTotalPesoKg(pedidosData), [pedidosData]);
-  const totalValorAcumulado = useMemo(() => calculateTotalValor(pedidosData), [pedidosData]);
-  const dataArroz = useMemo(() => generateArrozData(pedidosData), [pedidosData]);
-  
+  const totalAcumuladoKg = useMemo(
+    () => calculateTotalPesoKg(pedidosData),
+    [pedidosData],
+  );
+  const totalValorAcumulado = useMemo(
+    () => calculateTotalValor(pedidosData),
+    [pedidosData],
+  );
+  const dataArroz = useMemo(
+    () => generateArrozData(pedidosData),
+    [pedidosData],
+  );
+
   const dataPeso = useMemo((): BarChartDataItem[] => {
     const pesoTotalArroba = totalAcumuladoKg / KG_PER_ARROBA;
     const pesoTotalLibra = totalAcumuladoKg * KG_PER_LIBRA;
     return [
-      { value: parseFloat(totalAcumuladoKg.toFixed(2)), label: 'KG', frontColor: CHART_COLORS[0] },
-      { value: parseFloat(pesoTotalArroba.toFixed(2)), label: 'ARROBA', frontColor: CHART_COLORS[1] },
-      { value: parseFloat(pesoTotalLibra.toFixed(2)), label: 'LIBRA', frontColor: CHART_COLORS[2] },
+      {
+        value: parseFloat(totalAcumuladoKg.toFixed(2)),
+        label: 'KG',
+        frontColor: CHART_COLORS[0],
+      },
+      {
+        value: parseFloat(pesoTotalArroba.toFixed(2)),
+        label: 'ARROBA',
+        frontColor: CHART_COLORS[1],
+      },
+      {
+        value: parseFloat(pesoTotalLibra.toFixed(2)),
+        label: 'LIBRA',
+        frontColor: CHART_COLORS[2],
+      },
     ];
   }, [totalAcumuladoKg]);
 
   const totalPedidos = pedidosData.length;
-  
-  // Ancho dinámico para gráficos considerando paddings/margins
-  const chartVisibleWidth = screenWidth - (styles.container.marginHorizontal || 20) * 2 - (styles.container.paddingHorizontal || 10) * 2;
 
+  // Ancho dinámico para gráficos considerando paddings/margins
+  const chartVisibleWidth = screenWidth - 40 * 3;
 
   const renderContent = () => {
     if (isLoading) {
-      return <ActivityIndicator size="large" color="#0B2863" style={styles.loader} />;
+      return (
+        <ActivityIndicator size="large" color="#0B2863" style={styles.loader} />
+      );
     }
     if (error) {
       return <Text style={styles.errorText}>{error}</Text>;
     }
     if (pedidosData.length === 0 && !isLoading) {
-        return <Text style={styles.emptyDataText}>No hay datos disponibles para el período seleccionado.</Text>;
+      return (
+        <Text style={styles.emptyDataText}>
+          No hay datos disponibles para el período seleccionado.
+        </Text>
+      );
     }
 
     return (
@@ -193,7 +220,11 @@ export const Estadisticas = () => {
             {...BAR_CHART_DEFAULT_PROPS}
             data={dataPeso}
             width={chartVisibleWidth} // Usar ancho calculado
-            maxValue={dataPeso.length > 0 ? Math.max(...dataPeso.map(d => d.value)) * 1.2 || 10 : 10}
+            maxValue={
+              dataPeso.length > 0
+                ? Math.max(...dataPeso.map(d => d.value)) * 1.2 || 10
+                : 10
+            }
           />
         </View>
 
@@ -206,7 +237,11 @@ export const Estadisticas = () => {
             width={chartVisibleWidth} // Usar ancho calculado
             barWidth={dataArroz.length > 5 ? 30 : 40} // Ajustar ancho de barra si hay muchos items
             spacing={dataArroz.length > 5 ? 15 : 20}
-            maxValue={dataArroz.length > 0 ? Math.max(...dataArroz.map(d => d.value)) * 1.2 || 10 : 10}
+            maxValue={
+              dataArroz.length > 0
+                ? Math.max(...dataArroz.map(d => d.value)) * 1.2 || 10
+                : 10
+            }
           />
         </View>
       </>
@@ -227,7 +262,7 @@ export const Estadisticas = () => {
             value={isDaily}
             onValueChange={setIsDaily} // Esto disparará el re-fetch debido a la dependencia en fetchData
             thumbColor={isDaily ? '#0B2863' : '#bdc3c7'}
-            trackColor={{ false: '#ecf0f1', true: '#95a5a6' }}
+            trackColor={{false: '#ecf0f1', true: '#95a5a6'}}
             ios_backgroundColor="#ecf0f1"
           />
         </View>
@@ -262,7 +297,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -293,14 +328,15 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
     marginVertical: 4,
   },
-  container: { // Estilo para cada contenedor de gráfico
+  container: {
+    // Estilo para cada contenedor de gráfico
     marginHorizontal: 15,
     marginVertical: 10, // Espacio entre los gráficos y el bloque de totales
     padding: 15,
     backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -328,7 +364,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 20,
     marginTop: 30,
-  }
+  },
 });
 
 // No olvides exportar si no lo haces ya en un index.ts
