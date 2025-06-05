@@ -1,7 +1,7 @@
 export interface IOperadores {
   codigo: string;
   descripcion: string;
-  clave?: string;
+  clave: string;
   id: string;
   cod_vendedor: string;
   sucursal: string;
