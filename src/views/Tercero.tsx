@@ -118,8 +118,11 @@ const Tercero = () => {
     if (objTercero) {
       setShowMissingFilesAlert(
         objTercero.rut_pdf === 'N' ||
+          !objTercero.rut_pdf ||
           objTercero.camcom_pdf === 'N' ||
-          objTercero.di_pdf === 'N',
+          !objTercero.camcom_pdf ||
+          objTercero.di_pdf === 'N' ||
+          !objTercero.di_pdf,
       );
       setShowMissingLocationAlert(
         !objTercero.longitude || !objTercero.latitude,
