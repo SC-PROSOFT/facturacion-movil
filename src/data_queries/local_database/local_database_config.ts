@@ -44,6 +44,7 @@ const createTables = async (): Promise<boolean> => {
 
     // await tercerosService.dropTableCreates();
     // await tercerosService.dropTableEdits();
+    // await operadoresService.deleteTableOperadores();
     console.log('Creando tablas 6.1...');
     // await tercerosService.deleteAllTercerosCreated();
     // await tercerosService.deleteAllTercerosEdited();
