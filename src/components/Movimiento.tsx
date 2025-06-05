@@ -83,7 +83,7 @@ const Movimiento: React.FC<MovimientoProps> = ({
   ]);
 
   const canDeletePedido =
-    document.tipo_operacion === 'pedido' && document.sincronizado === 'N';
+    document.tipo_operacion === 'pedido' && document.guardadoEnServer === 'N';
 
   const handlePress = () => {
     onPressItem(document); // Llama con el objeto 'document' completo
