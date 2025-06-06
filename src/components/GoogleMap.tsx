@@ -2,6 +2,7 @@ import React from 'react';
 import {View, StyleSheet, Dimensions} from 'react-native';
 import MapView, {Marker} from 'react-native-maps';
 import {Modal, Portal, IconButton} from 'react-native-paper';
+import Toast from 'react-native-toast-message';
 
 interface GoogleMapProps {
   latitude?: number; // Hacer opcionales las coordenadas
@@ -17,6 +18,11 @@ const GoogleMap: React.FC<GoogleMapProps> = ({latitude, longitude}) => {
       console.log('Ubicación disponible:', latitude, longitude);
       setVisible(true); // Solo abrir si las coordenadas están definidas
     } else {
+      Toast.show({
+        type: 'info',
+        text1: 'Coordenadas no disponibles',
+        text2: 'Ubicación no disponible',
+      });
       console.warn('Ubicación no disponible');
     }
   };
