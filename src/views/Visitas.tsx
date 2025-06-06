@@ -145,12 +145,13 @@ const Visitas: React.FC = () => {
 
   const loadVisitas = async () => {
     try {
-      console.log(objOperador.cod_vendedor);
+      setLoaderMessage('Cargando visitas...');
       const visitasData = await visitaService.getAllVisitas();
       const filteredVisitas = visitasData.filter(
         visita => visita.vendedor === objOperador.cod_vendedor,
       );
       setVisitas(filteredVisitas);
+      
     } catch (error) {
       console.log(error);
     }
@@ -242,7 +243,6 @@ const Visitas: React.FC = () => {
   };
 
   const toggleVisita = async (visita: IVisita) => {
-    console.log('visita =>>>>', visita);
     try {
       const tercero = await tercerosService.getByAttribute(
         'codigo',

@@ -90,7 +90,7 @@ interface RecordProps {
 interface UploadResultDetail {
   exitosos: number;
   fallidos: number;
-  mensajesError?: string[]; // O un array de objetos con más detalle
+  mensajesError?: string[];
 }
 
 interface UploadSummary {
@@ -124,17 +124,30 @@ const ProgressWindow = ({
 }: ProgressWindowProps) => {
   const styles = StyleSheet.create({
     container: {
-      paddingBottom: 15,
+      backgroundColor: '#0B2863',
+      width: '100%',
     },
     dialogContent: {
+      paddingVertical: 10,
       display: 'flex',
       flexDirection: 'row',
+    },
+    dialogTitle: {
+      textAlign: 'center',
+      fontWeight: 'bold',
+      color: '#fff',
+      width: 'auto',
     },
   });
 
   return (
     <Dialog visible={visible} dismissable={false} style={{marginTop: -10}}>
-      <Dialog.Title>Descargando datos</Dialog.Title>
+      <View style={styles.container}>
+        <Dialog.Title style={styles.dialogTitle}>
+          <Icon name="sync" size={20} color="#fff" />
+          Sincronizando
+        </Dialog.Title>
+      </View>
       <Dialog.Content>
         <View style={styles.dialogContent}>
           <ActivityIndicator animating={true} color="black" size={10} />
@@ -167,7 +180,19 @@ interface ResultsModalProps {
 
 const UploadResultsModal = ({visible, summary, onClose}: ResultsModalProps) => {
   if (!summary) return null;
-
+  const styles = StyleSheet.create({
+    titleContainer: {
+      backgroundColor: '#0B2863',
+      width: '100%',
+      marginBottom: 16,
+    },
+    dialogTitle: {
+      textAlign: 'center',
+      fontWeight: 'bold',
+      color: '#fff',
+      width: 'auto',
+    },
+  });
   const renderSection = (title: string, data?: UploadResultDetail) => {
     if (!data) return null;
 
@@ -177,12 +202,20 @@ const UploadResultsModal = ({visible, summary, onClose}: ResultsModalProps) => {
           {title}
         </Text>
         <View style={{paddingLeft: 10}}>
-          <Text style={{fontSize: 14, color: 'green', marginBottom: 2}}>
-            ✅ Exitosos: {data.exitosos}
-          </Text>
-          <Text style={{fontSize: 14, color: 'red', marginBottom: 6}}>
-            ❌ Fallidos: {data.fallidos}
-          </Text>
+          {data.exitosos + data.fallidos > 0 ? (
+            <View>
+              <Text style={{fontSize: 14, color: 'green', marginBottom: 2}}>
+                ✅ Exitosos: {data.exitosos}
+              </Text>
+              <Text style={{fontSize: 14, color: 'red', marginBottom: 6}}>
+                ❌ Fallidos: {data.fallidos}
+              </Text>
+            </View>
+          ) : (
+            <Text style={{fontSize: 14, color: '#666', marginBottom: 6}}>
+              ⬜ No existen datos para sincronizar.
+            </Text>
+          )}
         </View>
         {data.fallidos > 0 &&
           Array.isArray(data.mensajesError) &&
@@ -207,9 +240,12 @@ const UploadResultsModal = ({visible, summary, onClose}: ResultsModalProps) => {
 
   return (
     <Dialog visible={visible} onDismiss={onClose} style={{borderRadius: 16}}>
-      <Dialog.Title style={{textAlign: 'center', fontWeight: 'bold'}}>
-        🛜 Resultados de la Sincronización
-      </Dialog.Title>
+      <View style={styles.titleContainer}>
+        <Dialog.Title style={styles.dialogTitle}>
+          <Icon name="sync" size={24} color="#fff" />
+          Resultados de la Sincronización
+        </Dialog.Title>
+      </View>
       <Dialog.Content>
         <ScrollView
           style={{maxHeight: 400}}
@@ -222,7 +258,10 @@ const UploadResultsModal = ({visible, summary, onClose}: ResultsModalProps) => {
         </ScrollView>
       </Dialog.Content>
       <Dialog.Actions>
-        <Button mode="contained" onPress={onClose} style={{borderRadius: 8}}>
+        <Button
+          mode="contained"
+          onPress={onClose}
+          style={{borderRadius: 8, backgroundColor: '#0B2863'}}>
           Cerrar
         </Button>
       </Dialog.Actions>
@@ -1078,6 +1117,7 @@ const SyncDispositivo = () => {
         ],
       };
     } finally {
+      loadFiles();
       setLoading(false); // Ocultar indicador de carga
     }
   };

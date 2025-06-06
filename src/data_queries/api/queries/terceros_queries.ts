@@ -100,7 +100,7 @@ class TercerosApiServices {
       const status = response?.data?.data?.STATUS;
 
       if (status === '00') {
-        return true; 
+        return true;
       } else if (status === '35') {
         throw new Error(
           'La configuración para guardar el tercero no es correcta (STATUS 35).',
@@ -110,9 +110,17 @@ class TercerosApiServices {
           'Se produjo un error conocido por la API al guardar el tercero (STATUS 99).',
         );
       } else if (status === 'SC-1') {
-        throw new Error(
-          'Error específico SC-1 de la API al guardar el tercero.',
-        );
+        try {
+          const lastChanceResponse = await this._updateTercero(tercero);
+          if (lastChanceResponse) {
+            return true;
+          } else {
+            throw new Error(`Error especifico SC-1: ${tercero.codigo}`);
+          }
+        } catch (error: any) {
+          console.error('Error al crear el tercero:', error);
+          throw error;
+        }
       } else {
         console.error(
           'Error al guardar el tercero - Estado inesperado:',
@@ -152,19 +160,26 @@ class TercerosApiServices {
         return true;
       } else if (status === '35') {
         throw new Error(
-          'La configuración para guardar el tercero no es correcta (STATUS 35).',
+          'La configuración para editar el tercero no es correcta (STATUS 35).',
         );
       } else if (status === '99') {
         throw new Error(
-          'Se produjo un error conocido por la API al guardar el tercero (STATUS 99).',
+          'Se produjo un error conocido por la API al editar el tercero (STATUS 99).',
         );
       } else if (status === 'SC-1') {
-        throw new Error(
-          'Error específico SC-1 de la API al guardar el tercero.',
-        );
+        try {
+          const lastResponse = await this._saveBeforeUpdateTercero(tercero);
+          if (lastResponse) {
+            return true;
+          } else {
+            throw new Error(`Error especifico SC-1: ${tercero.codigo}`);
+          }
+        } catch (error: any) {
+          throw new Error(`Error al editar el tercero: ${error.message}`); // Mejor manejo de errores
+        }
       } else {
         console.error(
-          'Error al guardar el tercero - Estado inesperado:',
+          'Error al editar el tercero - Estado inesperado:',
           response?.data?.data,
         );
         throw new Error(
@@ -180,6 +195,22 @@ class TercerosApiServices {
           `Error de red o del servidor al intentar guardar el tercero: ${error.message}`,
         );
       }
+      throw error;
+    }
+  };
+
+  _saveBeforeUpdateTercero = async (tercero: ITerceros): Promise<boolean> => {
+    // Guarda el tercero antes de actualizarlo
+    try {
+      const response = await this._saveTercero(tercero);
+      if (response) {
+        // Si se guarda correctamente, procede a actualizarlo
+        return await this._updateTercero(tercero);
+      } else {
+        throw new Error('No se pudo guardar el tercero antes de actualizar.');
+      }
+    } catch (error: any) {
+      console.error('Error al guardar el tercero antes de actualizar:', error);
       throw error;
     }
   };

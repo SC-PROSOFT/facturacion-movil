@@ -335,9 +335,7 @@ const Sync = () => {
 
       await facturasService.deleteTablaFacturas();
       await zonaService.deleteZonas();
-      
       await visitaService.deleteVisitas();
-
       setDialogContent('Descargando operadores - 1/7');
       await operadoresService.fillOperadores(resGetOperadores);
 
