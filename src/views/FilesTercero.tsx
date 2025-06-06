@@ -252,6 +252,7 @@ const FilesTercero = () => {
   };
 
   const uploadFiles = async () => {
+    console.log("Entre")
     setIsDisabled(true);
     setIsLoading(true);
     const arrayFiles: DocumentPickerResponse[] = [];
@@ -378,6 +379,21 @@ const FilesTercero = () => {
           });
         }
       }
+      //  Actualizar objTercero y los estados de los archivos
+      const terceroModificado: ITerceros = {
+        ...objTercero,
+        rut_pdf: arrayFiles.some(file => file.name.includes('RUT')) ? 'S' : 'N',
+        camcom_pdf: arrayFiles.some(file => file.name.includes('CAMCOM'))
+          ? 'S'
+          : 'N',
+        di_pdf: arrayFiles.some(file => file.name.includes('DI')) ? 'S' : 'N',
+      };
+      // Guardar cambios en la base de datos
+      console.log('terceroModificado', terceroModificado);
+      await tercerosService.updateTercero(terceroModificado);
+      dispatch(setObjTercero(terceroModificado));
+     
+
       // Mostrar mensajes de éxito o información
       const allUploaded = uploadResults.every(result => result.success);
       if (allUploaded) {
