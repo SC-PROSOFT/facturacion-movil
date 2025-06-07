@@ -36,58 +36,87 @@ class EncuestaRepository implements IRepository<IEncuesta> {
   }
 
   async fillTable(data: IEncuesta[]): Promise<boolean> {
+    // Validar que la entrada no esté vacía
+    if (!data || data.length === 0) {
+      return true;
+    }
+
     const encuesta = data[0];
+
+    // Validar que las propiedades de encuesta sean válidas
+    if (
+      !encuesta.codigo ||
+      !encuesta.nro_preguntas ||
+      !encuesta.activar ||
+      !encuesta.preguntas ||
+      !encuesta.admin_creacion ||
+      !encuesta.fecha_creacion ||
+      !encuesta.admin_modificacion ||
+      !encuesta.fecha_modificacion
+    ) {
+      console.error(
+        'Error: Propiedades de encuesta no válidas o incompletas.',
+        encuesta,
+      );
+      throw new Error('Propiedades de encuesta no válidas.');
+    }
+
     const sqlDeletePrevious = `DELETE FROM encuesta`; // Elimina la encuesta anterior
     const sqlInsertStatement = `
-        INSERT INTO encuesta (
-            codigo, 
-            nro_preguntas, 
-            activar, 
-            preguntas, 
-            admin_creacion, 
-            fecha_creacion, 
-            admin_modificacion, 
-            fecha_modificacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `;
+      INSERT INTO encuesta (
+        codigo, 
+        nro_preguntas, 
+        activar, 
+        preguntas, 
+        admin_creacion, 
+        fecha_creacion, 
+        admin_modificacion, 
+        fecha_modificacion
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
     return new Promise((resolve, reject) => {
-      db.transaction((tx: any) => {
-        console.log('Iniciando transacción para eliminar encuesta anterior');
-        tx.executeSql(
-          sqlDeletePrevious,
-          [],
-          () => {
-            console.log('Encuesta anterior eliminada');
-            console.log('Insertando nueva encuesta:', encuesta);
-            tx.executeSql(
-              sqlInsertStatement,
-              [
-                encuesta.codigo,
-                encuesta.nro_preguntas,
-                encuesta.activar,
-                JSON.stringify(encuesta.preguntas),
-                encuesta.admin_creacion,
-                encuesta.fecha_creacion,
-                encuesta.admin_modificacion,
-                encuesta.fecha_modificacion,
-              ],
-              (_: ResultSet, response: ResultSet) => {
-                console.log('Encuesta insertada correctamente');
-                resolve(true);
-              },
-              (error: ResultSet) => {
-                console.error('Error al insertar encuesta:', error);
-                reject(new Error('Fallo insertar encuesta'));
-              },
-            );
-          },
-          (error: ResultSet) => {
-            console.error('Error al eliminar encuesta anterior:', error);
-            reject(new Error('Fallo eliminar encuesta anterior'));
-          },
-        );
-      });
+      try {
+        db.transaction((tx: any) => {
+          console.log('Iniciando transacción para eliminar encuesta anterior');
+          tx.executeSql(
+            sqlDeletePrevious,
+            [],
+            () => {
+              console.log('Encuesta anterior eliminada');
+              console.log('Insertando nueva encuesta:', encuesta);
+              tx.executeSql(
+                sqlInsertStatement,
+                [
+                  encuesta.codigo,
+                  encuesta.nro_preguntas,
+                  encuesta.activar,
+                  JSON.stringify(encuesta.preguntas),
+                  encuesta.admin_creacion,
+                  encuesta.fecha_creacion,
+                  encuesta.admin_modificacion,
+                  encuesta.fecha_modificacion,
+                ],
+                (_: ResultSet, response: ResultSet) => {
+                  console.log('Encuesta insertada correctamente');
+                  resolve(true);
+                },
+                (error: ResultSet) => {
+                  console.error('Error al insertar encuesta:', error);
+                  reject(new Error('Fallo insertar encuesta'));
+                },
+              );
+            },
+            (error: ResultSet) => {
+              console.error('Error al eliminar encuesta anterior:', error);
+              reject(new Error('Fallo eliminar encuesta anterior'));
+            },
+          );
+        });
+      } catch (error) {
+        console.error('Error inesperado durante la transacción:', error);
+        reject(new Error('Error inesperado durante la transacción.'));
+      }
     });
   }
 
