@@ -62,12 +62,13 @@ class EncuestaApiServices {
       }
       return response.data.data.MENSAJE.ENCUESTA;
     } catch (error: any) {
-      console.log('error =>', error);
+      console.log('error cartera =>', error);
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);
       } else if (error?.message == 'La solicitud fue cancelada') {
         throw new Error('La sincronizacion fue cancelada');
       } else {
+        
         throw new Error('Error al obtener cartera');
       }
     }
