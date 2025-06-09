@@ -17,6 +17,7 @@ import {setIsShowTercerosFinder} from '../redux/slices/tercerosFinderSlice';
 import {tercerosService} from '../data_queries/local_database/services';
 import {ITerceros} from '../common/types';
 import debounce from 'lodash/debounce';
+import Toast from 'react-native-toast-message';
 
 interface TercerosFinderProps {
   toggleTercero?: (tercero: ITerceros) => void;
@@ -33,6 +34,8 @@ export const TercerosFinder = React.memo(
 
     const objConfig = useAppSelector(store => store.config.objConfig);
     const objOperador = useAppSelector(store => store.operator.objOperator);
+    const {filtrarTercerosPorVendedor} = objConfig;
+    const {cod_vendedor} = objOperador;
     const [inputs, setInputs] = useState({operador: ''});
     const [tempTerceros, setTempTerceros] = useState<ITerceros[]>([]);
     const [terceros, setTerceros] = useState<ITerceros[]>([]);
@@ -49,8 +52,15 @@ export const TercerosFinder = React.memo(
     }, []);
 
     useEffect(() => {
-      if (isShowTercerosFinder && !isLoadingTerceros) {
+      console.log(filtrarTercerosPorVendedor);
+      if (
+        isShowTercerosFinder &&
+        !isLoadingTerceros &&
+        !filtrarTercerosPorVendedor
+      ) {
         loadAllTerceros();
+      } else if (isShowTercerosFinder && !isLoadingTerceros) {
+        loadCodVendedorTerceros();
       }
     }, [isShowTercerosFinder]);
     useEffect(() => {
@@ -77,6 +87,7 @@ export const TercerosFinder = React.memo(
           searchTable,
           1,
           pageSize,
+          filtrarTercerosPorVendedor ? cod_vendedor : undefined,
         );
         setFilteredTerceros(allTerceros);
         return;
@@ -89,6 +100,7 @@ export const TercerosFinder = React.memo(
           attribute,
           text,
           searchTable,
+          filtrarTercerosPorVendedor ? cod_vendedor : undefined,
         );
 
         setFilteredTerceros(filtered);
@@ -104,6 +116,42 @@ export const TercerosFinder = React.memo(
       setTerceros([]);
       setFilteredTerceros([]);
       dispatch(setIsShowTercerosFinder(false));
+    };
+
+    const loadCodVendedorTerceros = async () => {
+      if (isLoadingTerceros) return;
+      setIsLoadingTerceros(true);
+      setIsLoading(true);
+      if (!cod_vendedor) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'No hay un vendedor asignado',
+        });
+        setIsLoading(false);
+        setIsLoadingTerceros(false);
+        return;
+      }
+      try {
+        const {cod_vendedor} = objOperador;
+        const quantityTerceros = await tercerosService.getQuantityByTable(
+          searchTable,
+          cod_vendedor,
+        );
+        setQuantityTerceros(parseInt(quantityTerceros));
+        const codVendedorTerceros = await tercerosService.getBySellerCode(
+          cod_vendedor,
+        );
+        console.log('Cod Vendedor Terceros:', codVendedorTerceros);
+        setFilteredTerceros(codVendedorTerceros);
+        setTempTerceros(codVendedorTerceros);
+        setTerceros(codVendedorTerceros);
+      } catch (error) {
+        console.error('Error al obtener terceros por vendedor:', error);
+      } finally {
+        setIsLoading(false);
+        setIsLoadingTerceros(false);
+      }
     };
 
     const loadAllTerceros = async () => {
@@ -126,20 +174,22 @@ export const TercerosFinder = React.memo(
           pageSize,
         );
 
-        if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
-          const filteredTerceros = allTerceros.filter(
-            tercero => tercero.vendedor === cod_vendedor,
-          );
-          console.log('Filtered Terceros:', filteredTerceros);
-          setTempTerceros(filteredTerceros);
-          setTerceros(filteredTerceros);
-          setFilteredTerceros(filteredTerceros);
-        } else {
-          console.log('All Terceros:', allTerceros);
-          setTempTerceros(allTerceros);
-          setTerceros(allTerceros);
-          setFilteredTerceros(allTerceros);
-        }
+        // if (route.name != 'Sync' && filtrarTercerosPorVendedor) {
+        //   console.log("Filtering Terceros by Vendedor:", cod_vendedor);
+        //   // console.log('All Terceros:', allTerceros);
+
+        //   const filteredTerceros = allTerceros.filter(
+        //     tercero => tercero.vendedor === "TAT02",
+        //   );
+        //   console.log('Filtered Terceros:', filteredTerceros);
+        //   setTempTerceros(filteredTerceros);
+        //   setTerceros(filteredTerceros);
+        //   setFilteredTerceros(filteredTerceros);
+
+        // console.log('All Terceros:', allTerceros);
+        setTempTerceros(allTerceros);
+        setTerceros(allTerceros);
+        setFilteredTerceros(allTerceros);
       } catch (error) {
         console.error('Error al obtener terceros:', error);
       } finally {
@@ -322,7 +372,15 @@ export const TercerosFinder = React.memo(
               getItem={(data, index) => data[index]}
               keyExtractor={(item, index) => index.toString()}
               keyboardShouldPersistTaps="always"
-              onEndReached={loadMoreTerceros}
+              onEndReached={() => {
+                if (
+                  !isLoading &&
+                  filteredTerceros.length < quantityTerceros &&
+                  !filtrarTercerosPorVendedor
+                ) {
+                  loadMoreTerceros();
+                }
+              }}
               onEndReachedThreshold={0.7}
               ListFooterComponent={
                 isLoading ? (
