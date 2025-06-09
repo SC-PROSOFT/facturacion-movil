@@ -52,11 +52,13 @@ class TercerosService {
     tableSearch: 'terceros' | 'terceros_creados',
     page: number,
     pageSize: number,
+    codVendedor?: string,
   ): Promise<ITerceros[]> {
     return this.tercerosRepository.getPaginatedByTable(
       tableSearch,
       page,
       pageSize,
+      codVendedor,
     );
   }
 
@@ -74,11 +76,13 @@ class TercerosService {
     attributeName: string,
     attributeValue: any,
     tableSearch: 'terceros' | 'terceros_creados',
+    cod_vendedor?: string,
   ): Promise<ITerceros[]> {
     return this.tercerosRepository.getByLikeAttribute(
       attributeName,
       attributeValue,
       tableSearch,
+      cod_vendedor,
     );
   }
 
@@ -90,12 +94,17 @@ class TercerosService {
 
   async getQuantityByTable(
     tableSearch: 'terceros' | 'terceros_creados',
+    codVendedor?: string,
   ): Promise<string> {
-    return this.tercerosRepository.getQuantityByTable(tableSearch);
+    return this.tercerosRepository.getQuantityByTable(tableSearch, codVendedor);
   }
 
   async getCreated(): Promise<ITerceros[]> {
     return this.tercerosRepository.getCreatedTerceros();
+  }
+
+  async getBySellerCode(codVendedor: string): Promise<ITerceros[]> {
+    return this.tercerosRepository.getByCodVendedor(codVendedor);
   }
 
   async getModified(): Promise<ITerceros[]> {
