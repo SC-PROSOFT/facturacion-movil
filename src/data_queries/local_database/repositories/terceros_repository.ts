@@ -598,21 +598,32 @@ class TercerosRepository implements IRepository<ITerceros> {
     table: 'terceros' | 'terceros_creados',
     page: number,
     pageSize: number,
+    codVendedor?: string,
   ): Promise<ITerceros[]> {
     const offset = (page - 1) * pageSize;
 
     if (table === 'terceros_creados') {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
+          const sqlCreated = codVendedor
+            ? `SELECT * FROM terceros_creados WHERE vendedor = ? LIMIT ? OFFSET ?`
+            : `SELECT * FROM terceros_creados LIMIT ? OFFSET ?`;
+
+          const sqlEdited = codVendedor
+            ? `SELECT * FROM terceros_editados WHERE vendedor = ? LIMIT ? OFFSET ?`
+            : `SELECT * FROM terceros_editados LIMIT ? OFFSET ?`;
+
           tx.executeSql(
-            `SELECT * FROM terceros_creados LIMIT ? OFFSET ?`,
-            [pageSize, offset],
+            sqlCreated,
+            codVendedor ? [codVendedor, pageSize, offset] : [pageSize, offset],
             (_: ResultSet, responseCreated: ResultSet) => {
               const createdTerceros = responseCreated.rows.raw();
 
               tx.executeSql(
-                `SELECT * FROM terceros_editados LIMIT ? OFFSET ?`,
-                [pageSize, offset],
+                sqlEdited,
+                codVendedor
+                  ? [codVendedor, pageSize, offset]
+                  : [pageSize, offset],
                 (_: ResultSet, responseEdited: ResultSet) => {
                   const editedTerceros = responseEdited.rows.raw();
                   const combinedTerceros = [
@@ -639,13 +650,15 @@ class TercerosRepository implements IRepository<ITerceros> {
         });
       });
     } else {
-      const sqlSelectStatement = `SELECT * FROM ${table} LIMIT ? OFFSET ?`;
+      const sqlSelectStatement = codVendedor
+        ? `SELECT * FROM ${table} WHERE vendedor = ? LIMIT ? OFFSET ?`
+        : `SELECT * FROM ${table} LIMIT ? OFFSET ?`;
 
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
           tx.executeSql(
             sqlSelectStatement,
-            [pageSize, offset],
+            codVendedor ? [codVendedor, pageSize, offset] : [pageSize, offset],
             (_: ResultSet, response: ResultSet) => {
               resolve(response.rows.raw());
             },
@@ -755,19 +768,28 @@ class TercerosRepository implements IRepository<ITerceros> {
 
   async getQuantityByTable(
     table: 'terceros' | 'terceros_creados',
+    codVendedor?: string,
   ): Promise<string> {
     if (table === 'terceros_creados') {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
+          const sqlCreated = codVendedor
+            ? `SELECT COUNT (*) FROM terceros_creados WHERE vendedor = ?`
+            : `SELECT COUNT (*) FROM terceros_creados`;
+
+          const sqlEdited = codVendedor
+            ? `SELECT COUNT (*) FROM terceros_editados WHERE vendedor = ?`
+            : `SELECT COUNT (*) FROM terceros_editados`;
+
           tx.executeSql(
-            `SELECT COUNT (*) FROM terceros_creados`,
-            null,
+            sqlCreated,
+            codVendedor ? [codVendedor] : null,
             (_: ResultSet, responseCreated: ResultSet) => {
               const countCreated = responseCreated.rows.raw()[0]['COUNT (*)'];
 
               tx.executeSql(
-                `SELECT COUNT (*) FROM terceros_editados`,
-                null,
+                sqlEdited,
+                codVendedor ? [codVendedor] : null,
                 (_: ResultSet, responseEdited: ResultSet) => {
                   const countEdited = responseEdited.rows.raw()[0]['COUNT (*)'];
                   const totalCount =
@@ -798,9 +820,13 @@ class TercerosRepository implements IRepository<ITerceros> {
     } else {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
+          const sqlSelectStatement = codVendedor
+            ? `SELECT COUNT (*) FROM ${table} WHERE vendedor = ?`
+            : `SELECT COUNT (*) FROM ${table}`;
+
           tx.executeSql(
-            `SELECT COUNT (*) FROM ${table}`,
-            null,
+            sqlSelectStatement,
+            codVendedor ? [codVendedor] : null,
             (_: ResultSet, response: ResultSet) => {
               resolve(response.rows.raw()[0]['COUNT (*)']);
             },
@@ -819,10 +845,13 @@ class TercerosRepository implements IRepository<ITerceros> {
     atributeName: string,
     attributeValue: any,
     table: 'terceros' | 'terceros_creados',
+    codVendedor?: string, // Nuevo parámetro para el código de vendedor
   ): Promise<ITerceros[]> {
     console.log('atribute search like', atributeName);
     console.log('value', attributeValue);
     console.log('table', table);
+    console.log('codVendedor', codVendedor);
+
     if (attributeValue === '') {
       return this.getAllByTable(table);
     }
@@ -830,15 +859,27 @@ class TercerosRepository implements IRepository<ITerceros> {
     if (table === 'terceros_creados') {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
+          const sqlCreated = codVendedor
+            ? `SELECT * FROM terceros_creados WHERE vendedor = ? AND ${atributeName} LIKE ?`
+            : `SELECT * FROM terceros_creados WHERE ${atributeName} LIKE ?`;
+
+          const sqlEdited = codVendedor
+            ? `SELECT * FROM terceros_editados WHERE vendedor = ? AND ${atributeName} LIKE ?`
+            : `SELECT * FROM terceros_editados WHERE ${atributeName} LIKE ?`;
+
           tx.executeSql(
-            `SELECT * FROM terceros_creados WHERE ${atributeName} LIKE ?`,
-            [`%${attributeValue}%`],
+            sqlCreated,
+            codVendedor
+              ? [codVendedor, `%${attributeValue}%`]
+              : [`%${attributeValue}%`],
             (_: ResultSet, responseCreated: ResultSet) => {
               const createdTerceros = responseCreated.rows.raw();
 
               tx.executeSql(
-                `SELECT * FROM terceros_editados WHERE ${atributeName} LIKE ?`,
-                [`%${attributeValue}%`],
+                sqlEdited,
+                codVendedor
+                  ? [codVendedor, `%${attributeValue}%`]
+                  : [`%${attributeValue}%`],
                 (_: ResultSet, responseEdited: ResultSet) => {
                   const editedTerceros = responseEdited.rows.raw();
                   const combinedTerceros = [
@@ -867,9 +908,15 @@ class TercerosRepository implements IRepository<ITerceros> {
     } else {
       return new Promise((resolve, reject) => {
         db.transaction((tx: any) => {
+          const sqlSelectStatement = codVendedor
+            ? `SELECT * FROM ${table} WHERE vendedor = ? AND ${atributeName} LIKE ?`
+            : `SELECT * FROM ${table} WHERE ${atributeName} LIKE ?`;
+
           tx.executeSql(
-            `SELECT * FROM ${table} WHERE ${atributeName} LIKE ?`,
-            [`%${attributeValue}%`],
+            sqlSelectStatement,
+            codVendedor
+              ? [codVendedor, `%${attributeValue}%`]
+              : [`%${attributeValue}%`],
             (_: ResultSet, response: ResultSet) => {
               resolve(response.rows.raw());
             },
@@ -881,6 +928,29 @@ class TercerosRepository implements IRepository<ITerceros> {
       });
     }
   }
+
+  async getByCodVendedor(cod_vendedor: string): Promise<ITerceros[]> {
+    const sqlSelectStatement = `
+      SELECT * FROM terceros WHERE vendedor = ?
+    `;
+
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlSelectStatement,
+          [cod_vendedor],
+          (_: ResultSet, response: ResultSet) => {
+            resolve(response.rows.raw());
+          },
+          (error: ResultSet) => {
+            console.log(error);
+            reject(new Error('Fallo obtener terceros por vendedor'));
+          },
+        );
+      });
+    });
+  }
+
   private saveCreatedTerceroToDB(tercero: ITerceros) {
     const sqlInsertCreatedTerceroStatement = `
     INSERT INTO terceros_creados (
