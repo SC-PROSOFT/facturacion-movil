@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, ScrollView} from 'react-native';
-import {Divider, List, Dialog, Button} from 'react-native-paper';
+import {Divider, List, Dialog, Button, FAB} from 'react-native-paper';
 
 /* components */
 import {
@@ -409,7 +409,7 @@ const Config: React.FC = () => {
   const [showModalLoadConfig, setShowModalLoadConfig] =
     useState<boolean>(false);
   const [isLoadingSave, setIsLoadingSave] = useState(false);
-
+  const [initialConfig, setInitialConfig] = useState<IConfig | null>(null);
   useEffect(() => {
     loadInitialConfigFromLocalDB();
   }, []);
@@ -496,6 +496,10 @@ const Config: React.FC = () => {
       dispatch(showAlert('04'));
     }
   };
+
+  const handleResetAndOpenModal = () => {
+    setShowModalLoadConfig(true); // Abre el modal
+  };
   const loadInitialConfigFromLocalDB = async () => {
     try {
       const config = await configService.getConfig();
@@ -553,6 +557,13 @@ const Config: React.FC = () => {
       paddingHorizontal: 20,
       paddingTop: 10,
     },
+    fab: {
+      position: 'absolute',
+      margin: 16,
+      left: 0,
+      bottom: 0,
+      backgroundColor: '#365AC3', // Color azul para el botón
+    },
   });
 
   return (
@@ -594,6 +605,12 @@ const Config: React.FC = () => {
         showModalLoadConfig={showModalLoadConfig}
         toggleShowModalLoadConfig={toggleShowModalLoadConfig}
         saveInLocalDb={saveInLocalDb}
+      />
+      <FAB
+        style={styles.fab}
+        icon="cog-refresh" // Puedes usar otro ícono si prefieres
+        onPress={handleResetAndOpenModal}
+        color="#fff" // Color del ícono
       />
     </View>
   );
