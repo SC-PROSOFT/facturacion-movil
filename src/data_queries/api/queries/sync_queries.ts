@@ -161,7 +161,7 @@ class SyncQueries {
         `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/INV125.dll`,
         {},
       );
-
+      console.log('response encuesta =>', response.data.data);
       if (
         response.data.data.STATUS == '35' ||
         response.data.data.STATUS == '30'
@@ -170,7 +170,7 @@ class SyncQueries {
       }
       return response.data.data.MENSAJE.ENCUESTA;
     } catch (error: any) {
-      console.log('error =>', error);
+      console.log('error encuesta =>', error);
       if (error?.message == 'La configuracion no es correcta') {
         throw new Error(error.message);
       } else if (error?.message == 'La solicitud fue cancelada') {
