@@ -14,7 +14,7 @@ const initialState: ConfigState = {
     facturarSinExistencias: false,
     seleccionarAlmacen: false,
     localizacionGps: false,
-    filtrarTercerosPorVendedor: false,
+    filtrarTercerosPorVendedor: true,
     modificarPrecio: false,
 
     descargasIp: '',
