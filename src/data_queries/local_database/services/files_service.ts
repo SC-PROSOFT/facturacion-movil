@@ -30,6 +30,7 @@ class FilesService {
   async updateFile(
     codigo: string,
     files: DocumentPickerResponse[],
+    allFilesSync?: 'S' | 'N', // 'S' = Sincronizado, 'N' = No sincronizado
   ): Promise<boolean> {
     return this.filesRepository.updateFiles(codigo, files);
   }
