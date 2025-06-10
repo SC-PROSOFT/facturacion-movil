@@ -107,6 +107,18 @@ class VisitasService {
   async deleteVisitas(): Promise<boolean> {
     return this.visitaRepository.deleteData();
   }
+  async createBulkVisitas(
+    visitas: Omit<IVisita, 'id_visita'>[],
+  ): Promise<IVisita[]> {
+    try {
+      // Aquí podrías implementar la lógica para insertar múltiples visitas en una sola transacción
+      // o en lotes, dependiendo de tu base de datos y repositorio.
+      return this.visitaRepository.createBulkVisitas(visitas);
+    } catch (error) {
+      console.error('Error al crear múltiples visitas:', error);
+      throw error; // O maneja el error según tu estrategia
+    }
+  }
 }
 
 class FrecuenciaService {
