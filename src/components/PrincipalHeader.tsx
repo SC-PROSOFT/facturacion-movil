@@ -59,13 +59,20 @@ const PrincipalHeader: FC<FlyOutProps> = ({children}) => {
           paddingHorizontal: 15,
           paddingVertical: 10,
         }}>
-        <View style={{flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+            marginRight: 10,
+          }}>
           <Avatar.Text
             size={42}
             label={getInitialsOfClient(objOperador.descripcion)}
             style={{borderRadius: 10}}
           />
-          <View style={{marginLeft: 10, flex: 1}}> {/* <--- CAMBIO CLAVE 1: Haz este View flexible */}
+          <View style={{marginLeft: 10, flex: 1}}>
+            {/* <--- CAMBIO CLAVE 1: Haz este View flexible */}
             <Text numberOfLines={1} style={{color: '#FFF', fontSize: 12}}>
               Sesion iniciada como:
             </Text>
@@ -93,7 +100,6 @@ const PrincipalHeader: FC<FlyOutProps> = ({children}) => {
           <Icon name="logout" size={28} color={'#FFF'} />
         </TouchableOpacity>
       </View>
-  
       {children}
     </Shadow>
   );
@@ -124,7 +130,6 @@ const Searcher = ({
         }}>
         Visitas programadas
       </Text>
-
       <View
         style={{
           flexDirection: 'row',
@@ -143,7 +148,6 @@ const Searcher = ({
             handleInputChange={handleInputChange}
           />
         </View>
-
         <IconButton
           iconName="account-search"
           iconColor="#FFF"
