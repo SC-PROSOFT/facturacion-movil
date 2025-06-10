@@ -417,6 +417,17 @@ class TercerosRepository implements IRepository<ITerceros> {
   }
 
   async fillTable(terceros: ITerceros[]): Promise<boolean> {
+    // const terceroEspecifico = terceros.find(
+    //   tercero => tercero.codigo === '0000002238',
+    // );
+
+    // // Si lo encontramos, lo mostramos en la consola
+    // if (terceroEspecifico) {
+    //   console.log(
+    //     'Datos del tercero con código 0000002238:',
+    //     JSON.stringify(terceroEspecifico, null, 2), // JSON.stringify con formato para mejor lectura
+    //   );
+    // }
     const batchSize = Math.floor(999 / 25);
     const totalRecords = terceros.length;
     const totalBatches = Math.ceil(totalRecords / batchSize);
