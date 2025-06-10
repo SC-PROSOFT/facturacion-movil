@@ -59,22 +59,23 @@ const PrincipalHeader: FC<FlyOutProps> = ({children}) => {
           paddingHorizontal: 15,
           paddingVertical: 10,
         }}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={{flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10}}>
           <Avatar.Text
             size={42}
             label={getInitialsOfClient(objOperador.descripcion)}
             style={{borderRadius: 10}}
           />
-          <View style={{marginLeft: 10}}>
-            <Text style={{color: '#FFF', fontSize: 12}}>
+          <View style={{marginLeft: 10, flex: 1}}> {/* <--- CAMBIO CLAVE 1: Haz este View flexible */}
+            <Text numberOfLines={1} style={{color: '#FFF', fontSize: 12}}>
               Sesion iniciada como:
             </Text>
-            <Text style={{color: '#FFF', fontSize: 16, fontWeight: 'bold'}}>
+            <Text
+              numberOfLines={1} // <--- CAMBIO CLAVE 2: Añade esto para truncar el texto
+              style={{color: '#FFF', fontSize: 16, fontWeight: 'bold'}}>
               {objOperador.descripcion}
             </Text>
           </View>
         </View>
-
         <TouchableOpacity
           style={{
             flexDirection: 'row',
@@ -83,8 +84,7 @@ const PrincipalHeader: FC<FlyOutProps> = ({children}) => {
             paddingHorizontal: 10,
             paddingRight: 5,
             borderRadius: 5,
-            marginTop: 10,
-            alignSelf: 'flex-start', // Hace que el botón se ajuste al contenido
+            // Quité marginTop y alignSelf para un mejor alineamiento con flexbox
           }}
           onPress={logout}>
           <Text style={{fontSize: 16, marginRight: 5, color: '#FFF'}}>
@@ -93,7 +93,7 @@ const PrincipalHeader: FC<FlyOutProps> = ({children}) => {
           <Icon name="logout" size={28} color={'#FFF'} />
         </TouchableOpacity>
       </View>
-
+  
       {children}
     </Shadow>
   );
