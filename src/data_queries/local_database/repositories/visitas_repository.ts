@@ -175,6 +175,149 @@ class VisitasRepository implements IRepository<IVisita> {
     });
   }
 
+  /**
+   * Inserta múltiples visitas en la base de datos dentro de una única transacción.
+   * Es mucho más eficiente que llamar a createVisita en un bucle.
+   *
+   * @param items - Un array de objetos de visita a crear.
+   * @returns Una promesa que se resuelve con un array de las visitas que se guardaron exitosamente.
+   */
+  async createBulkVisitas(
+    items: Omit<IVisita, 'id_visita'>[],
+  ): Promise<IVisita[]> {
+    // Si no hay items, no hay nada que hacer.
+    if (!items || items.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    const sqlInsertStatement = `
+    INSERT INTO visitas (
+      id_tercero, client, adress, status, observation, saleValue, appointmentDate,
+      latitude, longitude, zona, frecuencia, ruta, frecuencia_2, frecuencia_3, vendedor
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  `;
+
+    const savedVisits: IVisita[] = [];
+
+    return new Promise((resolve, reject) => {
+      db.transaction(
+        (tx: Transaction) => {
+          items.forEach(item => {
+            const params = [
+              item.id_tercero,
+              item.client,
+              item.adress ?? null,
+              item.status,
+              item.observation ?? null,
+              item.saleValue ?? 0,
+              item.appointmentDate,
+              item.location?.latitude ?? null,
+              item.location?.longitude ?? null,
+              item.zona ?? null,
+              item.frecuencia ?? null,
+              item.ruta ?? null,
+              item.frecuencia_2 ?? null,
+              item.frecuencia_3 ?? null,
+              item.vendedor ?? null,
+            ];
+
+            tx.executeSql(
+              sqlInsertStatement,
+              params,
+              (_tx: Transaction, result: ResultSet) => {
+                // Si la inserción es exitosa, guardamos el item con su nuevo ID.
+                if (result.insertId !== undefined) {
+                  savedVisits.push({...item, id_visita: result.insertId});
+                }
+              },
+              (_tx: Transaction, error: SQLError) => {
+                // Si el error es por una restricción de unicidad, lo ignoramos y continuamos.
+                if (error.message.includes('UNIQUE constraint failed')) {
+                  console.warn(
+                    `Visita duplicada (tercero ${item.id_tercero}, fecha ${item.appointmentDate}) no insertada.`,
+                  );
+                  // Devolver `false` permite que la transacción continúe con las siguientes inserciones.
+                  return false;
+                } else {
+                  console.error(
+                    `Error insertando visita para ${item.id_tercero}:`,
+                    error.message,
+                  );
+                  // Devolver `true` detiene y revierte toda la transacción si hay un error inesperado.
+                  return true;
+                }
+              },
+            );
+          });
+        },
+        (error: SQLError) => {
+          // Callback de error para toda la transacción
+          reject(
+            new Error(
+              `La transacción de inserción masiva falló: ${error.message}`,
+            ),
+          );
+        },
+        () => {
+          // Callback de éxito para toda la transacción
+          // Se ejecuta después de que todas las sentencias SQL en la transacción se completaron.
+          console.log(
+            `${savedVisits.length} de ${items.length} visitas fueron insertadas exitosamente.`,
+          );
+          resolve(savedVisits);
+        },
+      );
+    });
+  }
+
+  /**
+   * Elimina todas las visitas futuras que aún estén en estado 'Pendiente' ('2').
+   * Esto previene la acumulación de visitas no realizadas y limpia el camino
+   * para la nueva generación de visitas del día.
+   *
+   * @param today - La fecha de hoy en formato 'YYYY-MM-DD'.
+   */
+
+  async deletePendingFutureVisits(today: string): Promise<void> {
+    const sqlDeleteStatement = `
+     DELETE FROM visitas
+     WHERE appointmentDate < ? ;
+   `;
+
+    return new Promise((resolve, reject) => {
+      db.transaction(
+        (tx: Transaction) => {
+          tx.executeSql(
+            sqlDeleteStatement,
+            [today],
+            () => {
+              // La operación de eliminación se completó
+            },
+            (_tx: Transaction, error: SQLError) => {
+              console.error(
+                'Error eliminando visitas futuras pendientes:',
+                error.message,
+              );
+              // Devolver `true` asegura que la transacción falle y haga rollback.
+              return true;
+            },
+          );
+        },
+        (error: SQLError) => {
+          // Error de la transacción
+          reject(
+            new Error(`Fallo la transacción de eliminación: ${error.message}`),
+          );
+        },
+        () => {
+          // Éxito de la transacción
+          console.log('Visitas futuras pendientes eliminadas exitosamente.');
+          resolve();
+        },
+      );
+    });
+  }
+
   async create(item: IVisita): Promise<boolean> {
     const {id_visita, ...visitaData} = item;
     try {
