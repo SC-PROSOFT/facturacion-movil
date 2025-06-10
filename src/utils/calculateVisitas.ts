@@ -186,9 +186,7 @@ export async function generatePotentialVisits(
   ];
   const lastDate = await AsyncStorage.getItem(LAST_VISIT_GENERATION_DATE_KEY);
   const hoy = getLocalDateString(new Date());
-  if (lastDate === hoy) {
-    await AsyncStorage.setItem(LAST_VISIT_GENERATION_DATE_KEY, hoy);
-  }
+ 
 
   console.log(
     'Visitas: Generando para fechas:',
@@ -272,6 +270,9 @@ export async function generatePotentialVisits(
   console.log(
     `Visitas: Generadas ${potentialVisits.length} visitas potenciales.`,
   );
+  if (lastDate !== hoy) {
+    await AsyncStorage.setItem(LAST_VISIT_GENERATION_DATE_KEY, hoy);
+  }
   return potentialVisits;
 }
 
