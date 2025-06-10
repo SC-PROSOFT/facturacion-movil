@@ -51,6 +51,7 @@ class TercerosApiServices {
       longitude,
       rut_pdf,
       camcom_pdf,
+      di_pdf,
     } = tercero;
     // Use a template literal for cleaner string construction
     const datos = `00000086005264920250220112018|${directorio}|CONTROL|${novedad}|${
@@ -63,7 +64,7 @@ class TercerosApiServices {
       frecuencia3 || ''
     }|${latitude || ''}|${longitude || ''}|${rut_pdf || ''}|${
       camcom_pdf || ''
-    }`;
+    }| ${di_pdf || ''}`;
 
     return datos;
   };
@@ -72,7 +73,7 @@ class TercerosApiServices {
     console.log('get terce');
     try {
       const response = await this.axiosInstance.post(
-        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802.dll`,
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802_1.dll`,
         {},
       );
       return response.data.data.MENSAJE.LISTADO;
