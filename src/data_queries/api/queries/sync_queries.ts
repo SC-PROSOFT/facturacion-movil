@@ -124,7 +124,7 @@ class SyncQueries {
   _getTerceros = async (): Promise<ITerceros[]> => {
     try {
       const response = await this.axiosInstance.post(
-        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802.dll`,
+        `/v1/contabilidad/dll?ip=${this.direccionIp}&directorio=comercial/inc/app/CON802_1.dll`,
         {},
       );
       if (
