@@ -47,18 +47,9 @@ class EncuestaRepository implements IRepository<IEncuesta> {
     if (
       !encuesta.codigo ||
       !encuesta.nro_preguntas ||
-      !encuesta.activar ||
-      !encuesta.preguntas ||
-      !encuesta.admin_creacion ||
-      !encuesta.fecha_creacion ||
-      !encuesta.admin_modificacion ||
-      !encuesta.fecha_modificacion
+      !encuesta.preguntas 
     ) {
-      console.error(
-        'Error: Propiedades de encuesta no válidas o incompletas.',
-        encuesta,
-      );
-      throw new Error('Propiedades de encuesta no válidas.');
+      return true;
     }
 
     const sqlDeletePrevious = `DELETE FROM encuesta`; // Elimina la encuesta anterior
