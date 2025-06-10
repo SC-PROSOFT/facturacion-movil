@@ -82,7 +82,7 @@ export const TercerosFinder = React.memo(
     );
 
     const filterTerceros = async (text: string) => {
-      if (text.length === 0) {
+      if (text.length === 0 && !filtrarTercerosPorVendedor) {
         const allTerceros = await tercerosService.getPaginatedByTable(
           searchTable,
           1,
@@ -90,6 +90,10 @@ export const TercerosFinder = React.memo(
           filtrarTercerosPorVendedor ? cod_vendedor : undefined,
         );
         setFilteredTerceros(allTerceros);
+        return;
+      } else if (text.length === 0 && filtrarTercerosPorVendedor) {
+        const codTerceros = await tercerosService.getBySellerCode(cod_vendedor);
+        setFilteredTerceros(codTerceros);
         return;
       }
 
