@@ -211,7 +211,6 @@ export const Estadisticas = () => {
 
     return (
       <>
-        {/* Gráfico de peso total */}
         <View style={styles.container}>
           <Text style={styles.title}>
             Peso total vendido ({isDaily ? 'Hoy' : 'Este Mes'})
@@ -227,8 +226,6 @@ export const Estadisticas = () => {
             }
           />
         </View>
-
-        {/* Gráfico por tipo de arroz */}
         <View style={styles.container}>
           <Text style={styles.title}>Cantidad vendida por tipo de arroz</Text>
           <BarChart
