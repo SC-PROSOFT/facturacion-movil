@@ -7,12 +7,15 @@ import {DocumentPickerResponse} from 'react-native-document-picker';
 class FilesApiServices {
   private axiosInstance;
   private direccionIp;
+  private static objConfig: any;
 
   constructor(direccionIp: string, puerto: string) {
     this.axiosInstance = createAxiosInstance(direccionIp, puerto);
     this.direccionIp = direccionIp;
   }
-
+  static setObjConfig(config: any) {
+    FilesApiServices.objConfig = config;
+  }
   _uploadFiles = async (
     file: DocumentPickerResponse,
     tercero: ITerceros,
@@ -36,12 +39,20 @@ class FilesApiServices {
         type: file.type,
         name: file.name,
       });
+      const isComercializadoraLlanos =
+        FilesApiServices.objConfig?.nit === '0860052649' ? true : false;
+      const parsialRute = `D:\\WEB\\comercial\\DATOS\\ANEXOS\\`;
+      const parsialRute2 = `D:\\psc\\prog\\DATOS\\ANEXOS\\`;
 
-      // Aseguramos que la ruta esté bien construida
-      const ruta = `D:\\psc\\prog\\DATOS\\ANEXOS\\${
-        terceroModificado.tipo
-      }-${padLeftCodigo(terceroModificado.codigo)}`;
+      const definitiveRute = isComercializadoraLlanos
+        ? parsialRute
+        : parsialRute2;
+
+      const ruta = `${definitiveRute}${terceroModificado.tipo}-${padLeftCodigo(
+        terceroModificado.codigo,
+      )}`;
       console.log(ruta);
+      console.log(this.axiosInstance.defaults.baseURL);
       const response = await this.axiosInstance.post(
         `/v1/contabilidad/guardar-archivo?ruta=${ruta}`, // Encode para evitar problemas con los backslashes
         formData, // FormData debe ir como cuerpo directamente
@@ -53,6 +64,9 @@ class FilesApiServices {
       );
       console.log(response);
       if (response.data.success) {
+        if (isComercializadoraLlanos) {
+          console.log('Archivo subido exitosamente a:', parsialRute);
+        }
         return true;
       } else {
         console.log('error =>>>>', response.data);
