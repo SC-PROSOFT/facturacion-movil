@@ -19,7 +19,6 @@ class TercerosApiServices {
 
   _constructTercero = (tercero: ITerceros, novedad: string): string => {
     // Added return type
-    console.log(TercerosApiServices.objConfig);
 
     const directorio =
       TercerosApiServices.objConfig?.directorioContabilidad || 'COMER25';
