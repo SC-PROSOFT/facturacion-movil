@@ -1013,6 +1013,7 @@ const SyncDispositivo = () => {
       objConfig.direccionIp,
       objConfig.puerto,
     );
+    FilesApiServices.setObjConfig(objConfig);
     try {
       setDialogContent('Subiendo archivos');
       const files = await filesService.getAllFiles();
