@@ -488,6 +488,7 @@ const CreateTercero = () => {
         objConfig.direccionIp,
         objConfig.puerto,
       );
+      FilesApiServices.setObjConfig(objConfig);
       const success = await filesApiServices._uploadFiles(file, tercero);
       return success;
     } catch (error) {
@@ -518,6 +519,7 @@ const CreateTercero = () => {
         objConfig.direccionIp,
         objConfig.puerto,
       );
+      FilesApiServices.setObjConfig(objConfig);
       const success = await filesApiServices._uploadFiles(file, tercero);
       if (success) {
         setIsModalVisiblePdf(false);
