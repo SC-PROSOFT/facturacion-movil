@@ -252,7 +252,7 @@ const FilesTercero = () => {
   };
 
   const uploadFiles = async () => {
-    console.log("Entre")
+    console.log('Entre');
     setIsDisabled(true);
     setIsLoading(true);
     const arrayFiles: DocumentPickerResponse[] = [];
@@ -323,7 +323,7 @@ const FilesTercero = () => {
 
         // Verificar si objFiles tiene guardado en 'S' o 'N'
         let response;
-        console.log(filesObj);
+        console.log('Object Files', filesObj);
         if (filesObj?.guardado === 'S') {
           // Actualizar archivos existentes
           response = await filesService.updateFile(
@@ -341,6 +341,7 @@ const FilesTercero = () => {
             guardado: 'S', // Cambiar a 'S' porque se guardarán en la base de datos
           };
           response = await filesService.addFile(iFile);
+          setFiles(iFile); // Actualizar el estado local con los nuevos archivos
         }
         console.log('response', response);
         if (response) {
@@ -392,7 +393,6 @@ const FilesTercero = () => {
       console.log('terceroModificado', terceroModificado);
       await tercerosService.updateTercero(terceroModificado);
       dispatch(setObjTercero(terceroModificado));
-     
 
       // Mostrar mensajes de éxito o información
       const allUploaded = uploadResults.every(result => result.success);
@@ -429,6 +429,7 @@ const FilesTercero = () => {
         objConfig.direccionIp,
         objConfig.puerto,
       );
+      FilesApiServices.setObjConfig(objConfig);
       const success = await filesApiServices._uploadFiles(file, tercero);
       return success;
     } catch (error) {
