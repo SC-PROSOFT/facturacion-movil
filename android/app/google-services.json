@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "286748086893",
+    "project_id": "facturacion-movil-prosoft-app",
+    "storage_bucket": "facturacion-movil-prosoft-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:286748086893:android:89f23914017194b9cfe564",
+        "android_client_info": {
+          "package_name": "com.facturacion"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYbTtQoheCDnsbx27UrChADRruyovG_Fg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
