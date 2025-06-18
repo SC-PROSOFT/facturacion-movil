@@ -72,4 +72,4 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-/android/gradle.properties
+**/gradle-wrapper.properties
