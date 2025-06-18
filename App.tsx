@@ -1,9 +1,10 @@
 import React, {useRef, useEffect} from 'react';
 import {Provider as StoreProvider} from 'react-redux';
-import {StatusBar, View} from 'react-native';
+import {Alert, Linking, Platform, StatusBar, View} from 'react-native';
 import {MD3LightTheme as DefaultTheme, PaperProvider} from 'react-native-paper';
 import Toast, {BaseToast, ErrorToast} from 'react-native-toast-message';
 import {visitaService} from './src/data_queries/local_database/services';
+import appDistribution from '@react-native-firebase/app-distribution';
 
 /* store */
 import {store} from './src/redux/store';
@@ -15,7 +16,6 @@ import Navigation from './src/navigation/Navigation';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 /* context provider */
 import GlobalProvider from './src/context/global_provider';
-import {recalculateVisitsIfNeeded} from './src/utils';
 import {Buffer} from 'buffer';
 
 global.Buffer = Buffer; // Para compatibilidad con RN 0.71.0 y superior
@@ -130,6 +130,44 @@ const theme = {
 };
 
 const App = () => {
+  useEffect(() => {
+    const checkForUpdate = async () => {
+      console.log('Buscando actualizaciones de App Distribution...');
+      try {
+        const release = await appDistribution().checkForUpdate();
+
+        if (release) {
+          console.log('Nueva versión encontrada:', release.displayVersion);
+
+          let alertMessage = `Una nueva versión (${release.displayVersion}) está disponible.`;
+
+          if (release.releaseNotes) {
+            alertMessage += `\n\nNovedades:\n${release.releaseNotes}`;
+          }
+
+          Alert.alert('Actualización Disponible', alertMessage, [
+            {
+              text: 'Más tarde',
+              style: 'cancel',
+            },
+            {
+              text: 'Instalar Ahora',
+              onPress: () => Linking.openURL(release.downloadURL),
+            },
+          ]);
+        } else {
+          console.log('La app ya está actualizada.');
+        }
+      } catch (error) {
+        console.error('Error al buscar actualizaciones:', error);
+      }
+    };
+
+    if (!__DEV__) {
+      checkForUpdate();
+    }
+  }, []);
+
   return (
     <StoreProvider store={store}>
       <PaperProvider theme={theme}>
@@ -139,7 +177,7 @@ const App = () => {
 
           <InfoAlert />
           <DecisionAlert />
-          <Toast  config={toastConfig} />
+          <Toast config={toastConfig} />
         </GlobalProvider>
       </PaperProvider>
     </StoreProvider>
