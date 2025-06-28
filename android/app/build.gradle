@@ -4,6 +4,8 @@ plugins {
     id 'com.google.gms.google-services'
 }
 apply plugin: "com.facebook.react"
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.firebase.appdistribution'
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -84,8 +86,8 @@ android {
         applicationId "com.facturacion"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 6
+        versionName "1.0.8"
     }
     signingConfigs {
         debug {
@@ -120,6 +122,7 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            debuggable true
         }
     }
 }
@@ -128,6 +131,8 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    implementation("com.google.firebase:firebase-appdistribution-api:16.0.0-beta15")
+    // implementation("com.google.firebase:firebase-distribution")
     implementation("com.google.firebase:firebase-analytics")
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

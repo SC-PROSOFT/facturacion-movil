@@ -53,7 +53,8 @@ class TercerosApiServices {
       di_pdf,
     } = tercero;
     // Use a template literal for cleaner string construction
-    const datos = `00000086005264920250220112018|${directorio}|CONTROL|${novedad}|${
+    // Se quita sesion llegada porque chilla 00000086005264920250220112018
+    const datos = `|${directorio}|CONTROL|${novedad}|${
       codigo || ''
     }|${nombre || ''}|${direcc || ''}|${dv || ''}|${zona || ''}|${ruta || ''}|${
       plazo || ''

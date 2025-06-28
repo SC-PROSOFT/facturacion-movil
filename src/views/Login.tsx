@@ -44,6 +44,7 @@ import {getPermissions} from '../utils/getPermissions';
 /* common types */
 import {IOperadores} from '../common/types';
 import {getLastNroPedido, recalculateAndSaveVisitsIfNeeded} from '../utils';
+import {useOtaImage} from '../utils/imageResolve';
 /* local types */
 interface userInfo {
   user: string;
@@ -68,7 +69,18 @@ const {width} = Dimensions.get('window');
 
 // Función para calcular el tamaño de la fuente basado en el ancho del dispositivo
 const scaleFontSize = (size: number) => (width / 375) * size;
-
+// const resolvedImageSourceBackground = Image.resolveAssetSource(
+//   require('../../assets/coverBackground.png'),
+// );
+// const resolvedImageSourcePensador = Image.resolveAssetSource(
+//   require('../../assets/pensador.png'),
+// );
+// const [sourceBg, setSourceBg] = useState<any>(
+//   require('../../assets/coverBackground.png'),
+// );
+// const [sourcePensador, setSourcePensador] = useState<any>(
+//   require('../../assets/pensador.png'),
+// );
 const Form = ({
   inputs,
   checkboxes,
@@ -145,6 +157,15 @@ const Footer = ({appVersion}: {appVersion: string}) => {
 };
 
 const Login = () => {
+  const backgroundSource = useOtaImage(
+    'coverbackground.png', // minúsculas porque OTA renombra así
+    require('../../assets/coverBackground.png'),
+  );
+
+  const pensadorSource = useOtaImage(
+    'pensador.png', // minúsculas porque OTA renombra así
+    require('../../assets/pensador.png'),
+  );
   const dispatch = useAppDispatch();
 
   const objOperador = useAppSelector(store => store.operator.objOperator);
@@ -172,6 +193,7 @@ const Login = () => {
     adjustScreenSize();
     initDb();
     getPermissions();
+    checkIsSignedIn();
   }, []);
 
   const handleInputChange = (name: string, text: string) => {
@@ -180,6 +202,29 @@ const Login = () => {
   const pressNormalCheckbox = (checkboxName: string, checked: boolean) => {
     setCheckboxes(prevState => ({...prevState, [checkboxName]: checked}));
   };
+
+  const checkIsSignedIn = async () => {
+    const rememberAccount = await rememberAccountService.getRememberAccount();
+
+    if (rememberAccount) {
+      const {user, password} = rememberAccount;
+
+      setInputs({user, password});
+      setCheckboxes({rememberAccount: true});
+
+      login({user, password});
+    } else {
+      dispatch(setIsSignedIn(false));
+    }
+
+    // const lastNroPedido = await getLastNroPedido();
+    // if (lastNroPedido) {
+    //   visitaService.setLastNroPedido(lastNroPedido);
+    // }
+
+    // recalculateAndSaveVisitsIfNeeded();
+    
+  }
   const pressLoginButton = async () => {
     const {rememberAccount} = checkboxes;
     const {user, password} = inputs;
@@ -409,7 +454,7 @@ const Login = () => {
 
   return (
     <ImageBackground
-      source={require('../../assets/coverBackground.png')} // Ruta de la imagen de fondo
+      source={backgroundSource} // Ruta de la imagen de fondo
       style={loginStyles.backgroundImage}>
       <View style={loginStyles.topIncline} />
       <KeyboardAvoidingView behavior={'height'} style={{flex: 1}}>
@@ -418,7 +463,7 @@ const Login = () => {
             <View style={loginStyles.pensadorContainer}>
               <View style={loginStyles.pensadorBorder}>
                 <Image
-                  source={require('../../assets/pensador.png')}
+                  source={pensadorSource} // Ruta de la imagen del pensador
                   style={loginStyles.pensador}
                 />
               </View>
@@ -430,7 +475,7 @@ const Login = () => {
               Ingresa a
             </Text>
             <Text allowFontScaling={false} style={loginStyles.title2}>
-              Pedidos
+              Pedidos V2
             </Text>
           </View>
 

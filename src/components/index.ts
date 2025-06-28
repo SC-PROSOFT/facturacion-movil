@@ -43,3 +43,4 @@ export * from './AwayLocation';
 export * from './SearchLocation';
 export * from './Loader';
 export * from './CancelarVisita';
+export * from './UpdateModal';
