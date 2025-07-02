@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
 // El import principal ahora es OtaUpdater
 import OtaUpdater from 'react-native-ota-hot-update';
-
+import {zip, unzip, unzipAssets, subscribe} from 'react-native-zip-archive';
+// Importamos unzip para manejar archivos ZIP
 // RNBlobUtil solo se pasa como parámetro, pero es bueno mantener el import
 import RNBlobUtil from 'react-native-blob-util';
 import {Alert, TouchableOpacity, View, StyleSheet} from 'react-native';
@@ -9,6 +10,8 @@ import {Alert, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {Dialog, Portal, Text, ProgressBar} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import hotUpdate from 'react-native-ota-hot-update';
+import RNFS from 'react-native-fs';
+import RNRestart from 'react-native-restart';
 
 interface IUpdateProps {
   visible: boolean;
@@ -111,6 +114,9 @@ export const UpdateModal: React.FC<IUpdateProps> = ({
       `Iniciando actualización a v${updateInfo.version} con downloadBundleUri`,
     );
     console.log(`URL de descarga: ${updateInfo.url}`);
+
+    // Verificamos que la URL de actualización esté definida
+
     // 2. Usamos OtaUpdater.downloadBundleUri
     hotUpdate.downloadBundleUri(
       RNBlobUtil, // El manejador de descargas
@@ -120,7 +126,10 @@ export const UpdateModal: React.FC<IUpdateProps> = ({
         // 3. Callback de éxito
         updateSuccess: () => {
           console.log(
-            'Actualización exitosa. La aplicación se reiniciará automáticamente.',
+            `Carpeta de descargas: ${RNBlobUtil.fs.dirs.DownloadDir}`,
+          );
+          console.log(
+            `Actualización a v${updateInfo.version} descargada correctamente.`,
           );
           // No necesitamos cambiar de estado a 'success' porque la app
           // se reiniciará en este punto, cerrando el modal y todo lo demás.
@@ -139,6 +148,92 @@ export const UpdateModal: React.FC<IUpdateProps> = ({
         restartAfterInstall: true,
       },
     );
+  };
+
+  const downloadAndInstallOfExactlyFolder = () => {
+    setUpdatePhase('downloading');
+    console.log(
+      `Iniciando actualización a v${updateInfo.version} con setupExactBundlePath`,
+    );
+    console.log(`URL de descarga: ${updateInfo.url}`);
+    // Verificamos que la URL de actualización esté definida
+    if (!updateInfo.url) {
+      Alert.alert('Error', 'La URL de actualización no está definida.');
+      return;
+    }
+    // Usamos RNB fecth para descargar el archivo
+
+    const zipFilePath = `${RNFS.DocumentDirectoryPath}/bundle_${updateInfo.version}.zip`;
+    const extractedFolderPath = `${RNFS.DocumentDirectoryPath}/bundle_${updateInfo.version}`;
+
+    console.log(`Descargando archivo ZIP a: ${zipFilePath}`);
+    RNFS.downloadFile({
+      fromUrl: updateInfo.url,
+      toFile: zipFilePath,
+      progressDivider: 1, // Actualiza el progreso cada 1%
+      progress: res => {
+        const progress = res.bytesWritten / res.contentLength;
+        console.log(`Descargando... ${Math.floor(progress * 100)}%`);
+      },
+    })
+      .promise.then(async () => {
+        console.log('Descarga completa. Extrayendo archivo ZIP...');
+        try {
+          // Extraemos el archivo ZIP
+          await unzip(zipFilePath, extractedFolderPath, 'utf-8');
+
+          // Configuramos el bundle exacto
+
+          const listaDeTodasLasCarpetas = await RNFS.readDir(
+            RNFS.DocumentDirectoryPath,
+          );
+          console.log(
+            `Lista de carpetas en el directorio extraído: ${JSON.stringify(
+              listaDeTodasLasCarpetas,
+            )}`,
+          );
+          const exactedFolderBundle = `${extractedFolderPath}/index.android.bundle`;
+          const success = await OtaUpdater.setupExactBundlePath(
+            `${exactedFolderBundle}`,
+          );
+          console.log(
+            `Configurando bundle exacto desde: ${extractedFolderPath}`,
+          );
+          console.log(`Succes?: ${success}`);
+          
+
+          // Verificamos si el bundle JS existe
+          console.log(`Configuración del bundle: ${success}`);
+          if (success) {
+            const bundlePath = `${extractedFolderPath}/index.android.bundle`;
+            const exists = await RNFS.exists(bundlePath);
+            console.log(`¿Existe el bundle JS?: ${exists}`);
+            console.log(
+              `Actualización a v${updateInfo.version} instalada correctamente.`,
+            );
+            await OtaUpdater.setCurrentVersion(updateInfo.version);
+            // Eliminamos el archivo ZIP descargado
+            await RNFS.unlink(zipFilePath);
+            // Reiniciamos la aplicación
+            await OtaUpdater.resetApp();
+          } else {
+            throw new Error('Error al configurar el bundle exacto.');
+          }
+        } catch (error) {
+          console.error('Error al extraer o configurar el bundle:', error);
+          setUpdatePhase('error');
+          Alert.alert('Error de Actualización', error.message, [
+            {text: 'OK', onPress: handleClose},
+          ]);
+        }
+      })
+      .catch(error => {
+        console.error('Error durante la descarga:', error);
+        setUpdatePhase('error');
+        Alert.alert('Error de Actualización', error.message, [
+          {text: 'OK', onPress: handleClose},
+        ]);
+      });
   };
   // ========= FIN DE LA SECCIÓN MODIFICADA =========
 
@@ -166,14 +261,14 @@ export const UpdateModal: React.FC<IUpdateProps> = ({
             </View>
             <Dialog.Content>
               <Text style={styles.bodyText}>
-                Hay una nueva versión {updateInfo.version} de la aplicación disponible. Es necesaria
-                para seguir usando la aplicación.
+                Hay una nueva versión {updateInfo.version} de la aplicación
+                disponible. Es necesaria para seguir usando la aplicación.
               </Text>
             </Dialog.Content>
             <Dialog.Actions>
               <TouchableOpacity
                 style={styles.actualizarButton}
-                onPress={downloadAndInstall}>
+                onPress={downloadAndInstallOfExactlyFolder}>
                 <Text style={styles.buttonText}>Actualizar ahora</Text>
               </TouchableOpacity>
             </Dialog.Actions>

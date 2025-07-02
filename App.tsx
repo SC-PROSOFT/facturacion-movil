@@ -8,9 +8,7 @@ import OtaUpdater from 'react-native-ota-hot-update';
 import RNBlobUtil from 'react-native-blob-util';
 import DeviceInfo from 'react-native-device-info';
 import SplashScreen from 'react-native-splash-screen';
-// --- 1. IMPORTACIONES AÑADIDAS PARA EL ROLLBACK ---
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import RNRestart from 'react-native-restart';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 /* store */
 import {store} from './src/redux/store';
@@ -23,6 +21,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 /* context provider */
 import GlobalProvider from './src/context/global_provider';
 import {Buffer} from 'buffer';
+import { useEnsureOtaReady } from './src/hooks/useEnsureOtaReady';
 
 global.Buffer = Buffer; // Para compatibilidad con RN 0.71.0 y superior
 /* toast config */
@@ -38,7 +37,7 @@ const theme = {
 const manifestUrl =
   'https://firebasestorage.googleapis.com/v0/b/facturacion-movil-prosoft-app.firebasestorage.app/o/ota%2Fupdate.json?alt=media';
 const NATIVE_APP_VERSION = DeviceInfo.getVersion();
-
+const APP_DEBUG = "PROD"
 const App = () => {
   const [nativeAppVersion, setNativeAppVersion] = useState('');
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
@@ -46,18 +45,7 @@ const App = () => {
 
   useEffect(() => {
     const initializeApp = async () => {
-      // --- 2. LÓGICA DE VERIFICACIÓN DE ARRANQUE ---
-      // Esta función revisará si la app ha crasheado repetidamente.
-      // Si es así, intentará un rollback y detendrá la ejecución.
-      const canContinue = await handleStartupChecks();
-
-      // Si se disparó un rollback (y la app no se reinició por algún motivo),
-      // detenemos la inicialización para evitar más problemas.
-      if (!canContinue) return;
-
-      // --- FIN DE LA LÓGICA DE ROLLBACK ---
-
-      // Si todo está bien, continuamos con el flujo normal.
+      // useEnsureOtaReady(); // Aseguramos que el bundle OTA esté listo
       const appVersion = DeviceInfo.getVersion();
       setNativeAppVersion(appVersion);
       await checkForUpdate();
@@ -68,85 +56,44 @@ const App = () => {
   }, []);
 
   // --- 3. NUEVA FUNCIÓN PARA MANEJAR EL ROLLBACK ---
-  const handleStartupChecks = async (): Promise<boolean> => {
-    const ATTEMPTS_KEY = 'startupAttempts';
-    const MAX_ATTEMPTS = 3; // La app puede fallar 3 veces antes de hacer rollback
-    const SUCCESS_TIMEOUT = 10000; // 10 segundos para considerar un arranque exitoso
 
-    try {
-      let attempts = parseInt(
-        (await AsyncStorage.getItem(ATTEMPTS_KEY)) || '0',
-        10,
-      );
-      attempts += 1;
-      console.log(`[OTA Rollback] Intento de arranque N°: ${attempts}`);
-      await AsyncStorage.setItem(ATTEMPTS_KEY, attempts.toString());
-
-      if (attempts >= MAX_ATTEMPTS) {
-        console.warn(
-          `[OTA Rollback] Se detectaron ${attempts} arranques fallidos. Iniciando rollback...`,
-        );
-        // Reseteamos el contador ANTES del rollback para no quedar en un bucle si el rollback falla.
-        await AsyncStorage.setItem(ATTEMPTS_KEY, '0');
-
-        const rolledBack = await OtaUpdater.rollbackToPreviousBundle();
-        if (rolledBack) {
-          Alert.alert(
-            'Restaurando Versión Anterior',
-            'La última actualización causó un problema. La aplicación se reiniciará a la versión estable anterior.',
-          );
-          console.log(
-            '[OTA Rollback] Rollback exitoso. Reiniciando la aplicación.',
-          );
-          RNRestart.Restart(); // Forzamos el reinicio
-        } else {
-          Alert.alert(
-            'Error Crítico',
-            'No se pudo restaurar la versión anterior. Por favor, reinstale la aplicación desde la tienda.',
-          );
-          console.error(
-            '[OTA Rollback] El rollback falló. No había una versión anterior a la cual volver.',
-          );
-        }
-        return false; // Indicamos que la app no debe continuar.
-      }
-
-      // Si la app sobrevive X segundos, consideramos el arranque exitoso y reseteamos el contador.
-      setTimeout(() => {
-        console.log(
-          '[OTA Rollback] Arranque considerado exitoso. Reseteando contador.',
-        );
-        AsyncStorage.setItem(ATTEMPTS_KEY, '0');
-      }, SUCCESS_TIMEOUT);
-
-      return true; // Indicamos que la app puede continuar con su flujo normal.
-    } catch (error) {
-      console.error(
-        '[OTA Rollback] Error en el sistema de verificación de arranque:',
-        error,
-      );
-      // En caso de que AsyncStorage falle, continuamos para no bloquear la app innecesariamente.
-      return true;
-    }
-  };
+  // Dentro de tu archivo App.tsx
 
   const checkForUpdate = async () => {
     try {
-      // await OtaUpdater.setCurrentVersion(1)
-      const response = await fetch(manifestUrl);
+      const response = await fetch(manifestUrl, {
+        // Añadimos headers para evitar la caché del manifiesto mismo
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       const remoteInfo = await response.json();
       const currentVersion = await OtaUpdater.getCurrentVersion();
-      console.log(NATIVE_APP_VERSION);
+      
       console.log(
         `Versión remota: ${remoteInfo.version}, Versión actual: ${currentVersion}`,
       );
+
       if (
         remoteInfo.name === NATIVE_APP_VERSION &&
-        remoteInfo.version > currentVersion
+        remoteInfo.version > currentVersion && APP_DEBUG === "PROD" // Solo comprobamos actualizaciones en producción
       ) {
+        // --- INICIO DEL CAMBIO ---
+        // Creamos una nueva URL con un parámetro de tiempo para que siempre sea única
+        const cacheBustedUrl = `${remoteInfo.url}&cache_bust=${Date.now()}`;
+        
+        const newUpdateInfo = {
+          ...remoteInfo,
+          url: cacheBustedUrl, // Usamos la nueva URL
+        };
+
         setIsUpdateAvailable(true);
-        setUpdateInfo(remoteInfo);
-        console.log('Actualización disponible:', remoteInfo);
+        setUpdateInfo(newUpdateInfo); // Pasamos la información con la URL modificada
+        console.log('Actualización disponible:', newUpdateInfo);
+        // --- FIN DEL CAMBIO ---
+
       } else {
         console.log('No hay actualizaciones disponibles.');
         setIsUpdateAvailable(false);
@@ -159,19 +106,21 @@ const App = () => {
   return (
     <StoreProvider store={store}>
       <PaperProvider theme={theme}>
-        <GlobalProvider>
-          <StatusBar></StatusBar>
-          <Navigation></Navigation>
+        <ErrorBoundary>
+          <GlobalProvider>
+            <StatusBar></StatusBar>
+            <Navigation></Navigation>
 
-          <InfoAlert />
-          <DecisionAlert />
-          <Toast config={toastConfig} />
-          <UpdateModal
-            visible={isUpdateAvailable}
-            onClose={() => setIsUpdateAvailable(false)}
-            updateInfo={updateInfo || {version: 0, url: ''}}
-          />
-        </GlobalProvider>
+            <InfoAlert />
+            <DecisionAlert />
+            <Toast config={toastConfig} />
+            <UpdateModal
+              visible={isUpdateAvailable}
+              onClose={() => setIsUpdateAvailable(false)}
+              updateInfo={updateInfo || {version: 0, url: ''}}
+            />
+          </GlobalProvider>
+        </ErrorBoundary>
       </PaperProvider>
     </StoreProvider>
   );

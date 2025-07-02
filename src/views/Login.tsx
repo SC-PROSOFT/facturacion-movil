@@ -193,7 +193,7 @@ const Login = () => {
     adjustScreenSize();
     initDb();
     getPermissions();
-    checkIsSignedIn();
+    // checkIsSignedIn();
   }, []);
 
   const handleInputChange = (name: string, text: string) => {
@@ -203,28 +203,28 @@ const Login = () => {
     setCheckboxes(prevState => ({...prevState, [checkboxName]: checked}));
   };
 
-  const checkIsSignedIn = async () => {
-    const rememberAccount = await rememberAccountService.getRememberAccount();
+  // const checkIsSignedIn = async () => {
+  //   const rememberAccount = await rememberAccountService.getRememberAccount();
 
-    if (rememberAccount) {
-      const {user, password} = rememberAccount;
+  //   if (rememberAccount) {
+  //     const {user, password} = rememberAccount;
 
-      setInputs({user, password});
-      setCheckboxes({rememberAccount: true});
+  //     setInputs({user, password});
+  //     setCheckboxes({rememberAccount: true});
 
-      login({user, password});
-    } else {
-      dispatch(setIsSignedIn(false));
-    }
+  //     login({user, password});
+  //   } else {
+  //     dispatch(setIsSignedIn(false));
+  //   }
 
-    // const lastNroPedido = await getLastNroPedido();
-    // if (lastNroPedido) {
-    //   visitaService.setLastNroPedido(lastNroPedido);
-    // }
+  //   // const lastNroPedido = await getLastNroPedido();
+  //   // if (lastNroPedido) {
+  //   //   visitaService.setLastNroPedido(lastNroPedido);
+  //   // }
 
-    // recalculateAndSaveVisitsIfNeeded();
+  //   // recalculateAndSaveVisitsIfNeeded();
     
-  }
+  // }
   const pressLoginButton = async () => {
     const {rememberAccount} = checkboxes;
     const {user, password} = inputs;
@@ -475,7 +475,7 @@ const Login = () => {
               Ingresa a
             </Text>
             <Text allowFontScaling={false} style={loginStyles.title2}>
-              Pedidos V2
+              Pedidos
             </Text>
           </View>
 
