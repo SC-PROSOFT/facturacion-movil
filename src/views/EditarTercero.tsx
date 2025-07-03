@@ -3,7 +3,7 @@ import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAppSelector, useAppDispatch} from '../redux/hooks';
 import {setIsShowTercerosFinder} from '../redux/slices';
-import {IconButton} from '../components';
+import {IconButton, TercerosFinder} from '../components';
 import {decisionAlertContext} from '../context';
 import {ITerceros} from '../common/types';
 import {_Input} from '../components/_Input';
@@ -45,10 +45,10 @@ const EditarTercero = () => {
   return (
     <View style={styles.container}>
       <Text style={{color: '#092254', fontSize: 22, marginBottom: 10}}>
-        Selecciona el cliente 
+        Selecciona el cliente
       </Text>
       <Card style={styles.card}>
-        <Card.Content>
+        <Card.Content style={{paddingVertical: 6, paddingHorizontal: 6}}>
           {/* 3. El contenedor para el input y el botón */}
           <View style={styles.searchContainer}>
             <View style={styles.inputContainer}>
@@ -63,7 +63,6 @@ const EditarTercero = () => {
               iconName="magnify"
               onPress={() => {
                 dispatch(setIsShowTercerosFinder(true));
-                navigation.navigate('TercerosFinder');
               }}
               // 4. El color del ícono ahora se adapta al tema
               iconColor={'#FFFF'}
@@ -71,6 +70,7 @@ const EditarTercero = () => {
           </View>
         </Card.Content>
       </Card>
+      <TercerosFinder searchTable="terceros" />
     </View>
   );
 };
