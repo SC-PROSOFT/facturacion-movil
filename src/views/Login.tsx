@@ -19,6 +19,7 @@ import {
   PasswordInput,
   NormalButton,
   NormalCheckbox,
+  TypingText,
 } from '../components';
 /* local database config */
 import {createTables} from '../data_queries/local_database/local_database_config';
@@ -45,6 +46,8 @@ import {getPermissions} from '../utils/getPermissions';
 import {IOperadores} from '../common/types';
 import {getLastNroPedido, recalculateAndSaveVisitsIfNeeded} from '../utils';
 import {useOtaImage} from '../utils/imageResolve';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 /* local types */
 interface userInfo {
   user: string;
@@ -69,18 +72,6 @@ const {width} = Dimensions.get('window');
 
 // Función para calcular el tamaño de la fuente basado en el ancho del dispositivo
 const scaleFontSize = (size: number) => (width / 375) * size;
-// const resolvedImageSourceBackground = Image.resolveAssetSource(
-//   require('../../assets/coverBackground.png'),
-// );
-// const resolvedImageSourcePensador = Image.resolveAssetSource(
-//   require('../../assets/pensador.png'),
-// );
-// const [sourceBg, setSourceBg] = useState<any>(
-//   require('../../assets/coverBackground.png'),
-// );
-// const [sourcePensador, setSourcePensador] = useState<any>(
-//   require('../../assets/pensador.png'),
-// );
 const Form = ({
   inputs,
   checkboxes,
@@ -170,6 +161,7 @@ const Login = () => {
 
   const objOperador = useAppSelector(store => store.operator.objOperator);
   const objConfig = useAppSelector(store => store.config.objConfig);
+  const isSignedIn = useAppSelector(store => store.operator.isSignedIn);
   const {width, height} = Dimensions.get('window');
 
   // Función para calcular el tamaño de la fuente basado en el ancho del dispositivo
@@ -193,7 +185,7 @@ const Login = () => {
     adjustScreenSize();
     initDb();
     getPermissions();
-    // checkIsSignedIn();
+    checkIsSignedIn();
   }, []);
 
   const handleInputChange = (name: string, text: string) => {
@@ -203,28 +195,26 @@ const Login = () => {
     setCheckboxes(prevState => ({...prevState, [checkboxName]: checked}));
   };
 
-  // const checkIsSignedIn = async () => {
-  //   const rememberAccount = await rememberAccountService.getRememberAccount();
+  const checkIsSignedIn = async () => {
+    const rememberAccount = await rememberAccountService.getRememberAccount();
+    const isLoggedIn = await AsyncStorage.getItem('isSignedIn');
+    console.log(isSignedIn, rememberAccount);
+    if (rememberAccount && isLoggedIn) {
+      const {user, password} = rememberAccount;
 
-  //   if (rememberAccount) {
-  //     const {user, password} = rememberAccount;
+      setInputs({user, password});
+      setCheckboxes({rememberAccount: true});
 
-  //     setInputs({user, password});
-  //     setCheckboxes({rememberAccount: true});
+      login({user, password});
+    }
 
-  //     login({user, password});
-  //   } else {
-  //     dispatch(setIsSignedIn(false));
-  //   }
+    // const lastNroPedido = await getLastNroPedido();
+    // if (lastNroPedido) {
+    //   visitaService.setLastNroPedido(lastNroPedido);
+    // }
 
-  //   // const lastNroPedido = await getLastNroPedido();
-  //   // if (lastNroPedido) {
-  //   //   visitaService.setLastNroPedido(lastNroPedido);
-  //   // }
-
-  //   // recalculateAndSaveVisitsIfNeeded();
-    
-  // }
+    // recalculateAndSaveVisitsIfNeeded();
+  };
   const pressLoginButton = async () => {
     const {rememberAccount} = checkboxes;
     const {user, password} = inputs;
@@ -318,6 +308,7 @@ const Login = () => {
       }
 
       dispatch(setIsSignedIn(true));
+      AsyncStorage.setItem('isSignedIn', JSON.stringify(true));
     } else {
       dispatch(showAlert('00'));
     }
@@ -475,7 +466,12 @@ const Login = () => {
               Ingresa a
             </Text>
             <Text allowFontScaling={false} style={loginStyles.title2}>
-              Pedidos
+              <TypingText
+                words={['Pedidos', 'Facturación']}
+                typingSpeed={100} // Velocidad de escritura
+                pauseBetweenWords={800} // Pausa entre palabras
+                style={loginStyles.title2} // Estilos personalizados
+              />
             </Text>
           </View>
 

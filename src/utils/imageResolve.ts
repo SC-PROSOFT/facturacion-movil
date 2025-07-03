@@ -25,12 +25,14 @@ export function useOtaImage(
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
-    const versionOta = OtaUpdater.getCurrentVersion().toString();
+
     const resolve = async () => {
       if (imageCache.has(filename)) {
         setSource(imageCache.get(filename)!);
         return;
       }
+
+      const versionOta = (await OtaUpdater.getCurrentVersion()).toString();
 
       const name =
         options?.lowercase === false ? filename : filename.toLowerCase();
@@ -40,17 +42,16 @@ export function useOtaImage(
         'drawable-xxhdpi',
         'drawable-xhdpi',
         'drawable-mdpi',
-      ]; 
+      ];
       const testPaths = options?.prefix
         ? [`${RNFS.DocumentDirectoryPath}/${options.prefix}${sanitizedName}`]
         : dpiFolders.map(
             dpi =>
-              `${RNFS.DocumentDirectoryPath}/bundle_${versionOta}/${dpi}/assets_${sanitizedName}`,
+              `${RNFS.DocumentDirectoryPath}/bundle_${versionOta}/assets/${dpi}/assets_${sanitizedName}`,
           );
 
       for (const path of testPaths) {
         const exists = await RNFS.exists(path);
-        console.log(`Checking path: ${path}, exists: ${exists}`);
         if (exists) {
           const resolved = {uri: `file://${path}`};
           imageCache.set(filename, resolved);

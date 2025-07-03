@@ -9,8 +9,6 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   Visitas,
   Sync,
-  ActualizarFacturas,
-  EditarPedidos,
   SyncDispositivo,
   Estadisticas,
 } from '../views';

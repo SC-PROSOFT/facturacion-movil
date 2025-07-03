@@ -44,3 +44,4 @@ export * from './SearchLocation';
 export * from './Loader';
 export * from './CancelarVisita';
 export * from './UpdateModal';
+export * from './TypingText';

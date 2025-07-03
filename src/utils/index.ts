@@ -14,3 +14,4 @@ export * from './padLeftCodigo';
 export * from './observationList';
 export * from './operationHelp';
 export * from './getLastNroPedido';
+export * from './updateManager';

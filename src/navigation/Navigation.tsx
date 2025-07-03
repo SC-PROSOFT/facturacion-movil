@@ -22,6 +22,7 @@ import {
   CreateTercero,
   CreateRuta,
   FilesTercero,
+  EditarTercero,
 } from '../views';
 
 const Stack = createNativeStackNavigator();
@@ -176,6 +177,20 @@ const Navigation = () => {
             component={CreateTercero}
             options={{
               title: 'Crear cliente',
+              headerTitleAlign: 'left',
+              headerShown: true,
+              animation: 'none',
+              headerTintColor: '#fff',
+              headerStyle: {
+                backgroundColor: '#092254',
+              },
+            }}
+          />
+          <Stack.Screen
+            name="EditarTercero"
+            component={EditarTercero}
+            options={{
+              title: 'Editar cliente',
               headerTitleAlign: 'left',
               headerShown: true,
               animation: 'none',

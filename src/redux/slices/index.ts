@@ -21,3 +21,4 @@ export * from './filesSlice';
 export * from './zonaFinderSilce';
 export * from './rutaFinderSlice';
 export * from './visitasSlice';
+export * from './updateModalSlice';

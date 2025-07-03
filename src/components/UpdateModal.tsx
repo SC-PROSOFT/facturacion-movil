@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 // El import principal ahora es OtaUpdater
 import OtaUpdater from 'react-native-ota-hot-update';
 import {zip, unzip, unzipAssets, subscribe} from 'react-native-zip-archive';
@@ -12,16 +12,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import hotUpdate from 'react-native-ota-hot-update';
 import RNFS from 'react-native-fs';
 import RNRestart from 'react-native-restart';
-
-interface IUpdateProps {
-  visible: boolean;
-  onClose: () => void;
-  updateInfo: {
-    version: number;
-    url: string;
-  };
-}
-
+import {useAppDispatch, useAppSelector} from '../redux/hooks';
+import {hideUpdateModal, showUpdateModal} from '../redux/slices';
+import DeviceInfo from 'react-native-device-info';
+import {checkForUpdate} from '../utils';
+import {FIREBASE_STORAGE_BUCKET} from '@env';
+const NATIVE_APP_VERSION = DeviceInfo.getVersion();
+const APP_DEBUG = 'PROD';
 // Los estilos no cambian, se mantienen igual.
 const styles = StyleSheet.create({
   dialog: {
@@ -93,128 +90,51 @@ const styles = StyleSheet.create({
   },
 });
 
-export const UpdateModal: React.FC<IUpdateProps> = ({
-  visible,
-  onClose,
-  updateInfo,
-}) => {
-  // El estado 'success' ya no es necesario, porque el reinicio es automático.
+export const UpdateModal: React.FC = () => {
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    const check = async () => {
+      console.log(
+        '[OTA] Ejecutando comprobación de actualizaciones desde el helper...',
+      );
+      const updateData = await checkForUpdate();
+      if (updateData) {
+        dispatch(showUpdateModal(updateData));
+      }
+    };
+
+    check();
+  }, [dispatch]);
+
+  const {visible, updateInfo} = useAppSelector(store => store.updateModal);
   type UpdatePhase = 'prompt' | 'downloading' | 'error';
   const [updatePhase, setUpdatePhase] = useState<UpdatePhase>('prompt');
 
-  // El estado de progreso ya no es necesario.
-  // const [downloadProgress, setDownloadProgress] = useState(0);
-
-  // ========= INICIO DE LA SECCIÓN MODIFICADA =========
-  const downloadAndInstall = () => {
-    // 1. Cambiamos a la fase de descarga para mostrar la UI de progreso.
-    setUpdatePhase('downloading');
-
-    console.log(
-      `Iniciando actualización a v${updateInfo.version} con downloadBundleUri`,
-    );
-    console.log(`URL de descarga: ${updateInfo.url}`);
-
-    // Verificamos que la URL de actualización esté definida
-
-    // 2. Usamos OtaUpdater.downloadBundleUri
-    hotUpdate.downloadBundleUri(
-      RNBlobUtil, // El manejador de descargas
-      updateInfo.url,
-      updateInfo.version,
-      {
-        // 3. Callback de éxito
-        updateSuccess: () => {
-          console.log(
-            `Carpeta de descargas: ${RNBlobUtil.fs.dirs.DownloadDir}`,
-          );
-          console.log(
-            `Actualización a v${updateInfo.version} descargada correctamente.`,
-          );
-          // No necesitamos cambiar de estado a 'success' porque la app
-          // se reiniciará en este punto, cerrando el modal y todo lo demás.
-        },
-
-        // 4. Callback de fallo
-        updateFail: message => {
-          console.error('Falló la actualización:', message);
-          setUpdatePhase('error'); // Cambiamos al estado de error
-          Alert.alert('Error de Actualización', message, [
-            {text: 'OK', onPress: handleClose}, // Cerramos el modal al presionar OK
-          ]);
-        },
-
-        // 5. La librería se encarga del reinicio
-        restartAfterInstall: true,
-      },
-    );
-  };
-
   const downloadAndInstallOfExactlyFolder = () => {
     setUpdatePhase('downloading');
-    console.log(
-      `Iniciando actualización a v${updateInfo.version} con setupExactBundlePath`,
-    );
-    console.log(`URL de descarga: ${updateInfo.url}`);
-    // Verificamos que la URL de actualización esté definida
-    if (!updateInfo.url) {
+    if (!updateInfo?.url) {
       Alert.alert('Error', 'La URL de actualización no está definida.');
       return;
     }
-    // Usamos RNB fecth para descargar el archivo
-
     const zipFilePath = `${RNFS.DocumentDirectoryPath}/bundle_${updateInfo.version}.zip`;
     const extractedFolderPath = `${RNFS.DocumentDirectoryPath}/bundle_${updateInfo.version}`;
-
-    console.log(`Descargando archivo ZIP a: ${zipFilePath}`);
     RNFS.downloadFile({
       fromUrl: updateInfo.url,
       toFile: zipFilePath,
-      progressDivider: 1, // Actualiza el progreso cada 1%
-      progress: res => {
-        const progress = res.bytesWritten / res.contentLength;
-        console.log(`Descargando... ${Math.floor(progress * 100)}%`);
-      },
+      progressDivider: 1,
     })
       .promise.then(async () => {
-        console.log('Descarga completa. Extrayendo archivo ZIP...');
         try {
-          // Extraemos el archivo ZIP
           await unzip(zipFilePath, extractedFolderPath, 'utf-8');
-
-          // Configuramos el bundle exacto
-
-          const listaDeTodasLasCarpetas = await RNFS.readDir(
-            RNFS.DocumentDirectoryPath,
-          );
-          console.log(
-            `Lista de carpetas en el directorio extraído: ${JSON.stringify(
-              listaDeTodasLasCarpetas,
-            )}`,
-          );
           const exactedFolderBundle = `${extractedFolderPath}/index.android.bundle`;
           const success = await OtaUpdater.setupExactBundlePath(
             `${exactedFolderBundle}`,
           );
-          console.log(
-            `Configurando bundle exacto desde: ${extractedFolderPath}`,
-          );
-          console.log(`Succes?: ${success}`);
-          
-
-          // Verificamos si el bundle JS existe
-          console.log(`Configuración del bundle: ${success}`);
           if (success) {
-            const bundlePath = `${extractedFolderPath}/index.android.bundle`;
-            const exists = await RNFS.exists(bundlePath);
-            console.log(`¿Existe el bundle JS?: ${exists}`);
-            console.log(
-              `Actualización a v${updateInfo.version} instalada correctamente.`,
-            );
             await OtaUpdater.setCurrentVersion(updateInfo.version);
-            // Eliminamos el archivo ZIP descargado
             await RNFS.unlink(zipFilePath);
-            // Reiniciamos la aplicación
+            await deleteMoreOfThreeVersions();
+            dispatch(hideUpdateModal());
             await OtaUpdater.resetApp();
           } else {
             throw new Error('Error al configurar el bundle exacto.');
@@ -235,12 +155,31 @@ export const UpdateModal: React.FC<IUpdateProps> = ({
         ]);
       });
   };
-  // ========= FIN DE LA SECCIÓN MODIFICADA =========
+  const deleteMoreOfThreeVersions = async () => {
+    try {
+      const dir = RNFS.DocumentDirectoryPath;
+      const files = await RNFS.readDir(dir);
+      const versions = files
+        .filter(file => file.isDirectory() && file.name.startsWith('bundle_'))
+        .sort((a, b) => {
+          const versionA = parseInt(a.name.replace('bundle_', ''), 10);
+          const versionB = parseInt(b.name.replace('bundle_', ''), 10);
+          return versionA - versionB;
+        });
+
+      if (versions.length > 3) {
+        const toDelete = versions.slice(0, versions.length - 3);
+        await Promise.all(toDelete.map(file => RNFS.unlink(file.path)));
+        console.log('Versiones antiguas eliminadas:', toDelete);
+      }
+    } catch (error) {
+      console.error('Error al eliminar versiones antiguas:', error);
+    }
+  };
 
   const handleClose = () => {
-    // Reiniciamos el estado al cerrar
     setUpdatePhase('prompt');
-    onClose();
+    dispatch(hideUpdateModal());
   };
 
   const renderContent = () => {
@@ -261,7 +200,7 @@ export const UpdateModal: React.FC<IUpdateProps> = ({
             </View>
             <Dialog.Content>
               <Text style={styles.bodyText}>
-                Hay una nueva versión {updateInfo.version} de la aplicación
+                Hay una nueva versión {updateInfo?.version} de la aplicación
                 disponible. Es necesaria para seguir usando la aplicación.
               </Text>
             </Dialog.Content>
@@ -317,8 +256,7 @@ export const UpdateModal: React.FC<IUpdateProps> = ({
       <Dialog
         style={styles.dialog}
         visible={visible}
-        // El usuario no puede cerrar el modal durante la descarga
-        dismissable={updatePhase === 'prompt'}
+        dismissable={false}
         onDismiss={handleClose}>
         {renderContent()}
       </Dialog>

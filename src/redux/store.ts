@@ -23,6 +23,7 @@ import filesReducer from './slices/filesSlice';
 import zonaFinderReducer from './slices/zonaFinderSilce';
 import rutaFinderReducer from './slices/rutaFinderSlice';
 import visitasReducer from './slices/visitasSlice';
+import updateModalReducer from './slices/updateModalSlice';
 
 export const store = configureStore({
   reducer: {
@@ -49,6 +50,7 @@ export const store = configureStore({
     zonaFinder: zonaFinderReducer,
     rutaFinder: rutaFinderReducer,
     visitas: visitasReducer,
+    updateModal: updateModalReducer, 
   },
 });
 
