@@ -97,9 +97,9 @@ export const UpdateModal: React.FC = () => {
       console.log(
         '[OTA] Ejecutando comprobación de actualizaciones desde el helper...',
       );
-      const updateData = await checkForUpdate();
-      if (updateData) {
-        dispatch(showUpdateModal(updateData));
+      const {updateInfo, isUpdateAvailable} = await checkForUpdate();
+      if (isUpdateAvailable && updateInfo) {
+        dispatch(showUpdateModal(updateInfo));
       }
     };
 

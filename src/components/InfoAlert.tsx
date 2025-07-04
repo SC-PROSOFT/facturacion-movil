@@ -85,8 +85,18 @@ export const InfoAlert = () => {
 
   const styles = StyleSheet.create({
     textButton: {
-      color:
-        type == 'success' ? '#19C22A' : type == 'error' ? '#DE3A45' : '#365AC3',
+      color: '#fff',
+      paddingHorizontal: 6,
+    },
+    buttonStyle: {
+      backgroundColor: type == 'error' ? '#DE3A45' : '#092254',
+      alignSelf: 'center',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 10,
+      marginTop: 5,
+
+      paddingVertical: 5,
     },
     headContainer: {
       backgroundColor: '#092254',
@@ -157,7 +167,7 @@ export const InfoAlert = () => {
           </Text>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button onPress={hideDialog}>
+          <Button style={styles.buttonStyle} onPress={hideDialog}>
             <Text allowFontScaling={false} style={styles.textButton}>
               {textButton()}
             </Text>

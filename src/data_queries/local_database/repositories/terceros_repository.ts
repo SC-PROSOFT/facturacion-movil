@@ -213,7 +213,6 @@ class TercerosRepository implements IRepository<ITerceros> {
           valuesTercero,
           async (_: ResultSet, result: ResultSet) => {
             // store.dispatch(addTerceroCreado(tercero));
-            this.saveCreatedTerceroToDB(tercero);
             resolve(true);
           },
           (error: ResultSet) => {
@@ -962,7 +961,7 @@ class TercerosRepository implements IRepository<ITerceros> {
     });
   }
 
-  private saveCreatedTerceroToDB(tercero: ITerceros) {
+  async saveCreatedTerceroToDB(tercero: ITerceros): Promise<boolean> {
     const sqlInsertCreatedTerceroStatement = `
     INSERT INTO terceros_creados (
         codigo,
@@ -1021,20 +1020,24 @@ class TercerosRepository implements IRepository<ITerceros> {
       tercero.di_pdf,
     ];
 
-    db.transaction((tx: any) => {
-      tx.executeSql(
-        sqlInsertCreatedTerceroStatement,
-        valuesTercero,
-        (_: ResultSet, result: ResultSet) => {
-          console.log('Tercero creado guardado en la base de datos');
-        },
-        (error: ResultSet) => {
-          console.log(
-            'Error al guardar tercero creado en la base de datos',
-            error,
-          );
-        },
-      );
+    return new Promise((resolve, reject) => {
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          sqlInsertCreatedTerceroStatement,
+          valuesTercero,
+          (_: ResultSet, result: ResultSet) => {
+            console.log('Tercero creado guardado en la base de datos');
+            resolve(true);
+          },
+          (error: ResultSet) => {
+            console.log(
+              'Error al guardar tercero creado en la base de datos',
+              error,
+            );
+            reject(new Error('Fallo guardar tercero creado'));
+          },
+        );
+      });
     });
   }
 

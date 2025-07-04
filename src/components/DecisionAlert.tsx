@@ -38,7 +38,7 @@ export const DecisionAlert = () => {
   const styles = StyleSheet.create({
     textButton: {
       color:
-        type == 'success' ? '#19C22A' : type == 'error' ? '#DE3A45' : '#DE3A45',
+        type == 'success' ? '#19C22A' : type == 'error' ? '#DE3A45' : '#092254',
     },
   });
 

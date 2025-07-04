@@ -20,6 +20,7 @@ import {decisionAlertContext} from '../context';
 /* components */
 import {IconLeftInput, IconButton} from '../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 
 type FlyOutProps = {
   children?: ReactNode;
@@ -134,9 +135,16 @@ const Searcher = ({
   };
   const searchAct = async () => {
     try {
-      const updateData = await checkForUpdate();
-      if (updateData) {
-        dispatch(showUpdateModal(updateData));
+      const {updateInfo, isUpdateAvailable} = await checkForUpdate();
+      if (isUpdateAvailable && updateInfo) {
+        dispatch(showUpdateModal(updateInfo));
+        closeMenu();
+      } else {
+        Toast.show({
+          type: 'info',
+          text1: 'No hay actualizaciones disponibles',
+          text2: `Ultima version ${updateInfo?.version}.`,
+        });
       }
     } catch (error) {
       console.error('Error al buscar actualizaciones:', error);

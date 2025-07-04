@@ -56,7 +56,10 @@ import {
 } from '../data_queries/local_database/services';
 import {Loader} from '../components';
 import {setFile} from '../redux/slices';
-import {FilesApiServices} from '../data_queries/api/queries';
+import {
+  FilesApiServices,
+  TercerosApiServices,
+} from '../data_queries/api/queries';
 import Toast from 'react-native-toast-message';
 
 const CreateTercero = () => {
@@ -271,7 +274,10 @@ const CreateTercero = () => {
     try {
       // Calcular el tipo de tercero (NIT o CC)
       setLoaderMessage('Creando tercero...');
-
+      const apiTerceros = new TercerosApiServices(
+        objConfig.direccionIp,
+        objConfig.puerto,
+      );
       const updatedTercero: ITerceros = {
         ...tercero,
         vendedor: objOperador.cod_vendedor,
@@ -280,7 +286,21 @@ const CreateTercero = () => {
         di_pdf: cedulaFile ? `S` : 'N',
       };
       const response = await tercerosService.createTercero(updatedTercero);
-
+      const apiResponse = await apiTerceros._saveTercero(updatedTercero);
+      if (!apiResponse) {
+        const r = await tercerosService.saveTerceroCreated(updatedTercero);
+        if (r) {
+          Toast.show({
+            type: 'info',
+            text1: 'Tercero guardado localmente.',
+          });
+        }
+      } else {
+        Toast.show({
+          type: 'success',
+          text1: 'Tercero creado correctamente.',
+        });
+      }
       if (response) {
         try {
           const visitas = await generatePotentialVisits([updatedTercero]);
@@ -545,7 +565,6 @@ const CreateTercero = () => {
     } finally {
       setIsConsentSigned(pdfPath ? true : false);
       setIsLoading(false);
-      
     }
   };
   const numericOnly = (text: string) => {

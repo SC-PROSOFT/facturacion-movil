@@ -137,6 +137,9 @@ class TercerosService {
   async deleteAllTercerosEdited(): Promise<boolean> {
     return this.tercerosRepository.deleteAllTercerosEdited();
   }
+  async saveTerceroCreated(tercero: ITerceros): Promise<boolean> {
+    return this.tercerosRepository.saveCreatedTerceroToDB(tercero);
+  }
 }
 
 const tercerosService = new TercerosService();

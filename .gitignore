@@ -85,4 +85,6 @@ output
 ota-build
 .env
 updateJsonGenerator.bat
+updateOtaDebug.bat
 update.json
+update_debug.json

@@ -29,5 +29,5 @@ export interface ITerceros {
   rut_pdf: only;
   camcom_pdf: only;
   di_pdf: only;
-  estado?: '1' | '2'; // 1 = Creado, 2 = Actualizado
+  estado?: 'S' | 'N'; // 1 = Creado, 2 = Actualizado
 }
